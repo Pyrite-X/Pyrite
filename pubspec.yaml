@@ -1,0 +1,13 @@
+name: pyrite
+description: Pyrite, the Discord bot focused on removing bot phishing accounts.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ">=2.18.1 <3.0.0"
+
+dependencies:
+  lirx:
+    git: https://github.com/One-Nub/Lirx
+  onyx:
+    git: https://github.com/One-Nub/Onyx
