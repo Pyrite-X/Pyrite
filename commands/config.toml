@@ -30,7 +30,7 @@ default_member_permissions = 32 # Manage server permissions
         name = "action"
         description = "Set what will happen when a match is found."
         type = 3
-        required = true
+        required = false
         choices = [
             {name = "Log the match to the set log channel.", value = "log"},
             {name = "Kick the matching user.", value = "kick"},
