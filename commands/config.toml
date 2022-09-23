@@ -1,8 +1,8 @@
-# Set logchannel
-# Set if default list of bots who are commonly phished should be used or not
 name = "config"
 description = "Change Pyrite's general settings."
 type = 1
+dm_permission = false
+default_member_permissions = 32 # Manage server permissions
 
 [[options]]
     name = "logchannel"

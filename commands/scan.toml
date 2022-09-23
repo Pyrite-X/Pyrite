@@ -1,0 +1,5 @@
+name = "scan"
+description = "Scan for users matching your rules and Pyrite's phishing list."
+type = 1
+dm_permission = false
+default_member_permissions = 32 # Manage server permissions

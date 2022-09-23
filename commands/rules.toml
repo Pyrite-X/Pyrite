@@ -1,7 +1,8 @@
-# rules view, add, and delete.
 name = "rules"
 description = "Manage the Pyrite rules in your server."
 type = 1
+dm_permission = false
+default_member_permissions = 32 # Manage server permissions
 
 [[options]]
     name = "view"
