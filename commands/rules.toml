@@ -1,0 +1,57 @@
+# rules view, add, and delete.
+name = "rules"
+description = "Manage the Pyrite rules in your server."
+type = 1
+
+[[options]]
+    name = "view"
+    description = "View the rules you have configured for Pyrite."
+    type = 1
+
+[[options]]
+    name = "add"
+    description = "Add a rule for Pyrite to use."
+    type = 1
+
+    [[options]]
+        type = 3
+        name = "pattern"
+        description = "String pattern used to match usernames and nicknames to."
+        required = true
+        max_length = 64
+        autocomplete = false
+
+    [[options]]
+        type = 3
+        name = "action"
+        description = "Set what will happen when a match is found."
+        required = true
+        choices = [
+            {name = "Log the match to the set log channel.", value = "log"},
+            {name = "Kick the matching user.", value = "kick"},
+            {name = "Ban the matching user.", value = "ban"},
+            {name = "Log the match + Kick the user.", value = "log,kick"},
+            {name = "Log the match + Ban the user.", value = "log,ban"}
+        ]
+
+    [[options]]
+        type = 5
+        name = "regex"
+        description = "If the given pattern should be treated as RegEx or not. Default is false."
+        required = false
+
+    [[options]]
+        type = 9
+        name = "exclude"
+        description = "Select users or roles that will be excluded from this rule."
+
+[[options]]
+    name = "delete"
+    description = "Remove a rule from Pyrite."
+    type = 1
+
+    [[options]]
+        type = 4
+        name = "rule_id"
+        description = "ID of the rule that is to be removed."
+        required = true

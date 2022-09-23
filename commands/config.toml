@@ -1,0 +1,48 @@
+# Set logchannel
+# Set if default list of bots who are commonly phished should be used or not
+name = "config"
+description = "Change Pyrite's general settings."
+type = 1
+
+[[options]]
+    name = "logchannel"
+    description = "Change the channel that Pyrite sends logs to."
+    type = 1
+
+    [[options]]
+        name = "channel"
+        type = 7
+        channel_types = [0]
+        required = true
+
+[[options]]
+    name = "phish_list"
+    description = "Configure options regarding the detection of users being popular bots."
+    type = 1
+
+    [[options]]
+        name = "enable"
+        description = "True to act upon matching users, false if not."
+        type = 5
+        required = false
+
+    [[options]]
+        name = "action"
+        description = "Set what will happen when a match is found."
+        type = 3
+        required = true
+        choices = [
+            {name = "Log the match to the set log channel.", value = "log"},
+            {name = "Kick the matching user.", value = "kick"},
+            {name = "Ban the matching user.", value = "ban"},
+            {name = "Log the match + Kick the user.", value = "log,kick"},
+            {name = "Log the match + Ban the user.", value = "log,ban"}
+        ]
+
+    [[options]]
+        name = "fuzzy_match"
+        description = "Set how similar a name should be to a bot name to match. Default is 100% (aka disabled)"
+        type = 10
+        min_value = 50
+        max_value = 100
+        autocomplete = false
