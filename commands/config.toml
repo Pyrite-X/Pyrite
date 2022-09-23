@@ -11,6 +11,7 @@ default_member_permissions = 32 # Manage server permissions
 
     [[options]]
         name = "channel"
+        description = "Choose the channel that Pyrite will send logs to."
         type = 7
         channel_types = [0]
         required = true
