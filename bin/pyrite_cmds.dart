@@ -1,8 +1,6 @@
 import 'package:dotenv/dotenv.dart';
 import 'package:lirx/lirx.dart';
 
-import 'dart:convert';
-
 void main() async {
   var env = DotEnv()..load(['bin/.env']);
   final String token = env["TOKEN"]!;
