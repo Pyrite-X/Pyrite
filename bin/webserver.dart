@@ -13,16 +13,13 @@ class WebServer {
   WebServer(this.server, this.PUB_KEY);
 
   Future<void> startServer({required Function(Interaction) dispatchFunc, int port = 8080}) async {
-    server.get("/", (req, res) => "Thanks for visiting root!");
-
-    server.get("/ws", (req, res) => "Oi, this is for webhooks ONLY");
+    server.get("/ws", (req, res) => "You're not supposed to \"GET\" this endpoint... But it's working!");
 
     server.post("/ws", (req, res) async {
       Map<String, dynamic> body = await req.body as Map<String, dynamic>;
 
       if (body["type"] == 1) {
-        /// Ping, Pong!
-        return {"type": 1};
+        return InteractionResponse(InteractionResponseType.pong, {});
       } else {
         Interaction interaction = Interaction(body);
         interaction.setMetadata(req);
