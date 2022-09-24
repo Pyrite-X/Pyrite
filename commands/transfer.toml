@@ -1,0 +1,19 @@
+name = "transfer"
+description = "Transfer your premium subscription to another user."
+type = 1
+
+[[options]]
+    name = "user"
+    description = "Select a user to transfer your susbcription to."
+    type = 1
+
+    [[options.options]]
+        name = "user"
+        description = "The user you're transferring your subscription to."
+        type = 6
+        required = true
+
+[[options]]
+    name = "revoke"
+    description = "Revoke your active transfer."
+    type = 1
