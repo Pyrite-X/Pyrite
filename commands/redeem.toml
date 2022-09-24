@@ -1,0 +1,27 @@
+name = "redeem"
+description = "Redeem a code received from a purchase."
+type = 1
+
+[[options]]
+    name = "premium"
+    description = "Redeem a premium code."
+    type = 1
+
+    [[options.options]]
+        type = 3
+        name = "code"
+        description = "Code that was sent to you from Gumroad."
+        required = true
+        autocomplete = false
+
+[[options]]
+    name = "increase"
+    description = "Redeem a code for increasing a limit."
+    type = 1
+
+    [[options.options]]
+        type = 3
+        name = "code"
+        description = "Code that was sent to you from Gumroad."
+        required = true
+        autocomplete = false
