@@ -9,7 +9,7 @@ default_member_permissions = 32 # Manage server permissions
     description = "Change the channel that Pyrite sends logs to."
     type = 1
 
-    [[options]]
+    [[options.options]]
         name = "channel"
         description = "Choose the channel that Pyrite will send logs to."
         type = 7
@@ -21,13 +21,13 @@ default_member_permissions = 32 # Manage server permissions
     description = "Configure options regarding the detection of users being popular bots."
     type = 1
 
-    [[options]]
+    [[options.options]]
         name = "enable"
         description = "True to act upon matching users, false if not."
         type = 5
         required = false
 
-    [[options]]
+    [[options.options]]
         name = "action"
         description = "Set what will happen when a match is found."
         type = 3
@@ -40,7 +40,7 @@ default_member_permissions = 32 # Manage server permissions
             {name = "Log the match + Ban the user.", value = "log,ban"}
         ]
 
-    [[options]]
+    [[options.options]]
         name = "fuzzy_match"
         description = "Set how similar a name should be to a bot name to match. Default is 100% (aka disabled)"
         type = 10

@@ -14,7 +14,7 @@ default_member_permissions = 32 # Manage server permissions
     description = "Add a rule for Pyrite to use."
     type = 1
 
-    [[options]]
+    [[options.options]]
         type = 3
         name = "pattern"
         description = "String pattern used to match usernames and nicknames to."
@@ -22,7 +22,7 @@ default_member_permissions = 32 # Manage server permissions
         max_length = 64
         autocomplete = false
 
-    [[options]]
+    [[options.options]]
         type = 3
         name = "action"
         description = "Set what will happen when a match is found."
@@ -35,13 +35,13 @@ default_member_permissions = 32 # Manage server permissions
             {name = "Log the match + Ban the user.", value = "log,ban"}
         ]
 
-    [[options]]
+    [[options.options]]
         type = 5
         name = "regex"
         description = "If the given pattern should be treated as RegEx or not. Default is false."
         required = false
 
-    [[options]]
+    [[options.options]]
         type = 9
         name = "exclude"
         description = "Select users or roles that will be excluded from this rule."
@@ -52,7 +52,7 @@ default_member_permissions = 32 # Manage server permissions
     description = "Remove a rule from Pyrite."
     type = 1
 
-    [[options]]
+    [[options.options]]
         type = 4
         name = "rule_id"
         description = "ID of the rule that is to be removed."
