@@ -8,4 +8,5 @@ void main(List<String> arguments) {
 
   Pyrite bot = Pyrite(token: token, publicKey: publicKey);
   bot.startServer();
+  bot.startGateway();
 }
