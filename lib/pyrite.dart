@@ -45,6 +45,12 @@ class Pyrite {
   void startServer() async {
     onyx = Onyx();
     onyx.registerAppCommandHandler("about", about.aboutCmd);
+    onyx.registerAppCommandHandler("config", config.configCmd);
+    onyx.registerAppCommandHandler("help", help.helpCmd);
+    onyx.registerAppCommandHandler("redeem", redeem.redeemCmd);
+    onyx.registerAppCommandHandler("rules", rules.rulesCmd);
+    onyx.registerAppCommandHandler("scan", scan.scanCmd);
+    onyx.registerAppCommandHandler("transfer", transfer.transferCmd);
 
     WebServer server = WebServer(Alfred(), publicKey);
     server.startServer(dispatchFunc: onyx.dispatchInteraction);
