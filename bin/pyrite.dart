@@ -1,9 +1,5 @@
-import 'package:alfred/alfred.dart';
 import 'package:dotenv/dotenv.dart';
-import 'package:onyx/onyx.dart';
 import 'package:pyrite/pyrite.dart';
-
-import 'webserver.dart';
 
 void main(List<String> arguments) {
   var env = DotEnv()..load(['bin/.env']);
