@@ -13,5 +13,6 @@ dependencies:
   http: ^0.13.5
   lirx:
     git: https://github.com/One-Nub/Lirx
+  nyxx: ^4.1.0
   onyx:
     git: https://github.com/One-Nub/Onyx
