@@ -13,7 +13,7 @@ void aboutCmd(Interaction interaction) async {
   embedBuilder.thumbnailUrl =
       "https://cdn.discordapp.com/avatars/1022370218489692222/5966690e72baa4b1ceca1b76c49ef0ed.webp?size=2048";
   embedBuilder.timestamp = DateTime.now();
-  embedBuilder.color = DiscordColor.fromHexString("ed6432");
+  embedBuilder.color = DiscordColor.fromHexString("FF5151");
   embedBuilder.addField(
       name: "What is Pyrite?", content: "Pyrite is a bot focused on removing phishing bots!", inline: false);
   embedBuilder.addField(
