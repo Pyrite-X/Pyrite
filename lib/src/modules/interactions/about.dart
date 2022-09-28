@@ -6,7 +6,7 @@ import 'package:nyxx/nyxx.dart' show EmbedBuilder, DiscordColor;
 import 'package:onyx/onyx.dart';
 
 void aboutCmd(Interaction interaction) async {
-  HttpRequest metadata = interaction.metadata;
+  HttpRequest metadata = interaction.metadata["request"];
 
   var embedBuilder = EmbedBuilder();
   embedBuilder.title = "Here's some information about Pyrite!";

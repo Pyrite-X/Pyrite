@@ -17,10 +17,11 @@ import 'src/modules/interactions/transfer.dart' as transfer;
 class Pyrite {
   final String token;
   final String publicKey;
+  final BigInt appID;
   late final Onyx onyx;
   late final INyxxWebsocket nyxx;
 
-  Pyrite({required this.token, required this.publicKey});
+  Pyrite({required this.token, required this.publicKey, required this.appID});
 
   void startGateway() async {
     nyxx = NyxxFactory.createNyxxWebsocket(token, GatewayIntents.guildMembers)
@@ -53,6 +54,12 @@ class Pyrite {
     onyx.registerAppCommandHandler("transfer", transfer.transferCmd);
 
     WebServer server = WebServer(Alfred(), publicKey);
-    server.startServer(dispatchFunc: onyx.dispatchInteraction);
+    server.startServer(dispatchFunc: ((p0) {
+      var currentMetadata = p0.metadata;
+      Map<String, dynamic> newMetadata = {"request": currentMetadata, "pyrite": this};
+
+      p0.setMetadata(newMetadata);
+      onyx.dispatchInteraction(p0);
+    }));
   }
 }
