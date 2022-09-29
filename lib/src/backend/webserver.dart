@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:alfred/alfred.dart';
@@ -17,6 +18,7 @@ class WebServer {
 
     server.post("/ws", (req, res) async {
       Map<String, dynamic> body = await req.body as Map<String, dynamic>;
+      req.response.headers.contentType = ContentType.json;
 
       if (body["type"] == 1) {
         return InteractionResponse(InteractionResponseType.pong, {});
