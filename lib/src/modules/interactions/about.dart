@@ -1,12 +1,11 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:alfred/alfred.dart';
 import 'package:nyxx/nyxx.dart' show EmbedBuilder, DiscordColor;
 import 'package:onyx/onyx.dart';
 
 void aboutCmd(Interaction interaction) async {
-  HttpRequest metadata = interaction.metadata["request"];
+  HttpRequest request = interaction.metadata["request"];
 
   var embedBuilder = EmbedBuilder();
   embedBuilder.title = "Here's some information about Pyrite!";
@@ -38,6 +37,5 @@ void aboutCmd(Interaction interaction) async {
     ]
   });
 
-  metadata.response.headers.contentType = ContentType.json;
-  await metadata.response.send(jsonEncode(response));
+  await request.response.send(jsonEncode(response));
 }
