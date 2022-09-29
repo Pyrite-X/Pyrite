@@ -42,9 +42,9 @@ default_member_permissions = 32 # Manage server permissions
         required = false
 
     [[options.options]]
-        type = 9
+        type = 8
         name = "exclude"
-        description = "Select users or roles that will be excluded from this rule."
+        description = "Select a role that will be excluded from this rule."
         required = false
 
 [[options]]
