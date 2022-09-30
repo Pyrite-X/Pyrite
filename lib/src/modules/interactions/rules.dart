@@ -14,8 +14,12 @@ void rulesCmd(Interaction interaction) async {
   String optionName = subcommand.name;
 
   if (optionName == "view") {
+    viewRules(interaction);
   } else if (optionName == "add") {
-  } else if (optionName == "delete") {}
+    addRule(interaction);
+  } else if (optionName == "delete") {
+    deleteRule(interaction);
+  }
 }
 
 void viewRules(Interaction interaction) async {
