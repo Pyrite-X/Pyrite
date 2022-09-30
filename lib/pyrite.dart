@@ -19,28 +19,28 @@ class Pyrite {
   final String publicKey;
   final BigInt appID;
   late final Onyx onyx;
-  late final INyxxWebsocket nyxx;
+  late final INyxxWebsocket gateway;
 
   Pyrite({required this.token, required this.publicKey, required this.appID});
 
   void startGateway() async {
-    nyxx = NyxxFactory.createNyxxWebsocket(token, GatewayIntents.guildMembers)
+    gateway = NyxxFactory.createNyxxWebsocket(token, GatewayIntents.guildMembers)
       ..registerPlugin(Logging())
       ..registerPlugin(CliIntegration());
 
-    nyxx.eventsWs.onGuildMemberAdd.listen((event) => on_join_event.on_join_event(event));
-    nyxx.eventsWs.onGuildMemberUpdate.listen((event) async {
+    gateway.eventsWs.onGuildMemberAdd.listen((event) => on_join_event.on_join_event(event));
+    gateway.eventsWs.onGuildMemberUpdate.listen((event) async {
       print((await event.member.getOrDownload()).nickname);
       print(event.user.username);
     });
 
-    nyxx.eventsWs.onReady.listen((event) {
-      nyxx.setPresence(PresenceBuilder.of(
+    gateway.eventsWs.onReady.listen((event) {
+      gateway.setPresence(PresenceBuilder.of(
           status: UserStatus.idle,
           activity: ActivityBuilder("for suspicious users...", ActivityType.watching)));
     });
 
-    await nyxx.connect();
+    await gateway.connect();
   }
 
   void startServer() async {
