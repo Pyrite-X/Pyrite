@@ -4,6 +4,8 @@ import 'package:alfred/alfred.dart';
 import 'package:nyxx/nyxx.dart' show EmbedBuilder, DiscordColor;
 import 'package:onyx/onyx.dart';
 
+import '../../structures/action.dart';
+
 void configCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
 
@@ -51,26 +53,37 @@ void configPhishingList(List<ApplicationCommandOption> options, HttpRequest requ
   }
 
   /// TODO: Change actual settings
-  /// TODO: Consider responding differently if the setting is already configured that way or form old -> new option
-  String result = "";
+  StringBuffer choicesString = StringBuffer();
+
   for (ApplicationCommandOption option in options) {
     if (option.name == "enable") {
-      result += "• Phishing list matching has been **${option.value == true ? 'enabled' : 'disabled'}**.\n";
+      choicesString
+          .writeln("• Phishing list matching has been **${option.value == true ? 'enabled' : 'disabled'}**.");
     } else if (option.name == "action") {
-      /// TODO: Replace value with expanded text used for choices.
-      result += "• The action taken on a match has been set to **${option.value}**.\n";
+      Action actions = Action.fromString(option.value);
+      List<String> actionStringList = ActionEnumString.getStringsFromAction(actions);
+
+      StringBuffer sBuffer = StringBuffer();
+
+      sBuffer.writeln(
+          "• The ${actionStringList.length != 1 ? 'actions' : 'action'} taken on a match has been set to:");
+      actionStringList.forEach((element) {
+        sBuffer.writeln("　- $element");
+      });
+
+      choicesString.writeln(sBuffer.toString());
     } else if (option.name == "fuzzy_match") {
-      result +=
-          "• A match will be found if a name is ~**${option.value.round()}%** similar to a name in the list.\n";
+      choicesString.writeln(
+          "• A match will be found if a name is ~**${option.value.round()}%** similar to a name in the list.");
     } else if (option.name == "exclude") {
-      result +=
-          "• Users with the role <@&${option.value}> will be ignored if they match a name in the list.\n";
+      choicesString.writeln(
+          "• Users with the role <@&${option.value}> will be ignored if they match a name in the list.");
     }
   }
 
   var embedBuilder = EmbedBuilder();
   embedBuilder.title = "Success!";
-  embedBuilder.addField(name: "Your Changes", content: result);
+  embedBuilder.addField(name: "Your Changes", content: choicesString.toString());
   embedBuilder.color = DiscordColor.fromHexString("69c273");
   embedBuilder.timestamp = DateTime.now();
 
