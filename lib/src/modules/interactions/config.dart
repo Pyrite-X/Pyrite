@@ -19,6 +19,8 @@ void configCmd(Interaction interaction) async {
     configLogChannel(BigInt.parse(channelParameter.value), request);
   } else if (optionName == "phish_list") {
     configPhishingList(subcommand.options!, request);
+  } else if (optionName == "join_event") {
+    configJoinEvent(subcommand.options!, request);
   }
 }
 
@@ -94,4 +96,17 @@ void configPhishingList(List<ApplicationCommandOption> options, HttpRequest requ
   });
 
   await request.response.send(jsonEncode(response));
+}
+
+void configJoinEvent(List<ApplicationCommandOption> options, HttpRequest request) async {
+  if (options.isEmpty) {
+    InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
+      "content":
+          "The </config join_event:1025642564474388501> command requires at least one option to be configured!",
+      "flags": 1 << 6
+    });
+
+    await request.response.send(jsonEncode(response));
+    return;
+  }
 }
