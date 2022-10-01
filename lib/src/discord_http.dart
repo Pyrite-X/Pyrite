@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:onyx/onyx.dart';
 
@@ -22,6 +24,9 @@ class DiscordHTTP {
   /// The ID of the application, used for making REST requests.
   final BigInt applicationID;
 
+  /// Scheme used to send the request, http or https.
+  final String scheme;
+
   /// Authorization string consisting of the [authToken] with the proper syntax for Discord.
   late final String _authorizationStr;
 
@@ -37,7 +42,8 @@ class DiscordHTTP {
       {required this.authToken,
       required this.applicationID,
       this.discordURL = "discord.com",
-      this.apiVersion = "v10"}) {
+      this.apiVersion = "v10",
+      this.scheme = "https"}) {
     _authorizationStr = "Bot $authToken";
   }
 
@@ -52,7 +58,7 @@ class DiscordHTTP {
   }
 
   Future<http.Response> banUser({required BigInt guildID, required BigInt userID, int? deleteSeconds}) async {
-    UriBuilder builder = UriBuilder(scheme: 'https', host: discordURL);
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/guilds/$guildID/bans/$userID");
 
     var uri = builder.build();
@@ -62,7 +68,7 @@ class DiscordHTTP {
   }
 
   Future<http.Response> kickUser({required BigInt guildID, required BigInt userID}) async {
-    UriBuilder builder = UriBuilder(scheme: 'https', host: discordURL);
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/guilds/$guildID/members/$userID");
 
     var uri = builder.build();
@@ -70,15 +76,15 @@ class DiscordHTTP {
   }
 
   Future<http.Response> sendLogMessage({required BigInt channelID, required JsonData payload}) async {
-    UriBuilder builder = UriBuilder(scheme: 'https', host: discordURL);
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/channels/$channelID/messages");
 
     var uri = builder.build();
-    return await http.post(uri, headers: _buildHeaders());
+    return await http.post(uri, headers: _buildHeaders(), body: jsonEncode(payload));
   }
 
   Future<http.Response> getUser({required BigInt userID}) async {
-    UriBuilder builder = UriBuilder(scheme: 'https', host: discordURL);
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/users/$userID");
 
     var uri = builder.build();
@@ -86,7 +92,7 @@ class DiscordHTTP {
   }
 
   Future<http.Response> getGuildMember({required BigInt guildID, required BigInt userID}) async {
-    UriBuilder builder = UriBuilder(scheme: 'https', host: discordURL);
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/guilds/$guildID/members/$userID");
 
     var uri = builder.build();
@@ -96,7 +102,7 @@ class DiscordHTTP {
   Future<http.Response> listGuildMembers({required BigInt guildID, int limit = 1, BigInt? after}) async {
     if (after == null) after = BigInt.zero;
 
-    UriBuilder builder = UriBuilder(scheme: 'https', host: discordURL);
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/guilds/$guildID/members");
     builder.setQueryParameters({"limit": limit, "after": after});
 
@@ -106,7 +112,7 @@ class DiscordHTTP {
 
   Future<http.Response> searchGuildMembers(
       {required BigInt guildID, required String query, int limit = 1}) async {
-    UriBuilder builder = UriBuilder(scheme: 'https', host: discordURL);
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/guilds/$guildID/members/search");
     builder.setQueryParameters({"query": query, "limit": limit});
 
