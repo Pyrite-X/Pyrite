@@ -109,4 +109,41 @@ void configJoinEvent(List<ApplicationCommandOption> options, HttpRequest request
     await request.response.send(jsonEncode(response));
     return;
   }
+
+  //TODO: Actually change settings
+  StringBuffer choicesString = StringBuffer();
+
+  for (ApplicationCommandOption option in options) {
+    if (option.name == "enable") {
+      choicesString
+          .writeln("• Join event scanning has been **${option.value == true ? 'enabled' : 'disabled'}**.");
+    } else if (option.name == "action") {
+      Action actions = Action.fromString(option.value);
+      List<String> actionStringList = ActionEnumString.getStringsFromAction(actions);
+
+      StringBuffer sBuffer = StringBuffer();
+
+      sBuffer.writeln(
+          "• The ${actionStringList.length != 1 ? 'actions' : 'action'} taken on a match has been set to:");
+      actionStringList.forEach((element) {
+        sBuffer.writeln("　- $element");
+      });
+
+      choicesString.writeln(sBuffer.toString());
+    }
+  }
+
+  var embedBuilder = EmbedBuilder();
+  embedBuilder.title = "Success!";
+  embedBuilder.addField(name: "Your Changes", content: choicesString.toString());
+  embedBuilder.color = DiscordColor.fromHexString("69c273");
+  embedBuilder.timestamp = DateTime.now();
+
+  InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
+    "embeds": [
+      {...embedBuilder.build()}
+    ]
+  });
+
+  await request.response.send(jsonEncode(response));
 }
