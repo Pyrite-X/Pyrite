@@ -6,7 +6,7 @@ void main() async {
   final String token = env["TOKEN"]!;
   final BigInt appId = BigInt.parse(env["APP_ID"]!);
 
-  Lirx lirx = Lirx(botToken: token, applicationID: appId);
+  Lirx lirx = Lirx(botToken: token, applicationID: appId, discordURL: "http://192.168.254.108/api/");
   await lirx.loadCommandFiles([
     'commands/about.toml',
     'commands/config.toml',
