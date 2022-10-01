@@ -3,48 +3,36 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:onyx/onyx.dart';
 
+/// Client to send REST requests to Discord.
+///
+/// Needs to be instantiated once with variables, after that it follows a singleton pattern.
 class DiscordHTTP {
-  /// Base layout taken from myself at https://github.com/One-Nub/Lirx.
-  /// I would've extended the client from there, but the user agent would be wrong
-  /// and the authorization string is private, as well as all the header building methods.
-  ///
-  /// There is no ratelimiting here... Needs to be resolved, or a proxy will need to be thrown
-  /// in front that handles ratelimits for me... Probably will use nirn.
-
   static const String _userAgent = "Pyrite (https://github.com/One-Nub/Pyrite, 0.0.1)";
 
-  final String discordURL;
+  static final DiscordHTTP _instance = DiscordHTTP._init();
+  DiscordHTTP._init();
 
-  /// Version of the API that Pyrite will be using.
-  final String apiVersion;
-
-  /// The Bot token that will be used to authorize.
-  final String authToken;
-
-  /// The ID of the application, used for making REST requests.
-  final BigInt applicationID;
-
-  /// Scheme used to send the request, http or https.
-  final String scheme;
-
-  /// Authorization string consisting of the [authToken] with the proper syntax for Discord.
+  late final String authToken;
+  late final BigInt applicationID;
   late final String _authorizationStr;
 
-  /// Instantiates the DiscordHTTP class.
-  ///
-  /// [authToken] is the token used to authenticate requests sent to Discord, and should be the
-  /// token for a Bot account. <br>
-  /// [applicationID] is the application ID for the bot/application. <br>
-  /// [discordURL] is the primary domain that will be used when sending requests to Discord.
-  /// Defaults to "discord.com/api/". If this is changed, it must include the final "/". <br>
-  /// [apiVersion] will be the version of Discord's API that will be used. Defaults to "v10".
-  DiscordHTTP(
-      {required this.authToken,
-      required this.applicationID,
-      this.discordURL = "discord.com",
-      this.apiVersion = "v10",
-      this.scheme = "https"}) {
-    _authorizationStr = "Bot $authToken";
+  late String scheme = "https";
+  late String discordURL = "discord.com";
+  late String apiVersion = "v10";
+
+  factory DiscordHTTP(
+      {String? authToken, BigInt? applicationID, String? discordURL, String? apiVersion, String? scheme}) {
+    if (authToken != null) {
+      _instance.authToken = authToken;
+      _instance._authorizationStr = "Bot $authToken";
+    }
+    if (applicationID != null) _instance.applicationID = applicationID;
+
+    if (scheme != null) _instance.scheme = scheme;
+    if (discordURL != null) _instance.discordURL = discordURL;
+    if (apiVersion != null) _instance.apiVersion = apiVersion;
+
+    return _instance;
   }
 
   /// Build the headers that will be sent in the REST request.

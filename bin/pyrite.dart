@@ -8,10 +8,9 @@ void main(List<String> arguments) {
   final String publicKey = env["PUB_KEY"]!;
   final String token = env["TOKEN"]!;
 
-  DiscordHTTP restClient =
-      DiscordHTTP(authToken: publicKey, applicationID: appID, discordURL: "192.168.254.108");
-
-  Pyrite bot = Pyrite(token: token, publicKey: publicKey, appID: appID, restClient: restClient);
+  /// Simply instantiate DiscordHTTP.
+  DiscordHTTP(authToken: token, applicationID: appID, discordURL: "192.168.254.108", scheme: "http");
+  Pyrite bot = Pyrite(token: token, publicKey: publicKey, appID: appID);
   bot.startServer();
-  // bot.startGateway();
+  bot.startGateway();
 }
