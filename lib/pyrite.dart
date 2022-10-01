@@ -2,6 +2,8 @@ import 'package:alfred/alfred.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:onyx/onyx.dart';
 
+import 'src/discord_http.dart';
+
 import 'src/backend/webserver.dart';
 
 import 'src/modules/gateway/on_join_event.dart' as on_join_event;
@@ -18,10 +20,11 @@ class Pyrite {
   final String token;
   final String publicKey;
   final BigInt appID;
+  final DiscordHTTP restClient;
   late final Onyx onyx;
   late final INyxxWebsocket gateway;
 
-  Pyrite({required this.token, required this.publicKey, required this.appID});
+  Pyrite({required this.token, required this.publicKey, required this.appID, required this.restClient});
 
   void startGateway() async {
     gateway = NyxxFactory.createNyxxWebsocket(token, GatewayIntents.guildMembers)
