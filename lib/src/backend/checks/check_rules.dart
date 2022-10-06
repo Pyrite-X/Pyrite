@@ -1,5 +1,7 @@
+import 'package:pyrite/src/backend/checks/check_result.dart';
+
 import '../../structures/trigger/trigger_context.dart';
 
-bool checkRulesList(TriggerContext context) {
-  return false;
+CheckRulesResult checkRulesList(TriggerContext context) {
+  return CheckRulesResult(match: false);
 }
