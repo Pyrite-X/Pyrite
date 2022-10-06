@@ -1,30 +1,30 @@
-class ScanType {
+class ScanMode {
   late String textValue;
 
-  List<ScanTypeEnum> enumList = [];
+  List<ScanModeOptions> enumList = [];
 
-  ScanType.fromString(String input) {
+  ScanMode.fromString(String input) {
     textValue = input;
 
     List<String> splitInput = input.split(',');
     splitInput.forEach((element) {
-      enumList.add(ScanTypeEnum.fromString(element));
+      enumList.add(ScanModeOptions.fromString(element));
     });
   }
 
-  bool containsType(ScanTypeEnum typeEnum) => enumList.contains(typeEnum);
+  bool containsType(ScanModeOptions typeEnum) => enumList.contains(typeEnum);
 }
 
-enum ScanTypeEnum {
+enum ScanModeOptions {
   phish,
   rules;
 
-  factory ScanTypeEnum.fromString(String value) {
+  factory ScanModeOptions.fromString(String value) {
     switch (value) {
       case "phish":
-        return ScanTypeEnum.phish;
+        return ScanModeOptions.phish;
       case "rules":
-        return ScanTypeEnum.rules;
+        return ScanModeOptions.rules;
       default:
         throw UnimplementedError("The type $value is not implemented as a Scan type.");
     }
