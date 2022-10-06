@@ -23,13 +23,13 @@ default_member_permissions = 32 # Manage server permissions
 
     [[options.options]]
         name = "enable"
-        description = "True to act upon matching users, false if not."
+        description = "True to act if there's a match, false if not."
         type = 5
         required = false
 
     [[options.options]]
         name = "action"
-        description = "Set what will happen when a match is found."
+        description = "Set what will happen when a match is found. Only applies when scanning."
         type = 3
         required = false
         choices = [
@@ -62,13 +62,13 @@ default_member_permissions = 32 # Manage server permissions
 
     [[options.options]]
         name = "enable"
-        description = "True to scan joining users, false to not do anything. Checks both phishing list and custom rules."
+        description = "Toggle if scanning occurs on user join. True to enable, false to disable."
         type = 5
         required = false
 
     [[options.options]]
         name = "action"
-        description = "Set what will happen when a match is found when a user joins."
+        description = "Set what happens when a match is found. Overrides all other match actions."
         type = 3
         required = false
         choices = [
