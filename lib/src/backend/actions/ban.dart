@@ -1,6 +1,8 @@
 import '../../discord_http.dart';
 
-void banUser({required BigInt userID, required BigInt guildID}) async {
+import '../../structures/trigger/trigger_context.dart';
+
+void banUser({required TriggerContext context}) async {
   await DiscordHTTP()
-    ..banUser(guildID: guildID, userID: userID);
+    ..banUser(guildID: context.server.serverID, userID: context.user.userID);
 }

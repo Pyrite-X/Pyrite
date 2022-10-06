@@ -1,6 +1,8 @@
 import '../../discord_http.dart';
 
-void kickUser({required BigInt userID, required BigInt guildID}) async {
+import '../../structures/trigger/trigger_context.dart';
+
+void kickUser({required TriggerContext context}) async {
   await DiscordHTTP()
-    ..kickUser(guildID: guildID, userID: userID);
+    ..kickUser(guildID: context.server.serverID, userID: context.user.userID);
 }
