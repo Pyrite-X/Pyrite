@@ -2,20 +2,20 @@ import 'trigger_source.dart';
 import '../user.dart';
 import '../server.dart';
 
-class TriggerContent {
+class TriggerContext {
   EventSource eventSource;
   User user;
   Server server;
 
-  TriggerContent({required this.eventSource, required this.user, required this.server});
+  TriggerContext({required this.eventSource, required this.user, required this.server});
 }
 
-class TriggerContentBuilder {
+class TriggerContextBuilder {
   late EventSource eventSource;
   late User user;
   late Server server;
 
-  TriggerContentBuilder();
+  TriggerContextBuilder();
 
   void setEventSource(EventSource eventSource) => this.eventSource = eventSource;
 
@@ -23,5 +23,5 @@ class TriggerContentBuilder {
 
   void setServer(Server server) => this.server = server;
 
-  TriggerContent build() => TriggerContent(eventSource: eventSource, user: user, server: server);
+  TriggerContext build() => TriggerContext(eventSource: eventSource, user: user, server: server);
 }
