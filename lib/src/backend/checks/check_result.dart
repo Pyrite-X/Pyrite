@@ -3,19 +3,17 @@ import '../../structures/rule.dart';
 abstract class CheckResult {
   bool match;
 
-  CheckResult(this.match);
+  CheckResult({required this.match});
 }
 
-class CheckPhishResult implements CheckResult {
+class CheckPhishResult extends CheckResult {
   String? matchingString;
-  bool match;
 
-  CheckPhishResult({required this.match, this.matchingString});
+  CheckPhishResult({required super.match, this.matchingString});
 }
 
-class CheckRulesResult implements CheckResult {
+class CheckRulesResult extends CheckResult {
   Rule? rule;
-  bool match;
 
-  CheckRulesResult({required this.match, this.rule});
+  CheckRulesResult({required super.match, this.rule});
 }
