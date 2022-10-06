@@ -21,7 +21,7 @@ class UserBuilder {
 
   void setUsername(String username) => this.username = username;
 
-  void setNickname(String nickname) => this.nickname = nickname;
+  void setNickname(String? nickname) => this.nickname = nickname;
 
   void addRole(BigInt roleID) => roles.add(roleID);
 
