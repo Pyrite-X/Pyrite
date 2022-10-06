@@ -56,9 +56,7 @@ void checkUser(TriggerContext context) async {
 
   if (checkPhishResult != null && checkPhishResult.match) {
     runActions(context, checkPhishResult);
-  }
-
-  if (checkRulesResult != null && checkRulesResult.match) {
+  } else if (checkRulesResult != null && checkRulesResult.match) {
     runActions(context, checkRulesResult);
   }
 }
