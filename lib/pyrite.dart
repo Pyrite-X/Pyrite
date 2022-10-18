@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:alfred/alfred.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:onyx/onyx.dart';
 
 import 'src/backend/webserver.dart';
+import 'src/backend/checks/check_phish_list.dart';
 
 import 'src/modules/gateway/on_join_event.dart' as on_join_event;
 
@@ -61,5 +64,9 @@ class Pyrite {
       p0.setMetadata(newMetadata);
       onyx.dispatchInteraction(p0);
     }));
+
+    /// Load the list on init, then update every 30 minutes.
+    loadPhishingList();
+    Timer.periodic(Duration(minutes: 30), ((timer) => loadPhishingList()));
   }
 }
