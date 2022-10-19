@@ -1,11 +1,17 @@
+import 'package:unorm_dart/unorm_dart.dart' as unorm;
+
 class User {
   BigInt userID;
-  String username;
+  late String username;
   String? nickname;
   List<BigInt> roles = [];
 
-  User({required this.userID, required this.username, this.nickname, List<BigInt>? roles}) {
+  User({required this.userID, required String username, String? nickname, List<BigInt>? roles}) {
     if (roles != null) this.roles = roles;
+
+    /// Normalize the output to get rid of custom fonts/styles that could bypass matching.
+    this.username = unorm.nfkc(username);
+    if (nickname != null) this.nickname = unorm.nfkc(nickname);
   }
 }
 

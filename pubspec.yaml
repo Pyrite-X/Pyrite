@@ -17,3 +17,7 @@ dependencies:
   nyxx: ^4.1.0
   onyx:
     git: https://github.com/One-Nub/Onyx
+  unorm_dart: ^0.2.0
+
+dev_dependencies:
+  build_runner: ^2.3.2
