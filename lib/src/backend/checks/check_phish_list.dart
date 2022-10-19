@@ -25,10 +25,10 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
   String? matchString;
   //TODO: Implement fuzzy matching (highest premium tier).
   for (String name in phishingList) {
-    if (name == context.user.username) {
+    if (name.toLowerCase() == context.user.username.toLowerCase()) {
       matchString = name;
       break;
-    } else if (context.user.nickname != null && name == context.user.nickname) {
+    } else if (context.user.nickname != null && name.toLowerCase() == context.user.nickname!.toLowerCase()) {
       matchString = name;
       break;
     }
