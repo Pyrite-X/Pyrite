@@ -10,6 +10,7 @@ dependencies:
   alfred: ^0.1.7
   cryptography: ^2.0.5
   dotenv: ^4.0.1
+  edgedb: ^0.1.0
   http: ^0.13.5
   lirx:
     git: https://github.com/One-Nub/Lirx
