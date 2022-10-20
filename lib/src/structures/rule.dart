@@ -5,23 +5,23 @@ class Rule {
   bool regex;
   String pattern;
   Action action;
-  BigInt? excludeRole;
+  List<BigInt>? excludedRoles;
 
-  Rule({required this.pattern, required this.action, required this.regex, this.ruleID, this.excludeRole});
+  Rule({required this.pattern, required this.action, required this.regex, this.ruleID, this.excludedRoles});
 }
 
 class RuleBuilder {
   late bool regex;
   late String pattern;
   late Action action;
-  late BigInt excludeRole;
+  List<BigInt> excludedRoles = [];
 
   RuleBuilder();
 
   void setAction(Action action) => this.action = action;
-  void setExcludeRole(BigInt roleID) => excludeRole = roleID;
+  void addExcludedRole(BigInt roleID) => excludedRoles.add(roleID);
   void setPattern(String pattern) => this.pattern = pattern;
   void setRegexFlag(bool flag) => regex = flag;
 
-  Rule build() => Rule(pattern: pattern, action: action, regex: regex, excludeRole: excludeRole);
+  Rule build() => Rule(pattern: pattern, action: action, regex: regex, excludedRoles: excludedRoles);
 }
