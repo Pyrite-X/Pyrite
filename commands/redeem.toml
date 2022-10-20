@@ -16,7 +16,7 @@ type = 1
 
 [[options]]
     name = "increase"
-    description = "Redeem a code for increasing a limit."
+    description = "Redeem a code for increasing a limit. Run this in the server you are redeeming it for."
     type = 1
 
     [[options.options]]
