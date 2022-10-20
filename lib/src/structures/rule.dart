@@ -1,7 +1,7 @@
 import 'package:pyrite/src/structures/action.dart';
 
 class Rule {
-  int? ruleID;
+  String? ruleID;
   bool regex;
   String pattern;
   Action action;
