@@ -43,7 +43,9 @@ module default {
     }
 
     type Server {
-        required property serverID -> int64;
+        required property serverID -> int64 {
+            constraint exclusive;
+        }
         
         required property joinAction -> int16 {
             default := 1 #Kick
@@ -57,7 +59,9 @@ module default {
     }
 
     type UserPremium {
-        required property userID -> int64;
+        required property userID -> int64 {
+            constraint exclusive;
+        }
         required property code -> str;
 
         property tier -> str;
