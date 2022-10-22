@@ -1,3 +1,5 @@
+import 'dart:html';
+
 import 'package:edgedb/edgedb.dart';
 
 import '../structures/action.dart';
@@ -20,16 +22,46 @@ class DatabaseClient {
 }
 
 class ServerQueries {
-  DatabaseClient _client = DatabaseClient();
+  DatabaseClient _db = DatabaseClient();
 
-  Future<void> createServer(Server server) async {}
+  Future<void> createServer(Server server) async {
+    String queryString = r"""insert Server {
+      serverID := <int64>$id
+    } unless conflict on .serverID""";
+    await _db.client.execute(queryString, {'id': server.serverID});
+  }
+
   Future<void> updateConfiguration(
-      {BigInt? logchannelID, bool? joinEventHandling, Action? joinAction}) async {}
-  Future<void> getServer(BigInt serverID) async {}
+      {required BigInt serverID, BigInt? logchannelID, bool? joinEventHandling, Action? joinAction}) async {
+    StringBuffer buffer = StringBuffer();
+    buffer.writeln("update Server");
+    buffer.writeln(r"filter .serverID = <int64>$id");
+    buffer.writeln("set {");
+    if (logchannelID != null) buffer.writeln(r"logchannelID := <int64>$logchannelID,");
+    if (joinEventHandling != null) buffer.writeln(r"onJoinEnabled := <bool>$joinEventHandling,");
+    if (joinAction != null) buffer.writeln(r"joinAction := <int16>$joinAction");
+    buffer.write("}");
+    await _db.client.execute(buffer.toString(), {
+      "id": serverID,
+      "logchannelID": logchannelID,
+      "joinEventHandling": joinEventHandling,
+      "joinAction": joinAction
+    });
+  }
+
+  Future<void> getServer(BigInt serverID) async {
+    String queryString = r"""select Server {
+      serverID,
+      joinAction,
+      onJoinEnabled,
+      logchannelID
+    } filter .serverID = <int64>$0""";
+    await _db.client.querySingle(queryString, [serverID]);
+  }
 }
 
 class RuleQueries {
-  DatabaseClient _client = DatabaseClient();
+  DatabaseClient _db = DatabaseClient();
 
   Future<void> createRule(Server server, Rule rule) async {}
   Future<void> deleteRule(Server server, String ruleID) async {}
@@ -37,7 +69,7 @@ class RuleQueries {
 }
 
 class PhishListQueries {
-  DatabaseClient _client = DatabaseClient();
+  DatabaseClient _db = DatabaseClient();
 
   ///TODO: Create phishinglist class to handle config info.
   Future<void> createPhishingConfig(Server server) async {}
@@ -46,7 +78,7 @@ class PhishListQueries {
 }
 
 class PremiumQueries {
-  DatabaseClient _client = DatabaseClient();
+  DatabaseClient _db = DatabaseClient();
 
   Future<void> addEntry(BigInt userID, String code) async {}
   Future<void> updateTransfer(BigInt userID, BigInt recipientID) async {}
