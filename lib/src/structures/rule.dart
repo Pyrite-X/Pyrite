@@ -49,7 +49,7 @@ class RuleBuilder {
       ruleID: ruleID,
       action: action,
       authorID: authorID,
-      excludedRoles: excludedRoles,
       pattern: pattern,
-      regex: regex);
+      regex: regex,
+      excludedRoles: excludedRoles);
 }
