@@ -1,5 +1,3 @@
-import 'dart:html';
-
 import 'package:edgedb/edgedb.dart';
 
 import '../structures/action.dart';
@@ -42,7 +40,7 @@ class ServerQueries {
     if (joinAction != null) buffer.writeln(r"joinAction := <int16>$joinAction");
     buffer.write("}");
     await _db.client.execute(buffer.toString(), {
-      "id": serverID,
+      "id": serverID.toInt(),
       "logchannelID": logchannelID,
       "joinEventHandling": joinEventHandling,
       "joinAction": joinAction
@@ -56,14 +54,44 @@ class ServerQueries {
       onJoinEnabled,
       logchannelID
     } filter .serverID = <int64>$0""";
-    await _db.client.querySingle(queryString, [serverID]);
+    await _db.client.querySingle(queryString, [serverID.toInt()]);
   }
 }
 
 class RuleQueries {
   DatabaseClient _db = DatabaseClient();
 
-  Future<void> createRule(Server server, Rule rule) async {}
+  Future<void> createRule(Server server, Rule rule) async {
+    Map<String, dynamic> queryArgs = {
+      "ruleID": rule.ruleID,
+      "authorID": rule.authorID.toInt(),
+      "pattern": rule.pattern,
+      "regex": rule.regex,
+      "serverID": server.serverID.toInt()
+    };
+
+    String queryString = r"""insert Rule {
+      ruleID := <str>$ruleID,
+      authorID := <int64>$authorID,
+      pattern := <str>$pattern,
+      isRegex := <bool>$regex,
+      server := (
+        select Server
+        filter .serverID = <int64>$serverID
+        limit 1
+      ),""";
+    if (rule.excludedRoles != null && rule.excludedRoles!.isNotEmpty) {
+      queryString += r"excludedRoles := <array<int64>>$excludedRoles";
+      List<int> toIntList = [];
+      rule.excludedRoles!.forEach((element) => toIntList.add(element.toInt()));
+      queryArgs["excludedRoles"] = toIntList;
+    }
+
+    queryString += "}";
+
+    print(await _db.client.query(queryString, queryArgs));
+  }
+
   Future<void> deleteRule(Server server, String ruleID) async {}
   Future<void> getServerRules(Server server) async {}
 }
