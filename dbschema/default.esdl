@@ -3,7 +3,7 @@ module default {
         required property enabled -> bool {
             default := true;
         }
-        
+
         required property action -> int16 {
             default := 1; #Kick
         };
@@ -22,17 +22,17 @@ module default {
     }
 
     type Rule {
-        required property ruleID -> str; # Hex string 
+        required property ruleID -> str; # Hex string
         required property authorID -> int64;
-        
+
         required property pattern -> str {
             constraint max_len_value(64);
         }
-        
+
         required property action -> int16 {
             default := 5 #Kick, log (1<<0 | 1<<2)
         }
-        
+
         required property isRegex -> bool {
             default := false
         }
@@ -40,17 +40,19 @@ module default {
         property excludedRoles -> array<int64>;
 
         required link server -> Server;
+
+        constraint exclusive on ((.ruleID, .server));
     }
 
     type Server {
         required property serverID -> int64 {
             constraint exclusive;
         }
-        
+
         required property joinAction -> int16 {
             default := 1 #Kick
         }
-        
+
         required property onJoinEnabled -> bool {
             default := true;
         }
