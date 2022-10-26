@@ -16,6 +16,24 @@ class Action {
     });
   }
 
+  Action.fromInt(int input) {
+    bitwiseValue = input;
+    textValue = "";
+
+    if (this.containsValue(ActionEnum.kick.value)) {
+      textValue += "kick,";
+      enumList.add(ActionEnum.kick);
+    } else if (this.containsValue(ActionEnum.ban.value)) {
+      textValue += "ban,";
+      enumList.add(ActionEnum.ban);
+    }
+
+    if (this.containsValue(ActionEnum.log.value)) {
+      textValue += "log";
+      enumList.add(ActionEnum.log);
+    }
+  }
+
   bool containsValue(int input) {
     return (bitwiseValue & input) != 0;
   }
