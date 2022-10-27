@@ -39,6 +39,7 @@ class ServerQueries {
     if (joinEventHandling != null) buffer.writeln(r"onJoinEnabled := <bool>$joinEventHandling,");
     if (joinAction != null) buffer.writeln(r"joinAction := <int16>$joinAction");
     buffer.write("}");
+
     await _db.client.execute(buffer.toString(), {
       "id": serverID.toInt(),
       "logchannelID": logchannelID,
@@ -47,14 +48,14 @@ class ServerQueries {
     });
   }
 
-  Future<void> getServer(BigInt serverID) async {
+  Future<dynamic> getServer(BigInt serverID) async {
     String queryString = r"""select Server {
       serverID,
       joinAction,
       onJoinEnabled,
       logchannelID
     } filter .serverID = <int64>$0""";
-    await _db.client.querySingle(queryString, [serverID.toInt()]);
+    return await _db.client.querySingle(queryString, [serverID.toInt()]);
   }
 }
 
@@ -80,6 +81,7 @@ class RuleQueries {
         filter .serverID = <int64>$serverID
         limit 1
       ),""";
+
     if (rule.excludedRoles != null && rule.excludedRoles!.isNotEmpty) {
       queryString += r"excludedRoles := <array<int64>>$excludedRoles";
       List<int> toIntList = [];
@@ -89,11 +91,43 @@ class RuleQueries {
 
     queryString += "}";
 
-    print(await _db.client.query(queryString, queryArgs));
+    await _db.client.query(queryString, queryArgs);
   }
 
-  Future<void> deleteRule(Server server, String ruleID) async {}
-  Future<void> getServerRules(Server server) async {}
+  Future<void> deleteRule(Server server, String ruleID) async {
+    String queryString = r"""delete Rule
+      filter .ruleID = <str>$ruleID and .server.serverID = <int64>$serverID""";
+
+    await _db.client.query(queryString, {"ruleID": ruleID, "serverID": server.serverID.toInt()});
+  }
+
+  Future<dynamic> getRule(Server server, String ruleID) async {
+    String queryString = r"""select Rule {
+      ruleID,
+      authorID,
+      pattern,
+      isRegex,
+      server,
+      excludedRoles
+    }
+    filter .ruleID = <str>$ruleID and .server.serverID = <int64>$serverID""";
+
+    return await _db.client.query(queryString, {"ruleID": ruleID, "serverID": server.serverID.toInt()});
+  }
+
+  Future<List<dynamic>> getAllServerRules(Server server) async {
+    String queryString = r"""select Rule {
+      ruleID,
+      authorID,
+      pattern,
+      isRegex,
+      server,
+      excludedRoles
+    }
+    filter .server.serverID = <int64>$serverID""";
+
+    return await _db.client.query(queryString, {"serverID": server.serverID.toInt()});
+  }
 }
 
 class PhishListQueries {
