@@ -31,21 +31,27 @@ class ServerQueries {
 
   Future<void> updateConfiguration(
       {required BigInt serverID, BigInt? logchannelID, bool? joinEventHandling, Action? joinAction}) async {
+    Map<String, dynamic> arguments = {"id": serverID.toInt()};
     StringBuffer buffer = StringBuffer();
+
     buffer.writeln("update Server");
     buffer.writeln(r"filter .serverID = <int64>$id");
     buffer.writeln("set {");
-    if (logchannelID != null) buffer.writeln(r"logchannelID := <int64>$logchannelID,");
-    if (joinEventHandling != null) buffer.writeln(r"onJoinEnabled := <bool>$joinEventHandling,");
-    if (joinAction != null) buffer.writeln(r"joinAction := <int16>$joinAction");
+    if (logchannelID != null) {
+      buffer.writeln(r"logchannelID := <int64>$logchannelID,");
+      arguments["logchannelID"] = logchannelID;
+    }
+    if (joinEventHandling != null) {
+      buffer.writeln(r"onJoinEnabled := <bool>$joinEventHandling,");
+      arguments["joinEventHandling"] = joinEventHandling;
+    }
+    if (joinAction != null) {
+      buffer.writeln(r"joinAction := <int16>$joinAction");
+      arguments["joinAction"] = joinAction;
+    }
     buffer.write("}");
 
-    await _db.client.execute(buffer.toString(), {
-      "id": serverID.toInt(),
-      "logchannelID": logchannelID,
-      "joinEventHandling": joinEventHandling,
-      "joinAction": joinAction
-    });
+    await _db.client.execute(buffer.toString(), arguments);
   }
 
   Future<dynamic> getServer(BigInt serverID) async {
