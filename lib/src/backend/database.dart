@@ -139,10 +139,53 @@ class RuleQueries {
 class PhishListQueries {
   DatabaseClient _db = DatabaseClient();
 
-  ///TODO: Create phishinglist class to handle config info.
-  Future<void> createPhishingConfig(Server server) async {}
+  /// Creates a default configuration for a [server].
+  ///
+  /// Utilizes the default for all other options, which is if matching is enabled,
+  /// the action (which is to only kick by default), and a fuzzy match percentage.
+  Future<void> createPhishingConfig(Server server) async {
+    String queryString = r"""insert PhishingList {
+      server := (
+        select Server
+        filter .serverID = <int64>$serverID
+        limit 1
+      )
+    }""";
+
+    await _db.client.execute(queryString, {"serverID": server.serverID.toInt()});
+  }
+
   Future<void> updateConfiguration(
-      {Action? action, bool? enabled, List<BigInt>? excludedRoles, int? fuzzyMatchPercent}) async {}
+      {Action? action, bool? enabled, List<BigInt>? excludedRoles, int? fuzzyMatchPercent}) async {
+    if (action == null && enabled == null && excludedRoles == null && fuzzyMatchPercent == null) return;
+
+    StringBuffer queryBuffer =
+        StringBuffer(["update PhishingList", r"filter .serverID = <int64>$serverID", "set {"]);
+    Map<String, dynamic> arguments = {};
+
+    if (action != null) {
+      queryBuffer.writeln(r"action := <int16>$actionValue,");
+      arguments["actionValue"] = action.bitwiseValue;
+    }
+    if (enabled != null) {
+      queryBuffer.writeln(r"enabled := <bool>$enabled,");
+      arguments["enabled"] = enabled;
+    }
+    if (excludedRoles != null) {
+      queryBuffer.writeln(r"excludedRoles := <array<int64>>$excludedRoles,");
+      List<int> intifiedList = [];
+      excludedRoles.forEach((element) => intifiedList.add(element.toInt()));
+      arguments["excludedRoles"] = intifiedList;
+    }
+    if (fuzzyMatchPercent != null) {
+      queryBuffer.writeln(r"fuzzyPercent := <int16>$fuzzy");
+      arguments["fuzzy"] = fuzzyMatchPercent;
+    }
+
+    queryBuffer.write("}");
+
+    await _db.client.execute(queryBuffer.toString(), arguments);
+  }
 }
 
 class PremiumQueries {
