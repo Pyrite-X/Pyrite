@@ -191,8 +191,67 @@ class PhishListQueries {
 class PremiumQueries {
   DatabaseClient _db = DatabaseClient();
 
-  Future<void> addEntry(BigInt userID, String code) async {}
-  Future<void> updateTransfer(BigInt userID, BigInt recipientID) async {}
-  Future<void> revokeTransfer(BigInt userID) async {}
-  Future<void> updateTier(BigInt userID) async {}
+  Future<void> addEntry(BigInt userID, String code, String? tier) async {
+    String queryString = r"""insert UserPremium {
+      userID := <int64>$userID,
+      code := <str>$code,
+      tier := <optional str>$tier
+    }""";
+
+    Map<String, dynamic> arguments = {"userID": userID.toInt(), "code": code};
+    if (tier != null) arguments["tier"] = tier;
+
+    await _db.client.execute(queryString, arguments);
+  }
+
+  /// Returns one of 3 strings based upon existence: owner, transfer, or none.
+  Future<String> checkUserExists(BigInt userID) async {
+    String queryString =
+        r"""with CU := (select UserPremium {userID, transferringTo} filter .userID = <int64>$id or .transferringTo = <int64>$id)
+        select 'owner' if CU.userID ?= <int64>$id else
+          'transfer' if CU.transferringTo ?= <int64>$id else
+          'none';""";
+
+    dynamic result = await _db.client.query(queryString, {"id": userID.toInt()});
+    return result.first;
+  }
+
+  /// Returns an entry either if the userID is the owner of the premium, or if
+  /// the userID is the recipient of a transfer.
+  Future<dynamic> getUserEntry(BigInt userID) async {
+    String queryString = r"""select UserPremium {
+      userID,
+      code,
+      tier,
+      transferringTo
+    }
+    filter .userID = <int64>$id or .transferringTo = <int64>$id""";
+
+    return await _db.client.query(queryString, {"id": userID.toInt()});
+  }
+
+  Future<void> updateTransfer(BigInt userID, BigInt? recipientID) async {
+    String queryString = r"""update UserPremium
+      filter .userID = <int64>$userID
+      set {
+        transferringTo := <optional int64>$recipientID
+      }""";
+
+    Map<String, dynamic> arguments = {"userID": userID.toInt()};
+
+    /// Will simply be cleared if there is no argument since it is optional in the query.
+    if (recipientID != null) arguments["recipientID"] = recipientID.toInt();
+
+    await _db.client.execute(queryString, arguments);
+  }
+
+  Future<void> updateTier(BigInt userID, String tier) async {
+    String queryString = r"""update UserPremium
+      filter .userID = <int64>$userID
+      set {
+        tier := <str>$tier
+      }""";
+
+    await _db.client.execute(queryString, {"userID": userID.toInt(), "tier": tier});
+  }
 }
