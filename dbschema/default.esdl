@@ -68,5 +68,7 @@ module default {
 
         property tier -> str;
         property transferringTo -> int64;
+
+        index on ((.userID, .transferringTo));
     }
 };
