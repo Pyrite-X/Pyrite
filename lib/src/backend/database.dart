@@ -160,7 +160,7 @@ class PhishListQueries {
     if (action == null && enabled == null && excludedRoles == null && fuzzyMatchPercent == null) return;
 
     StringBuffer queryBuffer =
-        StringBuffer(["update PhishingList", r"filter .serverID = <int64>$serverID", "set {"]);
+        StringBuffer(["update PhishingList", r"filter .server.serverID = <int64>$serverID", "set {"]);
     Map<String, dynamic> arguments = {};
 
     if (action != null) {
