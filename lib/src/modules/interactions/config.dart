@@ -5,6 +5,7 @@ import 'package:nyxx/nyxx.dart' show EmbedBuilder, DiscordColor;
 import 'package:onyx/onyx.dart';
 
 import '../../structures/action.dart';
+import '../../backend/database.dart' show ServerQueries, PhishListQueries;
 
 void configCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
@@ -14,19 +15,19 @@ void configCmd(Interaction interaction) async {
   ApplicationCommandOption subcommand = interactionData.options![0];
   String optionName = subcommand.name;
 
+  BigInt guildID = interactionData.guild_id!;
+
   if (optionName == "logchannel") {
     var channelParameter = subcommand.options![0];
-    configLogChannel(BigInt.parse(channelParameter.value), request);
+    configLogChannel(guildID, BigInt.parse(channelParameter.value), request);
   } else if (optionName == "phish_list") {
-    configPhishingList(subcommand.options!, request);
+    configPhishingList(guildID, subcommand.options!, request);
   } else if (optionName == "join_event") {
-    configJoinEvent(subcommand.options!, request);
+    configJoinEvent(guildID, subcommand.options!, request);
   }
 }
 
-void configLogChannel(BigInt channelID, HttpRequest request) async {
-  /// TODO: Change actual settings
-
+void configLogChannel(BigInt guildID, BigInt channelID, HttpRequest request) async {
   var embedBuilder = EmbedBuilder();
   embedBuilder.title = "Success!";
   embedBuilder.description = "Your log channel is now set to **<#${channelID}>**!";
@@ -39,10 +40,13 @@ void configLogChannel(BigInt channelID, HttpRequest request) async {
     ]
   });
 
+  ServerQueries db = ServerQueries();
+  await db.updateConfiguration(serverID: guildID, logchannelID: channelID);
+
   await request.response.send(jsonEncode(response));
 }
 
-void configPhishingList(List<ApplicationCommandOption> options, HttpRequest request) async {
+void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, HttpRequest request) async {
   if (options.isEmpty) {
     InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
       "content":
@@ -54,13 +58,17 @@ void configPhishingList(List<ApplicationCommandOption> options, HttpRequest requ
     return;
   }
 
-  /// TODO: Change actual settings
   StringBuffer choicesString = StringBuffer();
+  PhishListQueries db = PhishListQueries();
 
+  /// Probably not the most efficient to run the update command for each option passed... Will leave for now
+  /// but if there are efficiency issues might rework.
   for (ApplicationCommandOption option in options) {
     if (option.name == "enable") {
       choicesString
           .writeln("• Phishing list matching has been **${option.value == true ? 'enabled' : 'disabled'}**.");
+
+      await db.updateConfiguration(serverID: guildID, enabled: option.value as bool);
     } else if (option.name == "action") {
       Action actions = Action.fromString(option.value);
       List<String> actionStringList = ActionEnumString.getStringsFromAction(actions);
@@ -74,12 +82,18 @@ void configPhishingList(List<ApplicationCommandOption> options, HttpRequest requ
       });
 
       choicesString.writeln(sBuffer.toString());
+
+      await db.updateConfiguration(serverID: guildID, action: actions);
     } else if (option.name == "fuzzy_match") {
       choicesString.writeln(
           "• A match will be found if a name is ~**${option.value.round()}%** similar to a name in the list.");
+
+      await db.updateConfiguration(serverID: guildID, fuzzyMatchPercent: option.value);
     } else if (option.name == "exclude") {
       choicesString.writeln(
           "• Users with the role <@&${option.value}> will be ignored if they match a name in the list.");
+
+      await db.updateConfiguration(serverID: guildID, excludedRoles: [option.value]);
     }
   }
 
@@ -98,7 +112,7 @@ void configPhishingList(List<ApplicationCommandOption> options, HttpRequest requ
   await request.response.send(jsonEncode(response));
 }
 
-void configJoinEvent(List<ApplicationCommandOption> options, HttpRequest request) async {
+void configJoinEvent(BigInt guildID, List<ApplicationCommandOption> options, HttpRequest request) async {
   if (options.isEmpty) {
     InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
       "content":
@@ -112,11 +126,14 @@ void configJoinEvent(List<ApplicationCommandOption> options, HttpRequest request
 
   //TODO: Actually change settings
   StringBuffer choicesString = StringBuffer();
+  ServerQueries db = ServerQueries();
 
   for (ApplicationCommandOption option in options) {
     if (option.name == "enable") {
       choicesString
           .writeln("• Join event scanning has been **${option.value == true ? 'enabled' : 'disabled'}**.");
+
+      await db.updateConfiguration(serverID: guildID, joinEventHandling: option.value);
     } else if (option.name == "action") {
       Action actions = Action.fromString(option.value);
       List<String> actionStringList = ActionEnumString.getStringsFromAction(actions);
@@ -130,6 +147,8 @@ void configJoinEvent(List<ApplicationCommandOption> options, HttpRequest request
       });
 
       choicesString.writeln(sBuffer.toString());
+
+      await db.updateConfiguration(serverID: guildID, joinAction: actions);
     }
   }
 
