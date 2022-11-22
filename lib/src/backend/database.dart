@@ -156,12 +156,16 @@ class PhishListQueries {
   }
 
   Future<void> updateConfiguration(
-      {Action? action, bool? enabled, List<BigInt>? excludedRoles, int? fuzzyMatchPercent}) async {
+      {required BigInt serverID,
+      Action? action,
+      bool? enabled,
+      List<BigInt>? excludedRoles,
+      int? fuzzyMatchPercent}) async {
     if (action == null && enabled == null && excludedRoles == null && fuzzyMatchPercent == null) return;
 
     StringBuffer queryBuffer =
         StringBuffer(["update PhishingList", r"filter .server.serverID = <int64>$serverID", "set {"]);
-    Map<String, dynamic> arguments = {};
+    Map<String, dynamic> arguments = {"serverID": serverID.toInt()};
 
     if (action != null) {
       queryBuffer.writeln(r"action := <int16>$actionValue,");
