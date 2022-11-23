@@ -2,7 +2,6 @@ import 'package:edgedb/edgedb.dart';
 
 import '../structures/action.dart';
 import '../structures/rule.dart';
-import '../structures/server.dart';
 
 class DatabaseClient {
   static final DatabaseClient _instance = DatabaseClient._init();
@@ -22,11 +21,11 @@ class DatabaseClient {
 class ServerQueries {
   DatabaseClient _db = DatabaseClient();
 
-  Future<void> createServer(Server server) async {
+  Future<void> createServer(BigInt serverID) async {
     String queryString = r"""insert Server {
       serverID := <int64>$id
     } unless conflict on .serverID""";
-    await _db.client.execute(queryString, {'id': server.serverID});
+    await _db.client.execute(queryString, {'id': serverID.toInt()});
   }
 
   Future<void> updateConfiguration(
@@ -68,13 +67,13 @@ class ServerQueries {
 class RuleQueries {
   DatabaseClient _db = DatabaseClient();
 
-  Future<void> createRule(Server server, Rule rule) async {
+  Future<void> createRule(BigInt serverID, Rule rule) async {
     Map<String, dynamic> queryArgs = {
       "ruleID": rule.ruleID,
       "authorID": rule.authorID.toInt(),
       "pattern": rule.pattern,
       "regex": rule.regex,
-      "serverID": server.serverID.toInt()
+      "serverID": serverID.toInt()
     };
 
     String queryString = r"""insert Rule {
@@ -100,14 +99,14 @@ class RuleQueries {
     await _db.client.query(queryString, queryArgs);
   }
 
-  Future<void> deleteRule(Server server, String ruleID) async {
+  Future<void> deleteRule(BigInt serverID, String ruleID) async {
     String queryString = r"""delete Rule
       filter .ruleID = <str>$ruleID and .server.serverID = <int64>$serverID""";
 
-    await _db.client.query(queryString, {"ruleID": ruleID, "serverID": server.serverID.toInt()});
+    await _db.client.query(queryString, {"ruleID": ruleID, "serverID": serverID.toInt()});
   }
 
-  Future<dynamic> getRule(Server server, String ruleID) async {
+  Future<dynamic> getRule(BigInt serverID, String ruleID) async {
     String queryString = r"""select Rule {
       ruleID,
       authorID,
@@ -118,10 +117,10 @@ class RuleQueries {
     }
     filter .ruleID = <str>$ruleID and .server.serverID = <int64>$serverID""";
 
-    return await _db.client.query(queryString, {"ruleID": ruleID, "serverID": server.serverID.toInt()});
+    return await _db.client.query(queryString, {"ruleID": ruleID, "serverID": serverID.toInt()});
   }
 
-  Future<List<dynamic>> getAllServerRules(Server server) async {
+  Future<List<dynamic>> getAllServerRules(BigInt serverID) async {
     String queryString = r"""select Rule {
       ruleID,
       authorID,
@@ -132,7 +131,7 @@ class RuleQueries {
     }
     filter .server.serverID = <int64>$serverID""";
 
-    return await _db.client.query(queryString, {"serverID": server.serverID.toInt()});
+    return await _db.client.query(queryString, {"serverID": serverID.toInt()});
   }
 }
 
@@ -143,7 +142,7 @@ class PhishListQueries {
   ///
   /// Utilizes the default for all other options, which is if matching is enabled,
   /// the action (which is to only kick by default), and a fuzzy match percentage.
-  Future<void> createPhishingConfig(Server server) async {
+  Future<void> createPhishingConfig(BigInt serverID) async {
     String queryString = r"""insert PhishingList {
       server := (
         select Server
@@ -152,7 +151,7 @@ class PhishListQueries {
       )
     }""";
 
-    await _db.client.execute(queryString, {"serverID": server.serverID.toInt()});
+    await _db.client.execute(queryString, {"serverID": serverID.toInt()});
   }
 
   Future<void> updateConfiguration(
