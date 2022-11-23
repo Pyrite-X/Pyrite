@@ -124,7 +124,6 @@ void configJoinEvent(BigInt guildID, List<ApplicationCommandOption> options, Htt
     return;
   }
 
-  //TODO: Actually change settings
   StringBuffer choicesString = StringBuffer();
   ServerQueries db = ServerQueries();
 
