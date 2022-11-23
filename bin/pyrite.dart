@@ -1,4 +1,5 @@
 import 'package:dotenv/dotenv.dart';
+import 'package:edgedb/edgedb.dart';
 import 'package:pyrite/pyrite.dart';
 import 'package:pyrite/src/backend/database.dart';
 import 'package:pyrite/src/discord_http.dart';
@@ -13,7 +14,8 @@ void main(List<String> arguments) {
   DiscordHTTP(authToken: token, applicationID: appID, discordURL: "192.168.254.108", scheme: "http");
 
   /// Start the database connection.
-  DatabaseClient(initializing: true);
+  /// Insecure connection is used for development.
+  DatabaseClient(initializing: true, dsn: env["EDGEDB_DSN"], tlsSecurity: TLSSecurity.insecure);
 
   /// Start bot features.
   Pyrite bot = Pyrite(token: token, publicKey: publicKey, appID: appID);

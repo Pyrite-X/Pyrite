@@ -9,9 +9,15 @@ class DatabaseClient {
 
   late final Client client;
 
-  factory DatabaseClient({bool initializing = false}) {
+  factory DatabaseClient(
+      {bool initializing = false, String? dsn, TLSSecurity tlsSecurity = TLSSecurity.defaultSecurity}) {
     if (initializing) {
-      _instance.client = createClient();
+      if (dsn != null) {
+        _instance.client = createClient(dsn: dsn, tlsSecurity: tlsSecurity);
+      } else {
+        _instance.client = createClient(tlsSecurity: tlsSecurity);
+      }
+
       _instance.client.ensureConnected();
     }
 
