@@ -45,7 +45,7 @@ class ServerQueries {
     buffer.writeln("set {");
     if (logchannelID != null) {
       buffer.writeln(r"logchannelID := <int64>$logchannelID,");
-      arguments["logchannelID"] = logchannelID;
+      arguments["logchannelID"] = logchannelID.toInt();
     }
     if (joinEventHandling != null) {
       buffer.writeln(r"onJoinEnabled := <bool>$joinEventHandling,");
@@ -53,7 +53,7 @@ class ServerQueries {
     }
     if (joinAction != null) {
       buffer.writeln(r"joinAction := <int16>$joinAction");
-      arguments["joinAction"] = joinAction;
+      arguments["joinAction"] = joinAction.bitwiseValue;
     }
     buffer.write("}");
 
