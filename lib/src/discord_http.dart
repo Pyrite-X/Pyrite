@@ -107,6 +107,15 @@ class DiscordHTTP {
     var uri = builder.build();
     return await http.get(uri, headers: _buildHeaders());
   }
+
+  Future<http.Response> sendFollowupMessage(
+      {required String interactionToken, required JsonData payload}) async {
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
+    builder.setPath("/api/$apiVersion/webhooks/$applicationID/$interactionToken");
+
+    var uri = builder.build();
+    return await http.post(uri, headers: _buildHeaders(), body: jsonEncode(payload));
+  }
 }
 
 class UriBuilder {
