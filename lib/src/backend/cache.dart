@@ -1,1 +1,1 @@
-class RedisCache {}
+class AppCache {}
