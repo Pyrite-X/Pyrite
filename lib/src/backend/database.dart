@@ -12,6 +12,7 @@ class DatabaseClient {
   factory DatabaseClient({bool initializing = false}) {
     if (initializing) {
       _instance.client = createClient();
+      _instance.client.ensureConnected();
     }
 
     return _instance;
@@ -124,6 +125,7 @@ class RuleQueries {
     String queryString = r"""select Rule {
       ruleID,
       authorID,
+      action,
       pattern,
       isRegex,
       server,
