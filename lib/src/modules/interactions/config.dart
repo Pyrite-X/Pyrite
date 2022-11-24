@@ -15,7 +15,7 @@ void configCmd(Interaction interaction) async {
   ApplicationCommandOption subcommand = interactionData.options![0];
   String optionName = subcommand.name;
 
-  BigInt guildID = interactionData.guild_id!;
+  BigInt guildID = interaction.guild_id!;
 
   if (optionName == "logchannel") {
     var channelParameter = subcommand.options![0];
@@ -41,9 +41,9 @@ void configLogChannel(BigInt guildID, BigInt channelID, HttpRequest request) asy
   });
 
   ServerQueries db = ServerQueries();
-  await db.updateConfiguration(serverID: guildID, logchannelID: channelID);
+  db.updateConfiguration(serverID: guildID, logchannelID: channelID);
 
-  await request.response.send(jsonEncode(response));
+  request.response.send(jsonEncode(response));
 }
 
 void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, HttpRequest request) async {
@@ -68,32 +68,32 @@ void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, 
       choicesString
           .writeln("• Phishing list matching has been **${option.value == true ? 'enabled' : 'disabled'}**.");
 
-      await db.updateConfiguration(serverID: guildID, enabled: option.value as bool);
+      db.updateConfiguration(serverID: guildID, enabled: option.value as bool);
     } else if (option.name == "action") {
       Action actions = Action.fromString(option.value);
       List<String> actionStringList = ActionEnumString.getStringsFromAction(actions);
 
       StringBuffer sBuffer = StringBuffer();
 
-      sBuffer.writeln(
+      sBuffer.write(
           "• The ${actionStringList.length != 1 ? 'actions' : 'action'} taken on a match has been set to:");
       actionStringList.forEach((element) {
-        sBuffer.writeln("　- $element");
+        sBuffer.write("\n　- $element");
       });
 
       choicesString.writeln(sBuffer.toString());
 
-      await db.updateConfiguration(serverID: guildID, action: actions);
+      db.updateConfiguration(serverID: guildID, action: actions);
     } else if (option.name == "fuzzy_match") {
       choicesString.writeln(
-          "• A match will be found if a name is ~**${option.value.round()}%** similar to a name in the list.");
+          "• A match will be found if a name is ~**${option.value}%** similar to a name in the list.");
 
-      await db.updateConfiguration(serverID: guildID, fuzzyMatchPercent: option.value);
+      db.updateConfiguration(serverID: guildID, fuzzyMatchPercent: option.value);
     } else if (option.name == "exclude") {
       choicesString.writeln(
           "• Users with the role <@&${option.value}> will be ignored if they match a name in the list.");
 
-      await db.updateConfiguration(serverID: guildID, excludedRoles: [option.value]);
+      db.updateConfiguration(serverID: guildID, excludedRoles: [BigInt.parse(option.value)]);
     }
   }
 
@@ -132,22 +132,22 @@ void configJoinEvent(BigInt guildID, List<ApplicationCommandOption> options, Htt
       choicesString
           .writeln("• Join event scanning has been **${option.value == true ? 'enabled' : 'disabled'}**.");
 
-      await db.updateConfiguration(serverID: guildID, joinEventHandling: option.value);
+      db.updateConfiguration(serverID: guildID, joinEventHandling: option.value);
     } else if (option.name == "action") {
       Action actions = Action.fromString(option.value);
       List<String> actionStringList = ActionEnumString.getStringsFromAction(actions);
 
       StringBuffer sBuffer = StringBuffer();
 
-      sBuffer.writeln(
+      sBuffer.write(
           "• The ${actionStringList.length != 1 ? 'actions' : 'action'} taken on a match has been set to:");
       actionStringList.forEach((element) {
-        sBuffer.writeln("　- $element");
+        sBuffer.write("\n　- $element");
       });
 
       choicesString.writeln(sBuffer.toString());
 
-      await db.updateConfiguration(serverID: guildID, joinAction: actions);
+      db.updateConfiguration(serverID: guildID, joinAction: actions);
     }
   }
 
