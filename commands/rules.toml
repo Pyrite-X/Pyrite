@@ -53,7 +53,7 @@ default_member_permissions = 32 # Manage server permissions
     type = 1
 
     [[options.options]]
-        type = 4
+        type = 3
         name = "rule_id"
         description = "ID of the rule that is to be removed."
         required = true
