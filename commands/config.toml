@@ -43,7 +43,7 @@ default_member_permissions = 32 # Manage server permissions
     [[options.options]]
         name = "fuzzy_match"
         description = "Set how similar a name should be to a bot name to match. Default is 100% (aka disabled)"
-        type = 10
+        type = 4
         min_value = 75
         max_value = 100
         required = false
