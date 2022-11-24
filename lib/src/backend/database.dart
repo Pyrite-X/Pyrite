@@ -80,7 +80,8 @@ class RuleQueries {
       "authorID": rule.authorID.toInt(),
       "pattern": rule.pattern,
       "regex": rule.regex,
-      "serverID": serverID.toInt()
+      "serverID": serverID.toInt(),
+      "action": rule.action.bitwiseValue
     };
 
     String queryString = r"""insert Rule {
@@ -88,6 +89,7 @@ class RuleQueries {
       authorID := <int64>$authorID,
       pattern := <str>$pattern,
       isRegex := <bool>$regex,
+      action := <int16>$action,
       server := (
         select Server
         filter .serverID = <int64>$serverID
@@ -106,11 +108,11 @@ class RuleQueries {
     await _db.client.query(queryString, queryArgs);
   }
 
-  Future<void> deleteRule(BigInt serverID, String ruleID) async {
+  Future<dynamic> deleteRule(BigInt serverID, String ruleID) async {
     String queryString = r"""delete Rule
       filter .ruleID = <str>$ruleID and .server.serverID = <int64>$serverID""";
 
-    await _db.client.query(queryString, {"ruleID": ruleID, "serverID": serverID.toInt()});
+    return await _db.client.querySingle(queryString, {"ruleID": ruleID, "serverID": serverID.toInt()});
   }
 
   Future<dynamic> getRule(BigInt serverID, String ruleID) async {
@@ -124,7 +126,7 @@ class RuleQueries {
     }
     filter .ruleID = <str>$ruleID and .server.serverID = <int64>$serverID""";
 
-    return await _db.client.query(queryString, {"ruleID": ruleID, "serverID": serverID.toInt()});
+    return await _db.client.querySingle(queryString, {"ruleID": ruleID, "serverID": serverID.toInt()});
   }
 
   Future<List<dynamic>> getAllServerRules(BigInt serverID) async {
