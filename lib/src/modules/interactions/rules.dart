@@ -20,7 +20,7 @@ void rulesCmd(Interaction interaction) async {
   } else if (optionName == "add") {
     addRule(interaction, subcommand.options!);
   } else if (optionName == "delete") {
-    deleteRule(interaction, subcommand.options![0].value);
+    deleteRule(interaction, subcommand.options![0].value.toString());
   }
 }
 
@@ -95,19 +95,100 @@ void viewRules(Interaction interaction) async {
 }
 
 void addRule(Interaction interaction, List<ApplicationCommandOption> options) async {
+  /// TODO: Add premium checks to determine if more can be added or if at limit.
+  /// Also consider the checking for if a rule ID exists or not already.
   HttpRequest request = interaction.metadata["request"];
 
-  InteractionResponse response = InteractionResponse(
-      InteractionResponseType.message_response, {"content": "Still a WIP!", "flags": 1 << 6});
+  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
+  await request.response.send(jsonEncode(response));
 
-  request.response.send(jsonEncode(response));
+  EmbedBuilder embedBuilder = EmbedBuilder();
+  embedBuilder.timestamp = DateTime.now();
+
+  RuleBuilder ruleBuilder = RuleBuilder();
+  ruleBuilder.generateRuleID();
+
+  StringBuffer descBuffer = StringBuffer();
+
+  /// No alternative since user object will be null since these commands don't work in DMs.
+  /// Goes from member object > nested user object > id of said user object.
+  if (interaction.member != null) {
+    if (interaction.member!["user"] != null) {
+      String userID = interaction.member!["user"]["id"];
+      ruleBuilder.setAuthorID(BigInt.parse(userID));
+    }
+  }
+
+  descBuffer.writeln("**Rule Configuration**");
+
+  options.forEach((element) {
+    if (element.name == "pattern") {
+      ruleBuilder.setPattern(element.value);
+      descBuffer.writeln("　`Pattern:` ${element.value}");
+    } else if (element.name == "action") {
+      Action action = Action.fromString(element.value);
+      ruleBuilder.setAction(action);
+
+      descBuffer.write("　`Action(s):` ");
+
+      var actionStringList = ActionEnumString.getStringsFromAction(action);
+      if (actionStringList.length > 1) {
+        /// Can assume this since at most only 2 will ever exist at most. Kick + log, or ban + log.
+        descBuffer.writeln("${actionStringList.first} + ${actionStringList.last}");
+      } else {
+        descBuffer.writeln(actionStringList.first);
+      }
+    } else if (element.name == "regex") {
+      ruleBuilder.setRegexFlag(element.value);
+      descBuffer.writeln("　`Regex Matching:` ${element.value}");
+    } else if (element.name == "exclude") {
+      // Only 1 role can be passed for now, in the future if this is a list it should iterate over the list.
+      ruleBuilder.addExcludedRole(BigInt.parse(element.value.toString()));
+      descBuffer.write("　`Excluded role id:` ${element.value}");
+    }
+  });
+
+  embedBuilder.title = "Rule ${ruleBuilder.ruleID} Created!";
+  embedBuilder.description = descBuffer.toString();
+
+  RuleQueries db = RuleQueries();
+  await db.createRule(interaction.guild_id!, ruleBuilder.build());
+
+  DiscordHTTP discordHTTP = DiscordHTTP();
+  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+    "embeds": [
+      {...embedBuilder.build()}
+    ]
+  });
 }
 
 void deleteRule(Interaction interaction, String ruleID) async {
   HttpRequest request = interaction.metadata["request"];
 
-  InteractionResponse response = InteractionResponse(
-      InteractionResponseType.message_response, {"content": "Still a WIP!", "flags": 1 << 6});
+  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
+  await request.response.send(jsonEncode(response));
 
-  request.response.send(jsonEncode(response));
+  RuleQueries db = RuleQueries();
+
+  EmbedBuilder embedBuilder = EmbedBuilder();
+  embedBuilder.timestamp = DateTime.now();
+
+  var result = await db.deleteRule(interaction.guild_id!, ruleID);
+
+  if (result == null) {
+    embedBuilder.color = DiscordColor.fromHexString('ff5151');
+    embedBuilder.title = "Error!";
+    embedBuilder.description = "No rule with the ID of `$ruleID` could be found!";
+  } else {
+    embedBuilder.color = DiscordColor.fromHexString('69c273');
+    embedBuilder.title = "Success!";
+    embedBuilder.description = "The rule `$ruleID` was deleted!";
+  }
+
+  DiscordHTTP discordHTTP = DiscordHTTP();
+  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+    "embeds": [
+      {...embedBuilder.build()}
+    ]
+  });
 }
