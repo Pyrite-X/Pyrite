@@ -25,7 +25,7 @@ class RuleBuilder {
   late BigInt authorID;
   List<BigInt> excludedRoles = [];
   late String pattern;
-  late bool regex;
+  bool regex = false;
 
   RuleBuilder();
 
