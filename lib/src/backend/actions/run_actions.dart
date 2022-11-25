@@ -25,9 +25,9 @@ void runActions(TriggerContext context, CheckResult result) async {
 }
 
 void triggerActions(Action action, TriggerContext context, CheckResult result) {
-  if (action.containsValue(ActionEnum.kick.value)) kickUser(context: context);
+  if (action.containsValue(ActionEnum.kick.value)) kickUser(context: context, result: result);
 
-  if (action.containsValue(ActionEnum.ban.value)) banUser(context: context);
+  if (action.containsValue(ActionEnum.ban.value)) banUser(context: context, result: result);
 
   if (action.containsValue(ActionEnum.log.value)) sendLogMessage(context: context, result: result);
 }
