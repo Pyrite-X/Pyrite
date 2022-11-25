@@ -27,7 +27,7 @@ class Pyrite {
   Pyrite({required this.token, required this.publicKey, required this.appID});
 
   void startGateway() async {
-    gateway = NyxxFactory.createNyxxWebsocket(token, GatewayIntents.guildMembers)
+    gateway = NyxxFactory.createNyxxWebsocket(token, GatewayIntents.guildMembers | GatewayIntents.guilds)
       ..registerPlugin(Logging())
       ..registerPlugin(CliIntegration());
 
