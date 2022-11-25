@@ -45,22 +45,31 @@ class DiscordHTTP {
     };
   }
 
-  Future<http.Response> banUser({required BigInt guildID, required BigInt userID, int? deleteSeconds}) async {
+  Future<http.Response> banUser(
+      {required BigInt guildID, required BigInt userID, int? deleteSeconds, String? logReason}) async {
     UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/guilds/$guildID/bans/$userID");
 
     var uri = builder.build();
-    return await http.put(uri, headers: _buildHeaders(), body: {
+    var headers = _buildHeaders();
+    if (logReason != null) {
+      headers["X-Audit-Log-Reason"] = logReason;
+    }
+    return await http.put(uri, headers: headers, body: {
       "delete_message_seconds": deleteSeconds ??= 600 //1 hour by default
     });
   }
 
-  Future<http.Response> kickUser({required BigInt guildID, required BigInt userID}) async {
+  Future<http.Response> kickUser({required BigInt guildID, required BigInt userID, String? logReason}) async {
     UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/guilds/$guildID/members/$userID");
 
     var uri = builder.build();
-    return await http.delete(uri, headers: _buildHeaders());
+    var headers = _buildHeaders();
+    if (logReason != null) {
+      headers["X-Audit-Log-Reason"] = logReason;
+    }
+    return await http.delete(uri, headers: headers);
   }
 
   Future<http.Response> sendLogMessage({required BigInt channelID, required JsonData payload}) async {
