@@ -38,7 +38,7 @@ void checkUser(TriggerContext context) async {
 
     // if premium and checkPhishResult has no match, check rules... for now just check rules if no match
     if (!checkPhishResult.match) {
-      checkRulesResult = rules.checkRulesList(context);
+      checkRulesResult = await rules.checkRulesList(context);
     }
   }
 
@@ -50,7 +50,7 @@ void checkUser(TriggerContext context) async {
     }
 
     if (scanningMode.containsType(ScanModeOptions.rules)) {
-      checkRulesResult = rules.checkRulesList(context);
+      checkRulesResult = await rules.checkRulesList(context);
     }
   }
 
