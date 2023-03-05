@@ -18,5 +18,8 @@ void main() async {
   ]);
 
   // print(jsonEncode(lirx.commandList));
-  print(await lirx.bulkPublishCommands());
+  var result = await lirx.bulkPublishCommands();
+  result = result as List<dynamic>;
+  print("${result.length} commands were published.");
+  result.forEach((element) => print(element));
 }

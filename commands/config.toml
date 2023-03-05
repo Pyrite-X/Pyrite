@@ -49,12 +49,6 @@ default_member_permissions = 32 # Manage server permissions
         required = false
         autocomplete = false
 
-    [[options.options]]
-        type = 8
-        name = "exclude"
-        description = "Select a role that will be excluded from this rule."
-        required = false
-
 [[options]]
     name = "join_event"
     description = "Configure what happens when a user joins the server."
@@ -66,15 +60,13 @@ default_member_permissions = 32 # Manage server permissions
         type = 5
         required = false
 
+[[options]]
+    name = "excluded_roles"
+    description = "Configure which roles will be exempt from being checked by Pyrite."
+    type = 1
+
     [[options.options]]
-        name = "action"
-        description = "Set what happens when a match is found. Overrides all other match actions."
+        name = "roles"
+        description = "Choose which roles you want to be ignored. Only roles will be recognized."
         type = 3
-        required = false
-        choices = [
-            {name = "Log the match to the set log channel.", value = "log"},
-            {name = "Kick the matching user.", value = "kick"},
-            {name = "Ban the matching user.", value = "ban"},
-            {name = "Log the match + Kick the user.", value = "log,kick"},
-            {name = "Log the match + Ban the user.", value = "log,ban"}
-        ]
+        required = true

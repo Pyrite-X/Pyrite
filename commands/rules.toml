@@ -41,12 +41,6 @@ default_member_permissions = 32 # Manage server permissions
         description = "If the given pattern should be treated as RegEx or not. Default is false."
         required = false
 
-    [[options.options]]
-        type = 8
-        name = "exclude"
-        description = "Select a role that will be excluded from this rule."
-        required = false
-
 [[options]]
     name = "delete"
     description = "Remove a rule from Pyrite."
