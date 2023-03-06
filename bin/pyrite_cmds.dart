@@ -11,10 +11,8 @@ void main() async {
     'commands/about.toml',
     'commands/config.toml',
     'commands/help.toml',
-    'commands/redeem.toml',
     'commands/rules.toml',
-    'commands/scan.toml',
-    'commands/transfer.toml'
+    'commands/scan.toml'
   ]);
 
   // print(jsonEncode(lirx.commandList));
