@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:alfred/alfred.dart';
+import 'package:ansicolor/ansicolor.dart';
+import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:onyx/onyx.dart';
 
@@ -27,9 +29,61 @@ class Pyrite {
 
   Pyrite({required this.token, required this.publicKey, required this.appID});
 
+  static final ELEVATED_INFO = Level("INFO", 825);
+
+  static String? _styleLogOutput(LogRecord record) {
+    /// The mongo package prints to these on the info level and it leaks some private data
+    /// (plus idc about those prints on the log level, but it doesn't have a way to override just that log level)
+    if (record.loggerName == "dns_llokup" || record.loggerName == "HttpUtils") {
+      return null;
+    }
+    StringBuffer output = StringBuffer();
+
+    output.write("[${record.time.toIso8601String()}] ");
+
+    AnsiPen pen = AnsiPen();
+    if (record.level.value > ELEVATED_INFO.value && record.level.value <= Level.WARNING.value) {
+      pen.yellow(bold: true);
+    } else if (record.level.value > Level.WARNING.value) {
+      pen.red(bold: true);
+    } else {
+      pen.white(bold: true);
+    }
+    output.write(pen("[${record.level.name}]"));
+
+    output.write(" [${record.loggerName}]: ${record.message}");
+    return output.toString();
+  }
+
+  static void _interceptAlfredLogs(dynamic Function() messageFn, LogType type) {
+    /// This is dumb honestly, but Alfred uses its own function to output to that you have
+    /// to override, and they also don't use the logging package.
+    Level level;
+    if (type == LogType.debug) {
+      level = Level.FINE;
+    } else if (type == LogType.warn) {
+      level = Level.WARNING;
+    } else if (type == LogType.error) {
+      level = Level.SEVERE;
+    } else {
+      level = ELEVATED_INFO;
+    }
+
+    LogRecord record = LogRecord(level, messageFn().toString(), "Alfred");
+    handleLogOutput(record);
+  }
+
+  static void handleLogOutput(LogRecord record) {
+    if (record.level.value < Logger.root.level.value) return;
+    String? log = _styleLogOutput(record);
+    if (log == null) {
+      return;
+    }
+    print(_styleLogOutput(record));
+  }
+
   void startGateway() async {
     gateway = NyxxFactory.createNyxxWebsocket(token, GatewayIntents.guildMembers | GatewayIntents.guilds)
-      ..registerPlugin(Logging())
       ..registerPlugin(CliIntegration());
 
     gateway.eventsWs.onGuildMemberAdd.listen((event) => on_join_event.on_join_event(event));
@@ -58,7 +112,10 @@ class Pyrite {
     onyx.registerAppCommandHandler("scan", scan.scanCmd);
     onyx.registerAppCommandHandler("transfer", transfer.transferCmd);
 
-    WebServer server = WebServer(Alfred(), publicKey);
+    Alfred alfred = Alfred();
+    alfred.logWriter = _interceptAlfredLogs;
+
+    WebServer server = WebServer(alfred, publicKey);
     server.startServer(dispatchFunc: ((p0) {
       var currentMetadata = p0.metadata;
       Map<String, dynamic> newMetadata = {"request": currentMetadata, "pyrite": this};
