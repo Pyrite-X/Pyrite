@@ -12,6 +12,7 @@ class Server {
   bool? checkPhishingList;
   Action? phishingMatchAction;
   List<Rule> rules = [];
+  List<BigInt> excludedRoles = [];
 
   Server(
       {required this.serverID,
@@ -21,8 +22,10 @@ class Server {
       this.fuzzyMatchPercent,
       this.checkPhishingList,
       this.phishingMatchAction,
-      List<Rule>? rules}) {
+      List<Rule>? rules,
+      List<BigInt>? excludedRoles}) {
     if (rules != null) this.rules = rules;
+    if (excludedRoles != null) this.excludedRoles = excludedRoles;
   }
 
   /// Specifically from a database representation of the server data.
@@ -43,6 +46,11 @@ class Server {
         this.phishingMatchAction = Action.fromInt(phishEntry["action"]);
       }
     }
+
+    if (data["excludedRoles"] != null) {
+      List<dynamic> roleList = data["excludedRoles"];
+      roleList.forEach((element) => excludedRoles.add(BigInt.from(element)));
+    }
   }
 }
 
@@ -55,6 +63,7 @@ class ServerBuilder {
   bool? checkPhishingList;
   Action? phishingMatchAction;
   List<Rule> rules = [];
+  List<BigInt> excludedRoles = [];
 
   ServerBuilder();
 
@@ -74,6 +83,8 @@ class ServerBuilder {
 
   void addRule(Rule rule) => rules.add(rule);
 
+  void addExcludedRoleId(BigInt roleID) => excludedRoles.add(roleID);
+
   Server build() => Server(
       serverID: serverID,
       ownerID: ownerID,
@@ -82,5 +93,6 @@ class ServerBuilder {
       fuzzyMatchPercent: fuzzyMatchPercent,
       checkPhishingList: checkPhishingList,
       phishingMatchAction: phishingMatchAction,
-      rules: rules);
+      rules: rules,
+      excludedRoles: excludedRoles);
 }
