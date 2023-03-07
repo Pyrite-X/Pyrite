@@ -8,6 +8,7 @@ import 'src/backend/webserver.dart';
 import 'src/backend/checks/check_phish_list.dart';
 
 import 'src/modules/gateway/on_join_event.dart' as on_join_event;
+import 'src/modules/gateway/on_guild_create.dart' as on_guild_create;
 
 import 'src/modules/interactions/about.dart' as about;
 import 'src/modules/interactions/config.dart' as config;
@@ -36,6 +37,7 @@ class Pyrite {
       print((await event.member.getOrDownload()).nickname);
       print(event.user.username);
     });
+    gateway.eventsWs.onGuildCreate.listen((event) => on_guild_create.on_guild_create(event));
 
     gateway.eventsWs.onReady.listen((event) {
       gateway.setPresence(PresenceBuilder.of(
