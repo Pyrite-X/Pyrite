@@ -8,6 +8,8 @@ import '../../structures/server.dart';
 import '../../structures/user.dart';
 
 void on_join_event(IGuildMemberAddEvent event) async {
+  if (event.user.bot) return;
+
   //TODO: Check if server has scanning on join enabled first, if not just return to save build time.
   TriggerContextBuilder contextBuilder = TriggerContextBuilder()
     ..setEventSource(EventSource(sourceType: EventSourceType.join));
