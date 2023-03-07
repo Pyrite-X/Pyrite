@@ -107,16 +107,18 @@ Future<WriteResult> updateGuildConfig(
   return await collection.updateOne(queryMap, {"\$set": updateMap});
 }
 
-Future<List<JsonData>> fetchGuildRules({required BigInt serverID}) async {
+Future<List<dynamic>> fetchGuildRules({required BigInt serverID}) async {
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
-  List<JsonData> data = await (collection
-      .modernFind(filter: {"_id": serverID.toString(), "rules.type": 0}, projection: {"rules": 1})).toList();
+  var query = await collection.modernFindOne(
+      filter: {"_id": serverID.toString(), "rules.type": 0}, projection: {"rules": 1, "_id": 0});
 
-  if (data.isEmpty) {
+  if (query == null || query.isEmpty) {
     return [];
   } else {
-    return data;
+    List<dynamic> payload = query["rules"];
+    payload.removeWhere((e) => e["type"] == 1);
+    return payload;
   }
 }
 
@@ -124,7 +126,12 @@ Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) asy
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
   WriteResult result = await collection.updateOne({
-    "_id": serverID.toString()
+    "_id": serverID.toString(),
+    "rules": {
+      "\$not": {
+        "\$elemMatch": {"ruleID": rule.ruleID}
+      }
+    }
   }, {
     "\$push": {
       'rules': {
@@ -138,6 +145,7 @@ Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) asy
     }
   });
 
+  //TODO: Implement logic to alert when nothing updated because of filter preventing dup keys.
   return result.isSuccess;
 }
 
