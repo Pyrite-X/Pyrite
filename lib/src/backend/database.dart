@@ -43,21 +43,12 @@ Future<WriteResult> insertNewGuild({required BigInt serverID}) async {
       .updateOne({"_id": serverID.toString()}, {"\$setOnInsert": _defaultData}, upsert: true);
 }
 
-Future<JsonData> fetchGuildData(
-    {required BigInt serverID, List<String>? fields, bool generateOnNull = false}) async {
+Future<JsonData> fetchGuildData({required BigInt serverID, List<String>? fields}) async {
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
   JsonData? data = await collection.findOne({"_id": serverID.toString()});
 
   if (data == null) {
-    if (generateOnNull) {
-      var newData = await insertNewGuild(serverID: serverID);
-      if (newData.document != null) {
-        return newData.document!;
-      } else {
-        return {};
-      }
-    }
     return {};
   }
 
@@ -107,17 +98,26 @@ Future<WriteResult> updateGuildConfig(
   return await collection.updateOne(queryMap, {"\$set": updateMap});
 }
 
-Future<List<dynamic>> fetchGuildRules({required BigInt serverID}) async {
+/// Query for the rules in a guild. Default [ruleType] is 0, which is custom rules.
+/// [ruleType] of 1 returns the "phishing list" rule entry.
+Future<List<dynamic>> fetchGuildRules({required BigInt serverID, int ruleType = 0}) async {
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
+
+  /// Since I'll forget, projection chooses what is returned in the result. 1 for true, 0 for false.
+  /// filter is filter, basically is used to figure out what document to select.
   var query = await collection.modernFindOne(
-      filter: {"_id": serverID.toString(), "rules.type": 0}, projection: {"rules": 1, "_id": 0});
+      filter: {"_id": serverID.toString(), "rules.type": ruleType}, projection: {"rules": 1, "_id": 0});
+
+  // Rules of type 0 are custom rules. Filter out phishing rule entry.
+  // Do the inverse if querying for phishing rule entry.
+  int filterRule = (ruleType == 0) ? 1 : 0;
 
   if (query == null || query.isEmpty) {
     return [];
   } else {
     List<dynamic> payload = query["rules"];
-    payload.removeWhere((e) => e["type"] == 1);
+    payload.removeWhere((e) => e["type"] == filterRule);
     return payload;
   }
 }
