@@ -140,10 +140,6 @@ void addRule(Interaction interaction, List<ApplicationCommandOption> options) as
     } else if (element.name == "regex") {
       ruleBuilder.setRegexFlag(element.value);
       descBuffer.writeln("　`Regex Matching:` ${element.value}");
-    } else if (element.name == "exclude") {
-      // Only 1 role can be passed for now, in the future if this is a list it should iterate over the list.
-      ruleBuilder.addExcludedRole(BigInt.parse(element.value.toString()));
-      descBuffer.write("　`Excluded role id:` ${element.value}");
     }
   });
 
