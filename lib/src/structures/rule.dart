@@ -1,13 +1,15 @@
 import 'dart:math';
 
+import 'package:onyx/onyx.dart';
+
 import './action.dart';
 
 class Rule {
-  String ruleID;
-  BigInt authorID;
-  bool regex;
-  String pattern;
-  Action action;
+  late String ruleID;
+  late BigInt authorID;
+  late String pattern;
+  late Action action;
+  late bool regex;
 
   Rule(
       {required this.ruleID,
@@ -15,6 +17,14 @@ class Rule {
       required this.authorID,
       required this.pattern,
       this.regex = false});
+
+  Rule.fromJson(JsonData data) {
+    ruleID = data["ruleID"];
+    authorID = BigInt.from(data["authorID"]);
+    pattern = data["pattern"];
+    action = Action.fromInt(int.parse(data["action"]));
+    regex = data["isRegex"];
+  }
 }
 
 class RuleBuilder {
