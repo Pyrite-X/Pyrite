@@ -2,6 +2,8 @@ import '../../structures/trigger/trigger_context.dart';
 import '../../structures/trigger/trigger_source.dart';
 
 import '../../structures/scan_types.dart';
+import '../../structures/server.dart';
+import '../../structures/user.dart';
 
 import '../actions/run_actions.dart';
 
@@ -28,6 +30,9 @@ void checkUser(TriggerContext context) async {
   ///   - Perform actions as they match (kick, ban, log, other combination)
   ///
   ///   - Get actions through containsValue on Action w/ ActionEnum as parameter.
+
+  bool excludeUser = checkUserRoles(context.server, context.user);
+  if (excludeUser) return;
 
   CheckPhishResult? checkPhishResult;
   CheckRulesResult? checkRulesResult;
@@ -59,4 +64,16 @@ void checkUser(TriggerContext context) async {
   } else if (checkRulesResult != null && checkRulesResult.match) {
     runActions(context, checkRulesResult);
   }
+}
+
+/// True = user should not be checked. False = check user.
+bool checkUserRoles(Server server, User user) {
+  if (server.excludedRoles.isEmpty || user.roles.isEmpty) return false;
+
+  for (var element in server.excludedRoles) {
+    if (user.roles.contains(element)) return true;
+  }
+
+  // default return false
+  return false;
 }
