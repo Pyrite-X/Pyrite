@@ -22,3 +22,4 @@ doc/api/
 
 *.env
 .vscode
+bin_proto/
