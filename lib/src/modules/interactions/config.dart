@@ -5,7 +5,7 @@ import 'package:nyxx/nyxx.dart' show EmbedBuilder, DiscordColor;
 import 'package:onyx/onyx.dart';
 
 import '../../structures/action.dart';
-import '../../backend/database.dart' show ServerQueries, PhishListQueries;
+import '../../backend/database.dart' as db;
 
 void configCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
@@ -40,8 +40,7 @@ void configLogChannel(BigInt guildID, BigInt channelID, HttpRequest request) asy
     ]
   });
 
-  ServerQueries db = ServerQueries();
-  db.updateConfiguration(serverID: guildID, logchannelID: channelID);
+  db.updateGuildConfig(serverID: guildID, logchannelID: channelID);
 
   request.response.send(jsonEncode(response));
 }
@@ -59,7 +58,6 @@ void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, 
   }
 
   StringBuffer choicesString = StringBuffer();
-  PhishListQueries db = PhishListQueries();
 
   /// Probably not the most efficient to run the update command for each option passed... Will leave for now
   /// but if there are efficiency issues might rework.
@@ -68,7 +66,7 @@ void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, 
       choicesString
           .writeln("• Phishing list matching has been **${option.value == true ? 'enabled' : 'disabled'}**.");
 
-      db.updateConfiguration(serverID: guildID, enabled: option.value as bool);
+      db.updateGuildConfig(serverID: guildID, phishingMatchEnabled: option.value as bool);
     } else if (option.name == "action") {
       Action actions = Action.fromString(option.value);
       List<String> actionStringList = ActionEnumString.getStringsFromAction(actions);
@@ -83,17 +81,16 @@ void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, 
 
       choicesString.writeln(sBuffer.toString());
 
-      db.updateConfiguration(serverID: guildID, action: actions);
+      db.updateGuildConfig(serverID: guildID, phishingMatchAction: actions);
     } else if (option.name == "fuzzy_match") {
+      //TODO: Modify location of config since this will be guild level.
       choicesString.writeln(
           "• A match will be found if a name is ~**${option.value}%** similar to a name in the list.");
 
-      db.updateConfiguration(serverID: guildID, fuzzyMatchPercent: option.value);
+      db.updateGuildConfig(serverID: guildID, fuzzyMatchPercent: option.value);
     } else if (option.name == "exclude") {
-      choicesString.writeln(
-          "• Users with the role <@&${option.value}> will be ignored if they match a name in the list.");
-
-      db.updateConfiguration(serverID: guildID, excludedRoles: [BigInt.parse(option.value)]);
+      //TODO: Modify location of config since exclusions will be top-lvl rather than rule & phish list specific.
+      choicesString.writeln("• This option is supposed to be removed, stop trying to exclude here.");
     }
   }
 
@@ -125,29 +122,16 @@ void configJoinEvent(BigInt guildID, List<ApplicationCommandOption> options, Htt
   }
 
   StringBuffer choicesString = StringBuffer();
-  ServerQueries db = ServerQueries();
 
   for (ApplicationCommandOption option in options) {
     if (option.name == "enable") {
       choicesString
           .writeln("• Join event scanning has been **${option.value == true ? 'enabled' : 'disabled'}**.");
 
-      db.updateConfiguration(serverID: guildID, joinEventHandling: option.value);
+      db.updateGuildConfig(serverID: guildID, onJoinEvent: option.value);
     } else if (option.name == "action") {
-      Action actions = Action.fromString(option.value);
-      List<String> actionStringList = ActionEnumString.getStringsFromAction(actions);
-
-      StringBuffer sBuffer = StringBuffer();
-
-      sBuffer.write(
-          "• The ${actionStringList.length != 1 ? 'actions' : 'action'} taken on a match has been set to:");
-      actionStringList.forEach((element) {
-        sBuffer.write("\n　- $element");
-      });
-
-      choicesString.writeln(sBuffer.toString());
-
-      db.updateConfiguration(serverID: guildID, joinAction: actions);
+      //TODO: Actions taken are on the lower level of rules and/or phishing list match.
+      choicesString.writeln("• Stop trying to set the action on the join event. It has been removed.");
     }
   }
 

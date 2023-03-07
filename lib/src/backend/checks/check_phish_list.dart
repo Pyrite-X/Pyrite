@@ -23,7 +23,8 @@ void loadPhishingList() async {
 
 CheckPhishResult checkPhishingList(TriggerContext context) {
   String? matchString;
-  //TODO: Implement fuzzy matching (highest premium tier).
+  // TODO: Implement fuzzy matching (highest premium tier).
+  // TODO: include logic to just return failed result if disabled
   for (String name in phishingList) {
     if (name.toLowerCase() == context.user.username.toLowerCase()) {
       matchString = name;

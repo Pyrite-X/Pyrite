@@ -7,7 +7,7 @@ import 'package:onyx/onyx.dart';
 import '../../discord_http.dart';
 import '../../structures/action.dart';
 import '../../structures/rule.dart';
-import '../../backend/database.dart' show RuleQueries;
+import '../../backend/database.dart' as db;
 
 void rulesCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
@@ -31,8 +31,7 @@ void viewRules(Interaction interaction) async {
       InteractionResponse(InteractionResponseType.defer_message_response, {"flags": 1 << 6});
   await request.response.send(jsonEncode(response));
 
-  RuleQueries db = RuleQueries();
-  List<dynamic> result = await db.getAllServerRules(interaction.guild_id!);
+  List<dynamic> result = await db.fetchGuildRules(serverID: interaction.guild_id!);
 
   ///TODO: Add pagination capabilities.
   EmbedBuilder embedBuilder = EmbedBuilder();
@@ -151,8 +150,7 @@ void addRule(Interaction interaction, List<ApplicationCommandOption> options) as
   embedBuilder.title = "Rule ${ruleBuilder.ruleID} Created!";
   embedBuilder.description = descBuffer.toString();
 
-  RuleQueries db = RuleQueries();
-  await db.createRule(interaction.guild_id!, ruleBuilder.build());
+  await db.insertGuildRule(serverID: interaction.guild_id!, rule: ruleBuilder.build());
 
   DiscordHTTP discordHTTP = DiscordHTTP();
   await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
@@ -168,14 +166,12 @@ void deleteRule(Interaction interaction, String ruleID) async {
   InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
   await request.response.send(jsonEncode(response));
 
-  RuleQueries db = RuleQueries();
-
   EmbedBuilder embedBuilder = EmbedBuilder();
   embedBuilder.timestamp = DateTime.now();
 
-  var result = await db.deleteRule(interaction.guild_id!, ruleID);
+  var result = await db.removeGuildRule(serverID: interaction.guild_id!, ruleID: ruleID);
 
-  if (result == null) {
+  if (!result) {
     embedBuilder.color = DiscordColor.fromHexString('ff5151');
     embedBuilder.title = "Error!";
     embedBuilder.description = "No rule with the ID of `$ruleID` could be found!";
