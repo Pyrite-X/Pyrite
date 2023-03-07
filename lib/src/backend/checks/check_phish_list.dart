@@ -26,18 +26,15 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
   // TODO: Implement fuzzy matching (highest premium tier).
   // TODO: include logic to just return failed result if disabled
   for (String name in phishingList) {
-    if (name.toLowerCase() == context.user.username.toLowerCase()) {
-      matchString = name;
-      break;
-    } else if (context.user.nickname != null && name.toLowerCase() == context.user.nickname!.toLowerCase()) {
+    bool usernameCheck = name.toLowerCase() == context.user.username.toLowerCase();
+    bool nicknameCheck = name.toLowerCase() == context.user.nickname?.toLowerCase();
+    if (usernameCheck || nicknameCheck) {
       matchString = name;
       break;
     }
   }
 
-  if (matchString == null) {
-    return CheckPhishResult(match: false);
-  } else {
-    return CheckPhishResult(match: true, matchingString: matchString);
-  }
+  return (matchString == null)
+      ? CheckPhishResult(match: false)
+      : CheckPhishResult(match: true, matchingString: matchString);
 }
