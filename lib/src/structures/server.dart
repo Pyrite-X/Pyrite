@@ -1,8 +1,10 @@
+import 'package:onyx/onyx.dart' show JsonData;
+
 import 'action.dart';
 import 'rule.dart';
 
 class Server {
-  BigInt serverID;
+  late BigInt serverID;
   BigInt ownerID;
   BigInt? logchannelID;
   bool? onJoinEnabled;
@@ -21,6 +23,26 @@ class Server {
       this.phishingMatchAction,
       List<Rule>? rules}) {
     if (rules != null) this.rules = rules;
+  }
+
+  /// Specifically from a database representation of the server data.
+  Server.fromJson({required JsonData data, required this.ownerID}) {
+    this.serverID = data["_id"];
+    this.logchannelID = data["logchannelID"];
+    this.onJoinEnabled = data["onJoinEnabled"];
+    this.fuzzyMatchPercent = data["fuzzyMatchPercent"];
+
+    if (data["rules"] != null) {
+      List<dynamic> ruleList = data["rules"];
+      var phishEntry = ruleList.firstWhere(
+        (element) => element["type"] == 1,
+        orElse: () => {},
+      );
+      if ((phishEntry as Map).isNotEmpty) {
+        this.checkPhishingList = phishEntry["enabled"];
+        this.phishingMatchAction = Action.fromInt(phishEntry["action"]);
+      }
+    }
   }
 }
 
