@@ -39,7 +39,8 @@ final _defaultData = {
 Future<WriteResult> insertNewGuild({required BigInt serverID}) async {
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
-  return await collection.insertOne({"_id": serverID.toString(), ..._defaultData});
+  return await collection
+      .updateOne({"_id": serverID.toString()}, {"\$setOnInsert": _defaultData}, upsert: true);
 }
 
 Future<JsonData> fetchGuildData(
