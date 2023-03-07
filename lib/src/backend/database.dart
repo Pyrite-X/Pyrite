@@ -36,11 +36,14 @@ final _defaultData = {
   ]
 };
 
-Future<WriteResult> insertNewGuild({required BigInt serverID}) async {
+Future<bool> insertNewGuild({required BigInt serverID}) async {
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
-  return await collection
-      .updateOne({"_id": serverID.toString()}, {"\$setOnInsert": _defaultData}, upsert: true);
+  var result =
+      await collection.updateOne({"_id": serverID.toString()}, {"\$setOnInsert": _defaultData}, upsert: true);
+
+  /// .nInserted not used since this is an update op with an upsert, not an insert
+  return result.nUpserted == 1 && result.isSuccess;
 }
 
 Future<JsonData> fetchGuildData({required BigInt serverID, List<String>? fields}) async {
@@ -59,7 +62,7 @@ Future<JsonData> fetchGuildData({required BigInt serverID, List<String>? fields}
   return data;
 }
 
-Future<WriteResult> updateGuildConfig(
+Future<bool> updateGuildConfig(
     {required BigInt serverID,
     BigInt? logchannelID,
     bool? onJoinEvent,
@@ -95,7 +98,8 @@ Future<WriteResult> updateGuildConfig(
     updateMap["rules.\$.enabled"] = phishingMatchEnabled;
   }
 
-  return await collection.updateOne(queryMap, {"\$set": updateMap});
+  var result = await collection.updateOne(queryMap, {"\$set": updateMap});
+  return result.nModified == 1 && result.isSuccess;
 }
 
 /// Query for the rules in a guild. Default [ruleType] is 0, which is custom rules.
@@ -129,7 +133,12 @@ Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) asy
     "_id": serverID.toString(),
     "rules": {
       "\$not": {
-        "\$elemMatch": {"ruleID": rule.ruleID}
+        "\$elemMatch": {
+          "\$or": [
+            {"ruleID": rule.ruleID},
+            {"pattern": rule.pattern}
+          ]
+        }
       }
     }
   }, {
@@ -145,8 +154,7 @@ Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) asy
     }
   });
 
-  //TODO: Implement logic to alert when nothing updated because of filter preventing dup keys.
-  return result.isSuccess;
+  return result.nModified == 1 && result.isSuccess;
 }
 
 Future<bool> removeGuildRule({required BigInt serverID, required String ruleID}) async {
@@ -160,5 +168,5 @@ Future<bool> removeGuildRule({required BigInt serverID, required String ruleID})
     }
   });
 
-  return result.isSuccess;
+  return result.nModified == 1 && result.isSuccess;
 }
