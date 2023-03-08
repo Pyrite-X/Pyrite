@@ -66,7 +66,7 @@ Future<void> cacheRules(BigInt serverID, List<Rule> ruleList) async {
 
   ruleList.forEach((element) {
     JsonData ruleJson = element.toJson();
-    String ruleID = ruleJson.remove("ruleID");
+    String ruleID = ruleJson["ruleID"];
     client.tier1.hset("$RULE_KEY\_$serverID", ruleID, jsonEncode(ruleJson));
   });
 
@@ -74,7 +74,7 @@ Future<void> cacheRules(BigInt serverID, List<Rule> ruleList) async {
   client.pexpire("$RULE_KEY\_$serverID", Duration(days: 7));
 }
 
-Future<JsonData> getRules(BigInt serverID, List<String>? ruleIDs) async {
+Future<JsonData> getRules(BigInt serverID, {List<String>? ruleIDs}) async {
   var client = RespCommandsTier2(_appCache.cacheConnection);
   JsonData result = await client.hgetall("$RULE_KEY\_$serverID");
 
