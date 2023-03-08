@@ -26,26 +26,46 @@ class AppCache {
   }
 }
 
-/// Contains all methods relevant to caching custom rules created by a server.
-class RuleCache {
-  static const BASE_STRING = "server_rules";
-  AppCache appCache = AppCache();
+const CONFIG_KEY = "server_config";
+const RULE_KEY = "server_rules";
+const SCAN_KEY = "server_scans";
+final AppCache _appCache = AppCache();
+
+/// Returns the number of scans that can be performed in a week.
+Future<int?> getScanCount(BigInt guildID) async {
+  var client = RespCommandsTier2(_appCache.cacheConnection);
+  String? keyValue = await client.hget(SCAN_KEY, guildID.toString());
+
+  return (keyValue != null) ? int.tryParse(keyValue) : null;
 }
 
-/// Contains all methods relevant to tracking the scan state for a server.
-///
-/// This includes how many remaining scans the server has for a week (3 - free, 5 - essential tier, or 7 - enhanced tier).
-/// Entries expire on UTC Sunday at midnight. When an entry is missing, assume that the maximum is available for their tier.
-class ScanCache {
-  static const BASE_STRING = "server_scans";
-  AppCache appCache = AppCache();
+/// Sets the scan count for [guildID] to [scanCount]. Sets the hash key TTL if new hash is made.
+Future<void> initializeScanCount(BigInt guildID, int scanCount) async {
+  var client = RespCommandsTier2(_appCache.cacheConnection);
+  await client.hset(SCAN_KEY, guildID.toString(), scanCount);
+
+  int ttl = await client.ttl(SCAN_KEY);
+
+  /// New hash key created, need to set ttl.
+  if (ttl == -1) {
+    var currentTime = DateTime.now().toUtc();
+    int daysUntilSunday =
+        (currentTime.weekday == DateTime.sunday) ? 7 : DateTime.sunday - currentTime.weekday;
+
+    /// Add in the day offset so it's now UTC midnight on sunday
+    var sundayTime = currentTime.add(Duration(days: daysUntilSunday));
+
+    /// Make a new time at midnight UTC since we need the original time for calculating the offset in seconds.
+    var sundayDay = DateTime.utc(sundayTime.year, sundayTime.month, sundayTime.minute);
+    Duration timeUntilSunday = sundayDay.difference(currentTime);
+
+    await client.pexpire(SCAN_KEY, timeUntilSunday);
+  }
 }
 
-/// Contains all methods relevant towards caching server configuration data.
-///
-/// This includes essentially all information stored about the server in the database - so the join action,
-/// log channel, if the bot should act when people join, and so on.
-class ServerCache {
-  static const BASE_STRING = "server_config";
-  AppCache appCache = AppCache();
+/// Decreases the available scans given by 1. Returns the remaining count.
+Future<int> decreaseScanCount(BigInt guildID) async {
+  var client = RespCommandsTier2(_appCache.cacheConnection);
+  var response = await client.tier1.tier0.execute(["HINCRBY", SCAN_KEY, -1]);
+  return response.toInteger().payload;
 }
