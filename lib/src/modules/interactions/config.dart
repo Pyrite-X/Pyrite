@@ -61,12 +61,16 @@ void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, 
 
   /// Probably not the most efficient to run the update command for each option passed... Will leave for now
   /// but if there are efficiency issues might rework.
+
+  bool? phishingMatchEnabled;
+  Action? phishingMatchAction;
+  int? fuzzyMatchPercent;
   for (ApplicationCommandOption option in options) {
     if (option.name == "enable") {
       choicesString
           .writeln("• Phishing list matching has been **${option.value == true ? 'enabled' : 'disabled'}**.");
 
-      db.updateGuildConfig(serverID: guildID, phishingMatchEnabled: option.value as bool);
+      phishingMatchEnabled = option.value as bool;
     } else if (option.name == "action") {
       Action actions = Action.fromString(option.value);
       List<String> actionStringList = ActionEnumString.getStringsFromAction(actions);
@@ -81,18 +85,20 @@ void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, 
 
       choicesString.writeln(sBuffer.toString());
 
-      db.updateGuildConfig(serverID: guildID, phishingMatchAction: actions);
+      phishingMatchAction = actions;
     } else if (option.name == "fuzzy_match") {
-      //TODO: Modify location of config since this will be guild level.
       choicesString.writeln(
           "• A match will be found if a name is ~**${option.value}%** similar to a name in the list.");
 
-      db.updateGuildConfig(serverID: guildID, fuzzyMatchPercent: option.value);
-    } else if (option.name == "exclude") {
-      //TODO: Modify location of config since exclusions will be top-lvl rather than rule & phish list specific.
-      choicesString.writeln("• This option is supposed to be removed, stop trying to exclude here.");
+      fuzzyMatchPercent = option.value;
     }
   }
+
+  db.updateGuildConfig(
+      serverID: guildID,
+      phishingMatchEnabled: phishingMatchEnabled,
+      phishingMatchAction: phishingMatchAction,
+      fuzzyMatchPercent: fuzzyMatchPercent);
 
   var embedBuilder = EmbedBuilder();
   embedBuilder.title = "Success!";
