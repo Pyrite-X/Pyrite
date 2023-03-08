@@ -38,7 +38,7 @@ default_member_permissions = 32 # Manage server permissions
     [[options.options]]
         type = 5
         name = "regex"
-        description = "If the given pattern should be treated as RegEx or not. Default is false."
+        description = "If the given pattern should be treated as RegEx (ECMAScript RegExp) or not. Default is false."
         required = false
 
 [[options]]
