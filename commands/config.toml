@@ -58,7 +58,7 @@ default_member_permissions = 32 # Manage server permissions
         name = "enable"
         description = "Toggle if scanning occurs on user join. True to enable, false to disable."
         type = 5
-        required = false
+        required = true
 
 [[options]]
     name = "excluded_roles"

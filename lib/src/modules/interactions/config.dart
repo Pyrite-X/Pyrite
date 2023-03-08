@@ -23,7 +23,8 @@ void configCmd(Interaction interaction) async {
   } else if (optionName == "phish_list") {
     configPhishingList(guildID, subcommand.options!, request);
   } else if (optionName == "join_event") {
-    configJoinEvent(guildID, subcommand.options!, request);
+    var selection = subcommand.options![0];
+    configJoinEvent(guildID, selection.value, request);
   } else if (optionName == "excluded_roles") {
     var inputOption = subcommand.options![0];
     configExcludedRoles(guildID, inputOption.value, request);
@@ -118,31 +119,11 @@ void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, 
   await request.response.send(jsonEncode(response));
 }
 
-void configJoinEvent(BigInt guildID, List<ApplicationCommandOption> options, HttpRequest request) async {
-  if (options.isEmpty) {
-    InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
-      "content":
-          "The </config join_event:1025642564474388501> command requires at least one option to be configured!",
-      "flags": 1 << 6
-    });
-
-    await request.response.send(jsonEncode(response));
-    return;
-  }
-
+void configJoinEvent(BigInt guildID, bool selection, HttpRequest request) async {
   StringBuffer choicesString = StringBuffer();
 
-  for (ApplicationCommandOption option in options) {
-    if (option.name == "enable") {
-      choicesString
-          .writeln("• Join event scanning has been **${option.value == true ? 'enabled' : 'disabled'}**.");
-
-      db.updateGuildConfig(serverID: guildID, onJoinEvent: option.value);
-    } else if (option.name == "action") {
-      //TODO: Actions taken are on the lower level of rules and/or phishing list match.
-      choicesString.writeln("• Stop trying to set the action on the join event. It has been removed.");
-    }
-  }
+  choicesString.writeln("• Join event scanning has been **${selection ? 'enabled' : 'disabled'}**.");
+  db.updateGuildConfig(serverID: guildID, onJoinEvent: selection);
 
   var embedBuilder = EmbedBuilder();
   embedBuilder.title = "Success!";
