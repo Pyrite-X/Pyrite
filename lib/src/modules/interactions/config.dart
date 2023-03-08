@@ -96,9 +96,6 @@ void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, 
 
   StringBuffer choicesString = StringBuffer();
 
-  /// Probably not the most efficient to run the update command for each option passed... Will leave for now
-  /// but if there are efficiency issues might rework.
-
   bool? phishingMatchEnabled;
   Action? phishingMatchAction;
   int? fuzzyMatchPercent;
