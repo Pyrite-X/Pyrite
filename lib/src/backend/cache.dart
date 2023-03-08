@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:onyx/onyx.dart' show JsonData;
 import 'package:resp_client/resp_client.dart';
 import 'package:resp_client/resp_commands.dart';
@@ -42,11 +44,11 @@ Future<JsonData> getServerConfig(BigInt serverID) async {
 
 Future<void> setServerConfig(Server server) async {
   var client = RespCommandsTier2(_appCache.cacheConnection);
-  await client.multi();
+  client.multi();
 
   JsonData mappedData = server.toJson();
   mappedData.forEach((key, value) {
-    client.hset("$CONFIG_KEY\_${server.serverID}", key, value);
+    client.tier1.hset("$CONFIG_KEY\_${server.serverID}", key, value);
   });
 
   await client.exec();
@@ -60,12 +62,12 @@ Future<bool> removeServerConfig(BigInt serverID) async {
 
 Future<void> cacheRules(BigInt serverID, List<Rule> ruleList) async {
   var client = RespCommandsTier2(_appCache.cacheConnection);
-  await client.multi();
+  client.multi();
 
   ruleList.forEach((element) {
     JsonData ruleJson = element.toJson();
     String ruleID = ruleJson.remove("ruleID");
-    client.hset("$RULE_KEY\_$serverID", ruleID, ruleJson);
+    client.tier1.hset("$RULE_KEY\_$serverID", ruleID, jsonEncode(ruleJson));
   });
 
   await client.exec();
