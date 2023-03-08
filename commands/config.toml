@@ -14,7 +14,13 @@ default_member_permissions = 32 # Manage server permissions
         description = "Choose the channel that Pyrite will send logs to."
         type = 7
         channel_types = [0]
-        required = true
+        required = false
+
+    [[options.options]]
+        name = "clear"
+        description = "Removed the saved log channel. Set to True to clear."
+        type = 5
+        required = false
 
 [[options]]
     name = "phish_list"

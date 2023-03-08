@@ -109,6 +109,17 @@ Future<bool> updateGuildConfig(
   return result.nModified == 1 && result.isSuccess;
 }
 
+Future<bool> removeGuildField({required BigInt serverID, required String fieldName}) async {
+  var _db = await _dbClass;
+  DbCollection collection = _db.client.collection("guilds");
+  JsonData queryMap = {"_id": serverID.toString()};
+
+  var result = await collection.updateOne(queryMap, {
+    r"$unset": {fieldName: ""}
+  });
+  return result.nModified == 1 && result.isSuccess;
+}
+
 /// Query for the rules in a guild. Default [ruleType] is 0, which is custom rules.
 /// [ruleType] of 1 returns the "phishing list" rule entry.
 Future<List<dynamic>> fetchGuildRules({required BigInt serverID, int ruleType = 0}) async {

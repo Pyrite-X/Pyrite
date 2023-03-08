@@ -18,8 +18,7 @@ void configCmd(Interaction interaction) async {
   BigInt guildID = interaction.guild_id!;
 
   if (optionName == "logchannel") {
-    var channelParameter = subcommand.options![0];
-    configLogChannel(guildID, BigInt.parse(channelParameter.value), request);
+    configLogChannel(guildID, subcommand.options!, request);
   } else if (optionName == "phish_list") {
     configPhishingList(guildID, subcommand.options!, request);
   } else if (optionName == "join_event") {
@@ -31,10 +30,46 @@ void configCmd(Interaction interaction) async {
   }
 }
 
-void configLogChannel(BigInt guildID, BigInt channelID, HttpRequest request) async {
+void configLogChannel(BigInt guildID, List<ApplicationCommandOption> options, HttpRequest request) async {
+  if (options.isEmpty) {
+    InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
+      "content":
+          "The </config logchannel:1022784407704191007> command requires at least one option to be configured!",
+      "flags": 1 << 6
+    });
+
+    await request.response.send(jsonEncode(response));
+    return;
+  } else if (options.length > 1) {
+    InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
+      "content":
+          "You can't set a new log channel and clear the saved log channel at the same time!\nTry only setting the new log channel instead.",
+      "flags": 1 << 6
+    });
+
+    await request.response.send(jsonEncode(response));
+    return;
+  }
+
+  String description = "";
+  for (ApplicationCommandOption option in options) {
+    if (option.name == "channel") {
+      BigInt channelID = BigInt.parse(option.value);
+      description = "• Your log channel is now set to **<#${channelID}>**!";
+      db.updateGuildConfig(serverID: guildID, logchannelID: channelID);
+    } else if (option.name == "clear") {
+      if (option.value) {
+        description = "• Your set log channel has now been cleared!";
+        db.removeGuildField(serverID: guildID, fieldName: "logchannelID");
+      } else {
+        description = "• Your set log channel was not modified.";
+      }
+    }
+  }
+
   var embedBuilder = EmbedBuilder();
   embedBuilder.title = "Success!";
-  embedBuilder.description = "Your log channel is now set to **<#${channelID}>**!";
+  embedBuilder.description = description;
   embedBuilder.color = DiscordColor.fromHexString("69c273");
   embedBuilder.timestamp = DateTime.now();
 
@@ -43,8 +78,6 @@ void configLogChannel(BigInt guildID, BigInt channelID, HttpRequest request) asy
       {...embedBuilder.build()}
     ]
   });
-
-  db.updateGuildConfig(serverID: guildID, logchannelID: channelID);
 
   request.response.send(jsonEncode(response));
 }
