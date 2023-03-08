@@ -24,6 +24,9 @@ void configCmd(Interaction interaction) async {
     configPhishingList(guildID, subcommand.options!, request);
   } else if (optionName == "join_event") {
     configJoinEvent(guildID, subcommand.options!, request);
+  } else if (optionName == "excluded_roles") {
+    var inputOption = subcommand.options![0];
+    configExcludedRoles(guildID, inputOption.value, request);
   }
 }
 
@@ -151,6 +154,45 @@ void configJoinEvent(BigInt guildID, List<ApplicationCommandOption> options, Htt
     "embeds": [
       {...embedBuilder.build()}
     ]
+  });
+
+  await request.response.send(jsonEncode(response));
+}
+
+final RegExp ID_REGEX = RegExp(r'(\d{17,})');
+void configExcludedRoles(BigInt guildID, String input, HttpRequest request) async {
+  var matches = ID_REGEX.allMatches(input);
+  List<BigInt> resultList = [];
+
+  StringBuffer choicesString = StringBuffer();
+
+  if (input == "none") {
+    choicesString.writeln("Your excluded role list has been cleared.");
+    db.updateGuildConfig(serverID: guildID, excludedRoles: resultList);
+  } else if (matches.isNotEmpty) {
+    choicesString.writeln("Users with these roles will be ignored on scans & on join:");
+    matches.forEach((element) {
+      String match = element[0]!;
+      resultList.add(BigInt.parse(match));
+      choicesString.writeln("　- <@&$match>");
+    });
+    db.updateGuildConfig(serverID: guildID, excludedRoles: resultList);
+  } else {
+    choicesString.writeln(
+        "Your excluded role list has not been modified because no valid options were found (role ID(s) or `none`).");
+  }
+
+  var embedBuilder = EmbedBuilder();
+  embedBuilder.title = "Success!";
+  embedBuilder.addField(name: "Your Changes", content: choicesString.toString());
+  embedBuilder.color = DiscordColor.fromHexString("69c273");
+  embedBuilder.timestamp = DateTime.now();
+
+  InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
+    "embeds": [
+      {...embedBuilder.build()}
+    ],
+    "allowed_mentions": {"parse": []}
   });
 
   await request.response.send(jsonEncode(response));

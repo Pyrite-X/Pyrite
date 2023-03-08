@@ -67,6 +67,6 @@ default_member_permissions = 32 # Manage server permissions
 
     [[options.options]]
         name = "roles"
-        description = "Select all the roles that you want to be ignored."
+        description = "Select all the roles that you want to be ignored. To clear, input \"none\""
         type = 3
         required = true
