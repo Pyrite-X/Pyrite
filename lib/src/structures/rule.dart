@@ -27,6 +27,7 @@ class Rule {
   }
 
   Map<String, dynamic> toJson() => {
+        'type': 0,
         'ruleID': ruleID,
         'authorID': authorID.toString(),
         'pattern': pattern,
