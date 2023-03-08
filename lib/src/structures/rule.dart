@@ -26,6 +26,14 @@ class Rule {
     regex = data["isRegex"];
   }
 
+  Map<String, dynamic> toJson() => {
+        'ruleID': ruleID,
+        'authorID': authorID.toString(),
+        'pattern': pattern,
+        'action': action.bitwiseValue,
+        'isRegex': regex
+      };
+
   @override
   String toString() {
     StringBuffer buffer = StringBuffer();

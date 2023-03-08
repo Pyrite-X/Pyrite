@@ -50,6 +50,24 @@ class Server {
       roleList.forEach((element) => excludedRoles.add(BigInt.from(element)));
     }
   }
+
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> output = {
+      'serverID': serverID.toString(),
+      'logchannelID': logchannelID.toString(),
+      'onJoinEnabled': onJoinEnabled,
+      'fuzzyMatchPercent': fuzzyMatchPercent,
+      'rules': [
+        {'type': 1, 'enabled': checkPhishingList, 'action': phishingMatchAction}
+      ]
+    };
+
+    List<String> roleList = [];
+    excludedRoles.forEach((element) => roleList.add(element.toString()));
+    output['excludedRoles'] = roleList;
+
+    return output;
+  }
 }
 
 class ServerBuilder {
