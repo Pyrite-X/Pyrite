@@ -66,6 +66,6 @@ Future<void> initializeScanCount(BigInt guildID, int scanCount) async {
 /// Decreases the available scans given by 1. Returns the remaining count.
 Future<int> decreaseScanCount(BigInt guildID) async {
   var client = RespCommandsTier2(_appCache.cacheConnection);
-  var response = await client.tier1.tier0.execute(["HINCRBY", SCAN_KEY, -1]);
+  var response = await client.tier1.tier0.execute(["HINCRBY", SCAN_KEY, guildID.toString(), -1]);
   return response.toInteger().payload;
 }
