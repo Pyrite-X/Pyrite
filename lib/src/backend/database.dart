@@ -68,7 +68,8 @@ Future<bool> updateGuildConfig(
     bool? onJoinEvent,
     int? fuzzyMatchPercent,
     Action? phishingMatchAction,
-    bool? phishingMatchEnabled}) async {
+    bool? phishingMatchEnabled,
+    List<BigInt>? excludedRoles}) async {
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
 
@@ -96,6 +97,12 @@ Future<bool> updateGuildConfig(
   if (phishingMatchEnabled != null) {
     queryMap["rules.type"] = 1;
     updateMap["rules.\$.enabled"] = phishingMatchEnabled;
+  }
+
+  if (excludedRoles != null) {
+    List<String> convertedRoleList = [];
+    excludedRoles.forEach((element) => convertedRoleList.add(element.toString()));
+    updateMap["excludedRoles"] = convertedRoleList;
   }
 
   var result = await collection.updateOne(queryMap, {"\$set": updateMap});
