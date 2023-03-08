@@ -58,6 +58,36 @@ Future<bool> removeServerConfig(BigInt serverID) async {
   return await client.del(["$CONFIG_KEY\_$serverID"]) == 1;
 }
 
+Future<void> cacheRules(BigInt serverID, List<Rule> ruleList) async {
+  var client = RespCommandsTier2(_appCache.cacheConnection);
+  await client.multi();
+
+  ruleList.forEach((element) {
+    JsonData ruleJson = element.toJson();
+    String ruleID = ruleJson.remove("ruleID");
+    client.hset("$RULE_KEY\_$serverID", ruleID, ruleJson);
+  });
+
+  await client.exec();
+  client.pexpire("$RULE_KEY\_$serverID", Duration(days: 7));
+}
+
+Future<JsonData> getRules(BigInt serverID, List<String>? ruleIDs) async {
+  var client = RespCommandsTier2(_appCache.cacheConnection);
+  JsonData result = await client.hgetall("$RULE_KEY\_$serverID");
+
+  if (ruleIDs != null) {
+    result.removeWhere((key, value) => !ruleIDs.contains(key));
+  }
+
+  return result;
+}
+
+Future<bool> removeCachedRules(BigInt serverID) async {
+  var client = RespCommandsTier2(_appCache.cacheConnection);
+  return await client.del(["$RULE_KEY\_$serverID"]) == 1;
+}
+
 /// Returns the number of scans that can be performed in a week.
 Future<int?> getScanCount(BigInt guildID) async {
   var client = RespCommandsTier2(_appCache.cacheConnection);
