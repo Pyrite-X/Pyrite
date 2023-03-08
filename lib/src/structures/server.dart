@@ -5,7 +5,6 @@ import 'rule.dart';
 
 class Server {
   late BigInt serverID;
-  BigInt ownerID;
   BigInt? logchannelID;
   bool? onJoinEnabled;
   int? fuzzyMatchPercent;
@@ -16,7 +15,6 @@ class Server {
 
   Server(
       {required this.serverID,
-      required this.ownerID,
       this.logchannelID,
       this.onJoinEnabled,
       this.fuzzyMatchPercent,
@@ -29,7 +27,7 @@ class Server {
   }
 
   /// Specifically from a database representation of the server data.
-  Server.fromJson({required JsonData data, required this.ownerID}) {
+  Server.fromJson({required JsonData data}) {
     this.serverID = data["_id"];
     this.logchannelID = data["logchannelID"];
     this.onJoinEnabled = data["onJoinEnabled"];
@@ -56,7 +54,6 @@ class Server {
 
 class ServerBuilder {
   late BigInt serverID;
-  late BigInt ownerID;
   BigInt? logchannelID;
   bool? onJoinEnabled;
   int? fuzzyMatchPercent;
@@ -68,8 +65,6 @@ class ServerBuilder {
   ServerBuilder();
 
   void setServerID(BigInt serverID) => this.serverID = serverID;
-
-  void setOwnerID(BigInt ownerID) => this.ownerID = ownerID;
 
   void setLogChannelID(BigInt logchannelID) => this.logchannelID = logchannelID;
 
@@ -87,7 +82,6 @@ class ServerBuilder {
 
   Server build() => Server(
       serverID: serverID,
-      ownerID: ownerID,
       logchannelID: logchannelID,
       onJoinEnabled: onJoinEnabled,
       fuzzyMatchPercent: fuzzyMatchPercent,
