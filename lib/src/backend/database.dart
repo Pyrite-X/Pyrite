@@ -36,14 +36,12 @@ final _defaultData = {
   ]
 };
 
-Future<bool> insertNewGuild({required BigInt serverID}) async {
+Future<JsonData?> insertNewGuild({required BigInt serverID}) async {
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
   var result =
       await collection.updateOne({"_id": serverID.toString()}, {"\$setOnInsert": _defaultData}, upsert: true);
-
-  /// .nInserted not used since this is an update op with an upsert, not an insert
-  return result.nUpserted == 1 && result.isSuccess;
+  return result.nUpserted == 1 && result.isSuccess ? {"_id": serverID, ..._defaultData} : null;
 }
 
 Future<JsonData> fetchGuildData({required BigInt serverID, List<String>? fields}) async {
