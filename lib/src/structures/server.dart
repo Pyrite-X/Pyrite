@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:onyx/onyx.dart' show JsonData;
 
 import 'action.dart';
@@ -28,19 +30,26 @@ class Server {
 
   /// Specifically from a database representation of the server data.
   Server.fromJson({required JsonData data}) {
-    this.serverID = BigInt.parse(data["_id"]);
+    this.serverID = data.containsKey("_id") ? BigInt.parse(data["_id"]) : BigInt.parse(data["serverID"]);
     this.logchannelID = BigInt.tryParse(data["logchannelID"].toString());
-    this.onJoinEnabled = data["onJoinEnabled"];
-    this.fuzzyMatchPercent = data["fuzzyMatchPercent"];
+    this.onJoinEnabled =
+        data["onJoinEnabled"].runtimeType == String ? data["onJoinEnabled"] == "true" : data["onJoinEnabled"];
+    this.fuzzyMatchPercent = data["fuzzyMatchPercent"].runtimeType == int
+        ? data["fuzzyMatchPercent"]
+        : int.tryParse(data["fuzzyMatchPercent"]);
 
     if (data["rules"] != null) {
-      List<dynamic> ruleList = data["rules"];
+      Iterable<dynamic> ruleList =
+          data["rules"].runtimeType == String ? jsonDecode(data["rules"]) : data["rules"];
+
       var phishEntry = ruleList.firstWhere(
         (element) => element["type"] == 1,
         orElse: () => {},
       );
       if ((phishEntry as Map).isNotEmpty) {
-        this.checkPhishingList = phishEntry["enabled"];
+        this.checkPhishingList = phishEntry["enabled"].runtimeType == String
+            ? phishEntry["enabled"] == true
+            : phishEntry["enabled"];
         this.phishingMatchAction = Action.fromInt(phishEntry["action"]);
       }
 
@@ -53,7 +62,9 @@ class Server {
     }
 
     if (data["excludedRoles"] != null) {
-      List<dynamic> roleList = data["excludedRoles"];
+      List<dynamic> roleList = data["excludedRoles"].runtimeType == String
+          ? jsonDecode(data["excludedRoles"])
+          : data["excludedRoles"];
       roleList.forEach((element) => excludedRoles.add(BigInt.parse(element)));
     }
   }
@@ -66,13 +77,13 @@ class Server {
       'onJoinEnabled': onJoinEnabled,
       'fuzzyMatchPercent': fuzzyMatchPercent,
       'rules': [
-        {'type': 1, 'enabled': checkPhishingList, 'action': phishingMatchAction?.bitwiseValue}
+        jsonEncode({'type': 1, 'enabled': checkPhishingList, 'action': phishingMatchAction?.bitwiseValue})
       ]
     };
 
     List<String> roleList = [];
     excludedRoles.forEach((element) => roleList.add(element.toString()));
-    output['excludedRoles'] = roleList;
+    output['excludedRoles'] = jsonEncode(roleList);
 
     return output;
   }
@@ -80,9 +91,9 @@ class Server {
   Map<String, dynamic> toJsonWithCustomRules() {
     var baseJson = toJson();
 
-    List<JsonData> ruleList = baseJson["rules"];
+    List<String> ruleList = baseJson["rules"];
     for (Rule rule in rules) {
-      ruleList.add(rule.toJson());
+      ruleList.add(jsonEncode(rule.toJson()));
     }
     baseJson["rules"] = ruleList;
 
