@@ -28,8 +28,8 @@ class Server {
 
   /// Specifically from a database representation of the server data.
   Server.fromJson({required JsonData data}) {
-    this.serverID = data["_id"];
-    this.logchannelID = data["logchannelID"];
+    this.serverID = BigInt.parse(data["_id"]);
+    this.logchannelID = BigInt.tryParse(data["logchannelID"].toString());
     this.onJoinEnabled = data["onJoinEnabled"];
     this.fuzzyMatchPercent = data["fuzzyMatchPercent"];
 
@@ -43,14 +43,22 @@ class Server {
         this.checkPhishingList = phishEntry["enabled"];
         this.phishingMatchAction = Action.fromInt(phishEntry["action"]);
       }
+
+      var ruleIterator = ruleList.where((element) => element["type"] == 0);
+      List<Rule> convertedRuleList = [];
+      ruleIterator.forEach((element) {
+        convertedRuleList.add(Rule.fromJson(element));
+      });
+      this.rules = convertedRuleList;
     }
 
     if (data["excludedRoles"] != null) {
       List<dynamic> roleList = data["excludedRoles"];
-      roleList.forEach((element) => excludedRoles.add(BigInt.from(element)));
+      roleList.forEach((element) => excludedRoles.add(BigInt.parse(element)));
     }
   }
 
+  /// Creates a json representation of a Server without any custom rules.
   Map<String, dynamic> toJson() {
     Map<String, dynamic> output = {
       'serverID': serverID.toString(),
@@ -58,7 +66,7 @@ class Server {
       'onJoinEnabled': onJoinEnabled,
       'fuzzyMatchPercent': fuzzyMatchPercent,
       'rules': [
-        {'type': 1, 'enabled': checkPhishingList, 'action': phishingMatchAction}
+        {'type': 1, 'enabled': checkPhishingList, 'action': phishingMatchAction?.bitwiseValue}
       ]
     };
 
@@ -67,6 +75,18 @@ class Server {
     output['excludedRoles'] = roleList;
 
     return output;
+  }
+
+  Map<String, dynamic> toJsonWithCustomRules() {
+    var baseJson = toJson();
+
+    List<JsonData> ruleList = baseJson["rules"];
+    for (Rule rule in rules) {
+      ruleList.add(rule.toJson());
+    }
+    baseJson["rules"] = ruleList;
+
+    return baseJson;
   }
 }
 
