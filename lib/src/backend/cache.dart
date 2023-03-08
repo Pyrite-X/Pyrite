@@ -1,6 +1,10 @@
+import 'package:onyx/onyx.dart' show JsonData;
 import 'package:resp_client/resp_client.dart';
 import 'package:resp_client/resp_commands.dart';
 import 'package:resp_client/resp_server.dart' as resp_server;
+
+import '../structures/rule.dart';
+import '../structures/server.dart';
 
 /// Base class for holding the cache object.
 class AppCache {
@@ -30,6 +34,29 @@ const CONFIG_KEY = "server_config";
 const RULE_KEY = "server_rules";
 const SCAN_KEY = "server_scans";
 final AppCache _appCache = AppCache();
+
+Future<JsonData> getServerConfig(BigInt serverID) async {
+  var client = RespCommandsTier2(_appCache.cacheConnection);
+  return await client.hgetall("$CONFIG_KEY\_$serverID");
+}
+
+Future<void> setServerConfig(Server server) async {
+  var client = RespCommandsTier2(_appCache.cacheConnection);
+  await client.multi();
+
+  JsonData mappedData = server.toJson();
+  mappedData.forEach((key, value) {
+    client.hset("$CONFIG_KEY\_${server.serverID}", key, value);
+  });
+
+  await client.exec();
+  client.pexpire("$CONFIG_KEY\_${server.serverID}", Duration(days: 7));
+}
+
+Future<bool> removeServerConfig(BigInt serverID) async {
+  var client = RespCommandsTier2(_appCache.cacheConnection);
+  return await client.del(["$CONFIG_KEY\_$serverID"]) == 1;
+}
 
 /// Returns the number of scans that can be performed in a week.
 Future<int?> getScanCount(BigInt guildID) async {
