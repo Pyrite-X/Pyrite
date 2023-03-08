@@ -45,41 +45,8 @@ void viewRules(Interaction interaction) async {
     description.writeln("Get started with </rules add:1022784407704191009>!");
   } else {
     result.forEach((element) {
-      Rule rule = Rule(
-          ruleID: element["ruleID"],
-          action: Action.fromInt(element["action"]),
-          authorID: BigInt.from(element["authorID"]),
-          pattern: element["pattern"],
-          regex: element["isRegex"]);
-
-      description.writeln("**Rule ${rule.ruleID}** - <@!${rule.authorID}> (${rule.authorID})");
-
-      description.write("　`Action(s):` ");
-      var actionStringList = ActionEnumString.getStringsFromAction(rule.action);
-      if (actionStringList.length > 1) {
-        /// Can assume this since at most only 2 will ever exist at most. Kick + log, or ban + log.
-        description.writeln("${actionStringList.first} + ${actionStringList.last}");
-      } else {
-        description.writeln(actionStringList.first);
-      }
-
-      description.writeln("　`Pattern: `${rule.pattern}");
-      description.writeln("　`Regex Matching:` ${rule.regex}");
-
-      if (element["excludedRoles"] != null) {
-        description.write("　`Excluded role id(s):` ");
-        var excludedRoles = (element["excludedRoles"] as List<dynamic>);
-        for (int i = 0; i < excludedRoles.length; i++) {
-          description.write("<@&${excludedRoles[i]}>");
-          if (i + 1 != excludedRoles.length) {
-            description.write(", ");
-          } else {
-            description.writeln();
-          }
-        }
-      }
-
-      description.writeln();
+      Rule rule = Rule.fromJson(element);
+      description.writeln(rule.toString());
     });
   }
 
@@ -118,35 +85,31 @@ void addRule(Interaction interaction, List<ApplicationCommandOption> options) as
     }
   }
 
-  descBuffer.writeln("**Rule Configuration**");
-
   options.forEach((element) {
     if (element.name == "pattern") {
       ruleBuilder.setPattern(element.value);
-      descBuffer.writeln("　`Pattern:` ${element.value}");
     } else if (element.name == "action") {
       Action action = Action.fromString(element.value);
       ruleBuilder.setAction(action);
-
-      descBuffer.write("　`Action(s):` ");
-
-      var actionStringList = ActionEnumString.getStringsFromAction(action);
-      if (actionStringList.length > 1) {
-        /// Can assume this since at most only 2 will ever exist at most. Kick + log, or ban + log.
-        descBuffer.writeln("${actionStringList.first} + ${actionStringList.last}");
-      } else {
-        descBuffer.writeln(actionStringList.first);
-      }
     } else if (element.name == "regex") {
       ruleBuilder.setRegexFlag(element.value);
-      descBuffer.writeln("　`Regex Matching:` ${element.value}");
     }
   });
 
-  embedBuilder.title = "Rule ${ruleBuilder.ruleID} Created!";
-  embedBuilder.description = descBuffer.toString();
+  Rule builtRule = ruleBuilder.build();
+  descBuffer.writeln(builtRule.toString());
 
-  await db.insertGuildRule(serverID: interaction.guild_id!, rule: ruleBuilder.build());
+  bool success = await db.insertGuildRule(serverID: interaction.guild_id!, rule: builtRule);
+  if (!success) {
+    embedBuilder.color = DiscordColor.fromHexString('ff5151');
+    embedBuilder.title = "Error!";
+    embedBuilder.description = "Your rule could not be created. This is likely because your defined pattern"
+        " matches the pattern of an already existing rule.";
+  } else {
+    embedBuilder.color = DiscordColor.fromHexString('69c273');
+    embedBuilder.title = "New Rule Created!";
+    embedBuilder.description = descBuffer.toString();
+  }
 
   DiscordHTTP discordHTTP = DiscordHTTP();
   await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
@@ -170,11 +133,11 @@ void deleteRule(Interaction interaction, String ruleID) async {
   if (!result) {
     embedBuilder.color = DiscordColor.fromHexString('ff5151');
     embedBuilder.title = "Error!";
-    embedBuilder.description = "No rule with the ID of `$ruleID` could be found!";
+    embedBuilder.description = "Rule `$ruleID` could not be found.";
   } else {
     embedBuilder.color = DiscordColor.fromHexString('69c273');
     embedBuilder.title = "Success!";
-    embedBuilder.description = "The rule `$ruleID` was deleted!";
+    embedBuilder.description = "Rule `$ruleID` was deleted.";
   }
 
   DiscordHTTP discordHTTP = DiscordHTTP();

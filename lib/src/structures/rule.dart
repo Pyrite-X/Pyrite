@@ -20,10 +20,29 @@ class Rule {
 
   Rule.fromJson(JsonData data) {
     ruleID = data["ruleID"];
-    authorID = BigInt.from(data["authorID"]);
+    authorID = BigInt.parse(data["authorID"]);
     pattern = data["pattern"];
-    action = Action.fromInt(int.parse(data["action"]));
+    action = Action.fromInt(data["action"]);
     regex = data["isRegex"];
+  }
+
+  @override
+  String toString() {
+    StringBuffer buffer = StringBuffer();
+    buffer.writeln("**Rule $ruleID** - <@!$authorID> ($authorID)");
+    buffer.write("　`Action(s):` ");
+
+    var actionStringList = ActionEnumString.getStringsFromAction(action);
+    if (actionStringList.length > 1) {
+      /// Can assume this since at most only 2 will ever exist at most. Kick + log, or ban + log.
+      buffer.writeln("${actionStringList.first} + ${actionStringList.last}");
+    } else {
+      buffer.writeln(actionStringList.first);
+    }
+    buffer.writeln("　`Pattern: `${pattern}");
+    buffer.writeln("　`Regex Matching:` ${regex}");
+
+    return buffer.toString();
   }
 }
 
