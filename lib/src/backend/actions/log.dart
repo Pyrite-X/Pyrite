@@ -32,6 +32,11 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
 
     CheckPhishResult phishResult = result as CheckPhishResult;
     embed.addField(name: "Matching String", content: phishResult.matchingString, inline: true);
+
+    embed.addField(
+        name: "Match Percentage",
+        content: "~${phishResult.fuzzyMatchPercent?.toStringAsPrecision(4)}%",
+        inline: true);
   } else if (result.runtimeType == CheckRulesResult) {
     title = "Rule match | ${user.tag}";
 

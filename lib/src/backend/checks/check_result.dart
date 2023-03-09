@@ -8,8 +8,9 @@ abstract class CheckResult {
 
 class CheckPhishResult extends CheckResult {
   String? matchingString;
+  double? fuzzyMatchPercent;
 
-  CheckPhishResult({required super.match, this.matchingString});
+  CheckPhishResult({required super.match, this.matchingString, this.fuzzyMatchPercent});
 }
 
 class CheckRulesResult extends CheckResult {

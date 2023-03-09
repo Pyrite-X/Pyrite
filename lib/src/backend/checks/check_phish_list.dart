@@ -28,9 +28,12 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
   }
 
   int? fuzzyMatchPercent = context.server.fuzzyMatchPercent;
+  // Set to 100 (no fuzzy matching) if not found.
+  fuzzyMatchPercent ??= 100;
   String lowercaseUsername = context.user.username.toLowerCase();
   String? lowercaseNickname = context.user.nickname?.toLowerCase();
 
+  double similarity = 100;
   for (String botName in phishingList) {
     String lowerBotName = botName.toLowerCase();
     bool usernameCheck = lowerBotName == lowercaseUsername;
@@ -40,9 +43,18 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
       break;
     }
 
-    if (fuzzyMatchPercent != null && fuzzyMatchPercent != 100) {
-      usernameCheck = lowercaseUsername.similarityTo(lowerBotName) * 100 >= fuzzyMatchPercent;
-      nicknameCheck = lowercaseNickname.similarityTo(lowerBotName) * 100 >= fuzzyMatchPercent;
+    if (fuzzyMatchPercent != 100) {
+      double luSim = lowercaseUsername.similarityTo(lowerBotName);
+      double lnSim = lowercaseNickname.similarityTo(lowerBotName);
+
+      usernameCheck = luSim * 100 >= fuzzyMatchPercent;
+      nicknameCheck = lnSim * 100 >= fuzzyMatchPercent;
+      if (usernameCheck) {
+        similarity = (luSim * 100);
+      } else if (nicknameCheck) {
+        similarity = (lnSim * 100);
+      }
+
       if (usernameCheck || nicknameCheck) {
         matchString = botName;
         break;
@@ -52,5 +64,5 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
 
   return (matchString == null)
       ? CheckPhishResult(match: false)
-      : CheckPhishResult(match: true, matchingString: matchString);
+      : CheckPhishResult(match: true, matchingString: matchString, fuzzyMatchPercent: similarity);
 }
