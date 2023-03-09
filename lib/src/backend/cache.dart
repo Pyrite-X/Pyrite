@@ -115,10 +115,10 @@ Future<void> initializeScanCount(BigInt guildID, int scanCount) async {
     var sundayTime = currentTime.add(Duration(days: daysUntilSunday));
 
     /// Make a new time at midnight UTC since we need the original time for calculating the offset in seconds.
-    var sundayDay = DateTime.utc(sundayTime.year, sundayTime.month, sundayTime.minute);
+    var sundayDay = DateTime.utc(sundayTime.year, sundayTime.month, sundayTime.day);
     Duration timeUntilSunday = sundayDay.difference(currentTime);
 
-    await client.pexpire(SCAN_KEY, timeUntilSunday);
+    client.pexpire(SCAN_KEY, timeUntilSunday);
   }
 }
 
