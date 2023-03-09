@@ -6,6 +6,7 @@ import 'package:onyx/onyx.dart';
 import 'package:pyrite/src/discord_http.dart';
 
 import '../../structures/action.dart';
+import '../../structures/server.dart';
 import '../../backend/storage.dart' as storage;
 import '../../utilities/base_embeds.dart' as embeds;
 
@@ -30,6 +31,8 @@ void configCmd(Interaction interaction) async {
   } else if (optionName == "excluded_roles") {
     var inputOption = subcommand.options![0];
     configExcludedRoles(interaction, inputOption.value, request);
+  } else if (optionName == "view") {
+    viewServerConfig(interaction, request);
   }
 }
 
@@ -199,13 +202,15 @@ void configExcludedRoles(Interaction interaction, String input, HttpRequest requ
 
   var matches = ID_REGEX.allMatches(input);
   List<BigInt> resultList = [];
-
   EmbedBuilder embedBuilder;
+
+  bool withinTen = matches.length <= 10;
+
   if (input == "none") {
     embedBuilder = embeds.warningEmbed();
     embedBuilder.description = "Your list of roles that Pyrite will ignore is now empty.";
     storage.removeGuildField(serverID: guildID, fieldName: "excludedRoles");
-  } else if (matches.isNotEmpty) {
+  } else if (matches.isNotEmpty && withinTen) {
     embedBuilder = embeds.successEmbed();
     StringBuffer choicesString = StringBuffer();
 
@@ -220,8 +225,13 @@ void configExcludedRoles(Interaction interaction, String input, HttpRequest requ
     storage.updateGuildConfig(serverID: guildID, excludedRoles: resultList);
   } else {
     embedBuilder = embeds.errorEmbed();
-    embedBuilder.description =
-        "Your list of roles Pyrite will ignore has not changed because no valid options were found (role ID(s) or `none`).";
+    if (!withinTen) {
+      embedBuilder.description = "You're adding too many excluded roles! "
+          "Please lower your number of choices from ${matches.length} roles to 10 roles.";
+    } else {
+      embedBuilder.description =
+          "Your list of roles Pyrite will ignore has not changed because no valid options were found (role ID(s) or `none`).";
+    }
   }
 
   embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
@@ -234,4 +244,62 @@ void configExcludedRoles(Interaction interaction, String input, HttpRequest requ
   });
 
   await request.response.send(jsonEncode(response));
+}
+
+void viewServerConfig(Interaction interaction, HttpRequest request) async {
+  // Defer because awaiting db responses makes the final reply timeout
+  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
+  await request.response.send(jsonEncode(response));
+
+  EmbedBuilder embedBuilder;
+  Server? serverData = await storage.fetchGuildData(interaction.guild_id!, withRules: true);
+
+  if (serverData == null) {
+    embedBuilder = embeds.warningEmbed();
+    embedBuilder.description = "There was an issue getting your server data.";
+  } else {
+    embedBuilder = embeds.infoEmbed();
+
+    int regexRuleCount = await storage.getGuildRegexRuleCount(serverData.serverID);
+
+    String logchannel = (serverData.logchannelID != null) ? "<#${serverData.logchannelID}>" : "None";
+    embedBuilder.addField(
+        name: "__General__",
+        content: "**Check users on join?:** ${serverData.onJoinEnabled}\n"
+            "**Log channel:** $logchannel\n"
+            "**Rule count:** ${serverData.rules.length}/${storage.DEFAULT_RULE_LIMIT}\n"
+            "**Regex rule count:** $regexRuleCount/${storage.DEFAULT_REGEX_RULE_LIMIT}",
+        inline: true);
+
+    List<String> actionStrList = serverData.phishingMatchAction != null
+        ? ActionEnumString.getStringsFromAction(serverData.phishingMatchAction!)
+        : [];
+    StringBuffer actionStr = StringBuffer();
+    actionStrList.forEach((element) => actionStr.writeln("• $element"));
+
+    embedBuilder.addField(
+        name: "__Phishing List__",
+        content: "**Checking enabled?:** ${serverData.checkPhishingList}\n"
+            "**Action(s):**\n${actionStr.toString()}"
+            "**Fuzzy matching percent:** ${serverData.fuzzyMatchPercent}%",
+        inline: true);
+
+    if (serverData.excludedRoles.isNotEmpty) {
+      StringBuffer output = StringBuffer();
+      serverData.excludedRoles.forEach((element) => output.writeln("<@&${element}> ($element)"));
+      embedBuilder.addField(name: "__Excluded Roles__", content: output, inline: true);
+    }
+  }
+  embedBuilder.title = "Your server's settings";
+  embedBuilder.addFooter((footer) {
+    footer.text = "Guild ID: ${interaction.guild_id}";
+  });
+
+  DiscordHTTP discordHTTP = DiscordHTTP();
+  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+    "embeds": [
+      {...embedBuilder.build()}
+    ],
+    "allowed_mentions": {"parse": []}
+  });
 }
