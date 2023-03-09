@@ -4,7 +4,6 @@ import '../../structures/trigger/trigger_context.dart';
 import 'check_result.dart';
 
 import '../../backend/storage.dart' as storage;
-import '../../backend/database.dart' as db;
 
 Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
   List<Rule> ruleList = context.server.rules;
