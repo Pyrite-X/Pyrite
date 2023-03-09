@@ -88,6 +88,14 @@ class DiscordHTTP {
     return await http.get(uri, headers: _buildHeaders());
   }
 
+  Future<http.Response> getGuild({required BigInt guildID}) async {
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
+    builder.setPath("/api/$apiVersion/guilds/$guildID");
+
+    var uri = builder.build();
+    return await http.get(uri, headers: _buildHeaders());
+  }
+
   Future<http.Response> getGuildMember({required BigInt guildID, required BigInt userID}) async {
     UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/guilds/$guildID/members/$userID");
