@@ -76,3 +76,8 @@ default_member_permissions = 32 # Manage server permissions
         description = "Select all the roles that you want to be ignored. To clear, input \"none\""
         type = 3
         required = true
+
+[[options]]
+    name = "view"
+    description = "View your configured settings."
+    type = 1
