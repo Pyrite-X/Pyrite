@@ -8,11 +8,10 @@ import '../../backend/storage.dart' as storage;
 Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
   List<Rule> ruleList = context.server.rules;
   if (context.server.rules.isEmpty) {
-    List<dynamic> serverRuleList = await storage.fetchGuildRules(context.server.serverID);
-    if (serverRuleList.isEmpty) {
+    context.server.rules = await storage.fetchGuildRules(context.server.serverID);
+    if (context.server.rules.isEmpty) {
       return CheckRulesResult(match: false);
     }
-    serverRuleList.forEach((element) => ruleList.add(Rule.fromJson(element)));
   }
 
   User user = context.user;
