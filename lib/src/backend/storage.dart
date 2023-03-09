@@ -10,6 +10,8 @@ import 'cache.dart' as redis;
 import 'database.dart' as db;
 
 const DEFAULT_SCAN_MAX_PER_WK = 3;
+const DEFAULT_RULE_LIMIT = 10;
+const DEFAULT_REGEX_RULE_LIMIT = 2;
 
 /// Fetches guild data from the cache and then the database.
 Future<Server?> fetchGuildData(BigInt guildID, {bool withRules = false}) async {
@@ -126,6 +128,36 @@ Future<bool> removeGuildRule({required BigInt serverID, required String ruleID})
   }
 
   return success;
+}
+
+Future<int> getGuildRuleCount(BigInt guildID) async {
+  return (await fetchGuildRules(guildID)).length;
+}
+
+Future<int> getGuildRegexRuleCount(BigInt guildID) async {
+  List<Rule> rList = await fetchGuildRules(guildID);
+  rList.removeWhere((element) => !element.regex);
+  return rList.length;
+}
+
+Future<JsonData> canAddRule(BigInt guildID, {Rule? rule}) async {
+  int ruleCount = await getGuildRuleCount(guildID);
+  JsonData response = {"flag": true, "reason": ""};
+
+  if (ruleCount >= DEFAULT_RULE_LIMIT) {
+    response["flag"] = false;
+    response["reason"] = "You are at the limit of $DEFAULT_RULE_LIMIT rules.";
+  } else if (rule != null) {
+    if (rule.regex) {
+      int regexRuleCount = await getGuildRegexRuleCount(guildID);
+      if (regexRuleCount >= DEFAULT_REGEX_RULE_LIMIT) {
+        response["flag"] = false;
+        response["reason"] = "You are at the limit of $DEFAULT_REGEX_RULE_LIMIT regex rules.";
+      }
+    }
+  }
+
+  return response;
 }
 
 Future<int> getScanCount(BigInt guildID) async {
