@@ -7,6 +7,8 @@ import '../structures/server.dart';
 import 'cache.dart' as redis;
 import 'database.dart' as db;
 
+const DEFAULT_SCAN_MAX_PER_WK = 3;
+
 /// Fetches guild data from the cache and then the database.
 Future<Server?> fetchGuildData(BigInt guildID, {bool withRules = false}) async {
   JsonData redisResponse = await redis.getServerConfig(guildID);
@@ -121,4 +123,18 @@ Future<bool> removeGuildRule({required BigInt serverID, required String ruleID})
   }
 
   return success;
+}
+
+Future<int> getScanCount(BigInt guildID) async {
+  int? scanCount = await redis.getScanCount(guildID);
+  if (scanCount == null) {
+    await redis.initializeScanCount(guildID, DEFAULT_SCAN_MAX_PER_WK);
+    scanCount = DEFAULT_SCAN_MAX_PER_WK;
+  }
+  return scanCount;
+}
+
+Future<bool> canRunScan(BigInt guildID) async {
+  int scanCount = await getScanCount(guildID);
+  return scanCount > 0;
 }
