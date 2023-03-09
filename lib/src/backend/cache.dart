@@ -35,6 +35,7 @@ class AppCache {
 const CONFIG_KEY = "server_config";
 const RULE_KEY = "server_rules";
 const SCAN_KEY = "server_scans";
+const BASE_TIMEOUT = Duration(days: 3);
 final AppCache _appCache = AppCache();
 
 Future<JsonData> getServerConfig(BigInt serverID) async {
@@ -52,7 +53,7 @@ Future<void> setServerConfig(Server server) async {
   });
 
   await client.exec();
-  client.pexpire("$CONFIG_KEY\_${server.serverID}", Duration(days: 7));
+  client.pexpire("$CONFIG_KEY\_${server.serverID}", BASE_TIMEOUT);
 }
 
 Future<bool> removeServerConfig(BigInt serverID) async {
@@ -71,7 +72,7 @@ Future<void> cacheRules(BigInt serverID, List<Rule> ruleList) async {
   });
 
   await client.exec();
-  client.pexpire("$RULE_KEY\_$serverID", Duration(days: 7));
+  client.pexpire("$RULE_KEY\_$serverID", BASE_TIMEOUT);
 }
 
 Future<JsonData> getRules(BigInt serverID, {List<String>? ruleIDs}) async {
