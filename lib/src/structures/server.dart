@@ -30,13 +30,19 @@ class Server {
 
   /// Specifically from a database representation of the server data.
   Server.fromJson({required JsonData data}) {
-    this.serverID = data.containsKey("_id") ? BigInt.parse(data["_id"]) : BigInt.parse(data["serverID"]);
+    if (data.containsKey("_id")) {
+      this.serverID = BigInt.parse(data["_id"].toString());
+    } else if (data.containsKey("serverID")) {
+      this.serverID = BigInt.parse(data["serverID"].toString());
+    }
+
     this.logchannelID = BigInt.tryParse(data["logchannelID"].toString());
-    this.onJoinEnabled =
-        data["onJoinEnabled"].runtimeType == String ? data["onJoinEnabled"] == "true" : data["onJoinEnabled"];
+    this.onJoinEnabled = data["onJoinEnabled"].runtimeType == String
+        ? data["onJoinEnabled"].toString() == "true"
+        : data["onJoinEnabled"];
     this.fuzzyMatchPercent = data["fuzzyMatchPercent"].runtimeType == int
         ? data["fuzzyMatchPercent"]
-        : int.tryParse(data["fuzzyMatchPercent"]);
+        : int.tryParse(data["fuzzyMatchPercent"].toString());
 
     if (data["rules"] != null) {
       Iterable<dynamic> ruleList =
@@ -44,11 +50,11 @@ class Server {
 
       var phishEntry = ruleList.firstWhere(
         (element) => element["type"] == 1,
-        orElse: () => {},
+        orElse: () => {} as JsonData,
       );
-      if ((phishEntry as Map).isNotEmpty) {
+      if ((phishEntry as JsonData).isNotEmpty) {
         this.checkPhishingList = phishEntry["enabled"].runtimeType == String
-            ? phishEntry["enabled"] == true
+            ? phishEntry["enabled"] == "true"
             : phishEntry["enabled"];
         this.phishingMatchAction = Action.fromInt(phishEntry["action"]);
       }
