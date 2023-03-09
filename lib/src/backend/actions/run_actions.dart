@@ -9,18 +9,15 @@ import 'kick.dart';
 import 'log.dart';
 
 void runActions(TriggerContext context, CheckResult result) async {
+  //If batching log msgs someday for scan cmd, need this
   var contextSource = context.eventSource.sourceType;
-  if (contextSource == EventSourceType.join) {
-    ///TODO: Get server join event action and trigger
-  }
 
-  if (contextSource == EventSourceType.scan) {
-    if (result is CheckPhishResult) {
-      //TODO: get phishing action & follow thru
-    } else if (result is CheckRulesResult) {
-      Action ruleActions = result.rule!.action;
-      triggerActions(ruleActions, context, result);
-    }
+  if (result is CheckPhishResult) {
+    Action action = context.server.phishingMatchAction!;
+    triggerActions(action, context, result);
+  } else if (result is CheckRulesResult) {
+    Action ruleActions = result.rule!.action;
+    triggerActions(ruleActions, context, result);
   }
 }
 
