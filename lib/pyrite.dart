@@ -11,6 +11,7 @@ import 'src/backend/checks/check_phish_list.dart';
 
 import 'src/modules/gateway/on_join_event.dart' as on_join_event;
 import 'src/modules/gateway/on_guild_create.dart' as on_guild_create;
+import 'src/modules/gateway/on_member_update.dart' as on_member_update;
 
 import 'src/modules/interactions/about.dart' as about;
 import 'src/modules/interactions/config.dart' as config;
@@ -87,10 +88,7 @@ class Pyrite {
       ..registerPlugin(CliIntegration());
 
     gateway.eventsWs.onGuildMemberAdd.listen((event) => on_join_event.on_join_event(event));
-    gateway.eventsWs.onGuildMemberUpdate.listen((event) async {
-      print((await event.member.getOrDownload()).nickname);
-      print(event.user.username);
-    });
+    gateway.eventsWs.onGuildMemberUpdate.listen((event) => on_member_update.om_member_update(event));
     gateway.eventsWs.onGuildCreate.listen((event) => on_guild_create.on_guild_create(event));
 
     gateway.eventsWs.onReady.listen((event) {
