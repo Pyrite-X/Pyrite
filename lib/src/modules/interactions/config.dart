@@ -5,7 +5,7 @@ import 'package:nyxx/nyxx.dart' show EmbedBuilder, DiscordColor;
 import 'package:onyx/onyx.dart';
 
 import '../../structures/action.dart';
-import '../../backend/database.dart' as db;
+import '../../backend/storage.dart' as storage;
 
 void configCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
@@ -56,11 +56,11 @@ void configLogChannel(BigInt guildID, List<ApplicationCommandOption> options, Ht
     if (option.name == "channel") {
       BigInt channelID = BigInt.parse(option.value);
       description = "• Your log channel is now set to **<#${channelID}>**!";
-      db.updateGuildConfig(serverID: guildID, logchannelID: channelID);
+      storage.updateGuildConfig(serverID: guildID, logchannelID: channelID);
     } else if (option.name == "clear") {
       if (option.value) {
         description = "• Your set log channel has now been cleared!";
-        db.removeGuildField(serverID: guildID, fieldName: "logchannelID");
+        storage.removeGuildField(serverID: guildID, fieldName: "logchannelID");
       } else {
         description = "• Your set log channel was not modified.";
       }
@@ -128,7 +128,7 @@ void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, 
     }
   }
 
-  db.updateGuildConfig(
+  storage.updateGuildConfig(
       serverID: guildID,
       phishingMatchEnabled: phishingMatchEnabled,
       phishingMatchAction: phishingMatchAction,
@@ -153,7 +153,7 @@ void configJoinEvent(BigInt guildID, bool selection, HttpRequest request) async 
   StringBuffer choicesString = StringBuffer();
 
   choicesString.writeln("• Join event scanning has been **${selection ? 'enabled' : 'disabled'}**.");
-  db.updateGuildConfig(serverID: guildID, onJoinEvent: selection);
+  storage.updateGuildConfig(serverID: guildID, onJoinEvent: selection);
 
   var embedBuilder = EmbedBuilder();
   embedBuilder.title = "Success!";
@@ -179,7 +179,7 @@ void configExcludedRoles(BigInt guildID, String input, HttpRequest request) asyn
 
   if (input == "none") {
     choicesString.writeln("Your excluded role list has been cleared.");
-    db.updateGuildConfig(serverID: guildID, excludedRoles: resultList);
+    storage.removeGuildField(serverID: guildID, fieldName: "excludedRoles");
   } else if (matches.isNotEmpty) {
     choicesString.writeln("Users with these roles will be ignored on scans & on join:");
     matches.forEach((element) {
@@ -187,7 +187,7 @@ void configExcludedRoles(BigInt guildID, String input, HttpRequest request) asyn
       resultList.add(BigInt.parse(match));
       choicesString.writeln("　- <@&$match>");
     });
-    db.updateGuildConfig(serverID: guildID, excludedRoles: resultList);
+    storage.updateGuildConfig(serverID: guildID, excludedRoles: resultList);
   } else {
     choicesString.writeln(
         "Your excluded role list has not been modified because no valid options were found (role ID(s) or `none`).");
