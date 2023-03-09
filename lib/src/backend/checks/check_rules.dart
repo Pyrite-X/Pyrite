@@ -3,12 +3,13 @@ import '../../structures/user.dart';
 import '../../structures/trigger/trigger_context.dart';
 import 'check_result.dart';
 
+import '../../backend/storage.dart' as storage;
 import '../../backend/database.dart' as db;
 
 Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
   List<Rule> ruleList = context.server.rules;
   if (context.server.rules.isEmpty) {
-    List<dynamic> serverRuleList = await db.fetchGuildRules(serverID: context.server.serverID);
+    List<dynamic> serverRuleList = await storage.fetchGuildRules(context.server.serverID);
     if (serverRuleList.isEmpty) {
       return CheckRulesResult(match: false);
     }
