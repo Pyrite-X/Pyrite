@@ -26,9 +26,9 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
 
   String title = "";
   if (result.runtimeType == CheckPhishResult) {
-    title = "Phishing list match | ${user.tag} ";
+    title = "Phishing List Match | ${user.tag} ";
     var pma = guild.phishingMatchAction!;
-    title = title + _actionToSuffix(pma);
+    embed.addField(name: "Action", content: _actionToSuffix(pma), inline: true);
 
     CheckPhishResult phishResult = result as CheckPhishResult;
     embed.addField(name: "Matching String", content: phishResult.matchingString, inline: true);
@@ -37,7 +37,7 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
 
     CheckRulesResult checkRulesResult = result as CheckRulesResult;
     var rac = checkRulesResult.rule!.action;
-    title = title + _actionToSuffix(rac);
+    embed.addField(name: "Action", content: _actionToSuffix(rac), inline: true);
 
     embed.addField(name: "Rule ID", content: checkRulesResult.rule!.ruleID, inline: true);
     embed.addField(name: "Rule Pattern", content: checkRulesResult.rule!.pattern, inline: true);
@@ -57,9 +57,11 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
     author.name = title;
   });
   DateTime userCreationDate = Snowflake(user.userID).toSnowflakeEntity().createdAt;
+
   embed.addField(
       name: "User Join Date",
-      content: "${userCreationDate.month}/${userCreationDate.day}/${userCreationDate.year} (mm/dd/yyyy)");
+      content: "<t:${(userCreationDate.millisecondsSinceEpoch / 1000).round()}:D>",
+      inline: true);
 
   http.Response msgResponse = await discordHTTP.sendLogMessage(channelID: logchannelID, payload: {
     "embeds": [
@@ -73,7 +75,7 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
 }
 
 String _actionToSuffix(Action action) => action.containsValue(ActionEnum.ban.value)
-    ? "| Banned"
+    ? "Banned"
     : action.containsValue(ActionEnum.kick.value)
-        ? "| Kicked"
-        : "| Alert";
+        ? "Kicked"
+        : "Alert";
