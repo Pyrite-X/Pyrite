@@ -3,10 +3,16 @@ import 'package:unorm_dart/unorm_dart.dart' as unorm;
 class User {
   BigInt userID;
   late String username;
+  String tag;
   String? nickname;
   List<BigInt> roles = [];
 
-  User({required this.userID, required String username, String? nickname, List<BigInt>? roles}) {
+  User(
+      {required this.userID,
+      required String username,
+      required this.tag,
+      String? nickname,
+      List<BigInt>? roles}) {
     if (roles != null) this.roles = roles;
 
     /// Normalize the output to get rid of custom fonts/styles that could bypass matching.
@@ -18,6 +24,7 @@ class User {
 class UserBuilder {
   late BigInt userID;
   late String username;
+  late String tag;
   late String? nickname;
   List<BigInt> roles = [];
 
@@ -27,9 +34,11 @@ class UserBuilder {
 
   void setUsername(String username) => this.username = username;
 
+  void setTag(String tag) => this.tag = tag;
+
   void setNickname(String? nickname) => this.nickname = nickname;
 
   void addRole(BigInt roleID) => roles.add(roleID);
 
-  User build() => User(userID: userID, username: username, nickname: nickname, roles: roles);
+  User build() => User(userID: userID, username: username, tag: tag, nickname: nickname, roles: roles);
 }
