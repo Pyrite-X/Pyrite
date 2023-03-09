@@ -1,13 +1,14 @@
 import 'dart:convert';
 
 import 'package:alfred/alfred.dart';
-import 'package:nyxx/nyxx.dart' show EmbedBuilder, DiscordColor;
+import 'package:nyxx/nyxx.dart' show EmbedBuilder, EmbedFooterBuilder;
 import 'package:onyx/onyx.dart';
 
 import '../../discord_http.dart';
 import '../../structures/action.dart';
 import '../../structures/rule.dart';
 import '../../backend/storage.dart' as storage;
+import '../../utilities/base_embeds.dart' as embeds;
 
 void rulesCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
@@ -27,29 +28,26 @@ void rulesCmd(Interaction interaction) async {
 void viewRules(Interaction interaction) async {
   HttpRequest request = interaction.metadata["request"];
 
-  InteractionResponse response =
-      InteractionResponse(InteractionResponseType.defer_message_response, {"flags": 1 << 6});
+  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
   await request.response.send(jsonEncode(response));
 
-  List<dynamic> result = await storage.fetchGuildRules(interaction.guild_id!);
+  List<Rule> result = await storage.fetchGuildRules(interaction.guild_id!);
 
   ///TODO: Add pagination capabilities.
-  EmbedBuilder embedBuilder = EmbedBuilder();
-  embedBuilder.title = "Server Custom Rule List";
-  embedBuilder.timestamp = DateTime.now();
-  embedBuilder.color = DiscordColor.fromHexString("4D346D");
+  late EmbedBuilder embedBuilder;
   StringBuffer description = StringBuffer();
 
   if (result.isEmpty) {
-    description.writeln("There are no custom rules configured!");
+    embedBuilder = embeds.warningEmbed();
+    description.writeln("You have no custom rules configured!");
     description.writeln("Get started with </rules add:1022784407704191009>!");
   } else {
-    result.forEach((element) {
-      Rule rule = Rule.fromJson(element);
-      description.writeln(rule.toString());
-    });
+    embedBuilder = embeds.infoEmbed();
+    embedBuilder.title = "Your guild's custom rules:";
+    result.forEach((element) => description.writeln(element.toString()));
   }
 
+  embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
   embedBuilder.description = description.toString();
 
   DiscordHTTP discordHTTP = DiscordHTTP();
@@ -68,8 +66,7 @@ void addRule(Interaction interaction, List<ApplicationCommandOption> options) as
   InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
   await request.response.send(jsonEncode(response));
 
-  EmbedBuilder embedBuilder = EmbedBuilder();
-  embedBuilder.timestamp = DateTime.now();
+  late EmbedBuilder embedBuilder;
 
   RuleBuilder ruleBuilder = RuleBuilder();
   ruleBuilder.generateRuleID();
@@ -98,20 +95,35 @@ void addRule(Interaction interaction, List<ApplicationCommandOption> options) as
 
   Rule builtRule = ruleBuilder.build();
   descBuffer.writeln(builtRule.toString());
+  DiscordHTTP discordHTTP = DiscordHTTP();
+
+  JsonData ruleStatus = await storage.canAddRule(interaction.guild_id!, rule: builtRule);
+  bool canAdd = ruleStatus["flag"];
+  String flagReason = ruleStatus["reason"];
+  if (!canAdd) {
+    embedBuilder = embeds.errorEmbed();
+    embedBuilder.description = "$flagReason Try deleting some rules first!";
+    embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
+    await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+      "embeds": [
+        {...embedBuilder.build()}
+      ]
+    });
+    return;
+  }
 
   bool success = await storage.insertGuildRule(serverID: interaction.guild_id!, rule: builtRule);
   if (!success) {
-    embedBuilder.color = DiscordColor.fromHexString('ff5151');
-    embedBuilder.title = "Error!";
+    embedBuilder = embeds.warningEmbed();
     embedBuilder.description = "Your rule could not be created. This is likely because your defined pattern"
         " matches the pattern of an already existing rule.";
   } else {
-    embedBuilder.color = DiscordColor.fromHexString('69c273');
-    embedBuilder.title = "New Rule Created!";
+    embedBuilder = embeds.successEmbed();
+    embedBuilder.title = "New rule created:";
     embedBuilder.description = descBuffer.toString();
   }
 
-  DiscordHTTP discordHTTP = DiscordHTTP();
+  embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
   await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
     "embeds": [
       {...embedBuilder.build()}
@@ -125,20 +137,18 @@ void deleteRule(Interaction interaction, String ruleID) async {
   InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
   await request.response.send(jsonEncode(response));
 
-  EmbedBuilder embedBuilder = EmbedBuilder();
-  embedBuilder.timestamp = DateTime.now();
+  late EmbedBuilder embedBuilder;
 
   var result = await storage.removeGuildRule(serverID: interaction.guild_id!, ruleID: ruleID);
 
   if (!result) {
-    embedBuilder.color = DiscordColor.fromHexString('ff5151');
-    embedBuilder.title = "Error!";
-    embedBuilder.description = "Rule `$ruleID` could not be found.";
+    embedBuilder = embeds.errorEmbed();
+    embedBuilder.description = "Rule **$ruleID** could not be found.";
   } else {
-    embedBuilder.color = DiscordColor.fromHexString('69c273');
-    embedBuilder.title = "Success!";
-    embedBuilder.description = "Rule `$ruleID` was deleted.";
+    embedBuilder = embeds.successEmbed();
+    embedBuilder.description = "Rule **$ruleID** was deleted.";
   }
+  embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
 
   DiscordHTTP discordHTTP = DiscordHTTP();
   await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
