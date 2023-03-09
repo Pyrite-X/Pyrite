@@ -7,7 +7,7 @@ import 'package:onyx/onyx.dart';
 import '../../discord_http.dart';
 import '../../structures/action.dart';
 import '../../structures/rule.dart';
-import '../../backend/database.dart' as db;
+import '../../backend/storage.dart' as storage;
 
 void rulesCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
@@ -31,7 +31,7 @@ void viewRules(Interaction interaction) async {
       InteractionResponse(InteractionResponseType.defer_message_response, {"flags": 1 << 6});
   await request.response.send(jsonEncode(response));
 
-  List<dynamic> result = await db.fetchGuildRules(serverID: interaction.guild_id!);
+  List<dynamic> result = await storage.fetchGuildRules(interaction.guild_id!);
 
   ///TODO: Add pagination capabilities.
   EmbedBuilder embedBuilder = EmbedBuilder();
@@ -99,7 +99,7 @@ void addRule(Interaction interaction, List<ApplicationCommandOption> options) as
   Rule builtRule = ruleBuilder.build();
   descBuffer.writeln(builtRule.toString());
 
-  bool success = await db.insertGuildRule(serverID: interaction.guild_id!, rule: builtRule);
+  bool success = await storage.insertGuildRule(serverID: interaction.guild_id!, rule: builtRule);
   if (!success) {
     embedBuilder.color = DiscordColor.fromHexString('ff5151');
     embedBuilder.title = "Error!";
@@ -128,7 +128,7 @@ void deleteRule(Interaction interaction, String ruleID) async {
   EmbedBuilder embedBuilder = EmbedBuilder();
   embedBuilder.timestamp = DateTime.now();
 
-  var result = await db.removeGuildRule(serverID: interaction.guild_id!, ruleID: ruleID);
+  var result = await storage.removeGuildRule(serverID: interaction.guild_id!, ruleID: ruleID);
 
   if (!result) {
     embedBuilder.color = DiscordColor.fromHexString('ff5151');
