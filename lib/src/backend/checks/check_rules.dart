@@ -7,9 +7,10 @@ import '../../backend/storage.dart' as storage;
 
 Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
   List<Rule> ruleList = context.server.rules;
-  if (context.server.rules.isEmpty) {
-    context.server.rules = await storage.fetchGuildRules(context.server.serverID);
-    if (context.server.rules.isEmpty) {
+
+  if (ruleList.isEmpty) {
+    ruleList = await storage.fetchGuildRules(context.server.serverID);
+    if (ruleList.isEmpty) {
       return CheckRulesResult(match: false);
     }
   }
@@ -20,7 +21,11 @@ Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
     if (rule.regex) {
       RegExp pattern = RegExp(rule.pattern);
       RegExpMatch? usernameMatch = pattern.firstMatch(user.username);
-      RegExpMatch? nicknameMatch = pattern.firstMatch(user.nickname!.toString());
+      RegExpMatch? nicknameMatch;
+      if (user.nickname != null) {
+        nicknameMatch = pattern.firstMatch(user.nickname!);
+      }
+
       if (usernameMatch != null || nicknameMatch != null) {
         matchRule = rule;
         break;
