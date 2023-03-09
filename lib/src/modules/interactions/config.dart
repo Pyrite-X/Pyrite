@@ -1,11 +1,13 @@
 import 'dart:convert';
 
 import 'package:alfred/alfred.dart';
-import 'package:nyxx/nyxx.dart' show EmbedBuilder, DiscordColor;
+import 'package:nyxx/nyxx.dart' show EmbedBuilder, EmbedFooterBuilder;
 import 'package:onyx/onyx.dart';
+import 'package:pyrite/src/discord_http.dart';
 
 import '../../structures/action.dart';
 import '../../backend/storage.dart' as storage;
+import '../../utilities/base_embeds.dart' as embeds;
 
 void configCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
@@ -15,22 +17,22 @@ void configCmd(Interaction interaction) async {
   ApplicationCommandOption subcommand = interactionData.options![0];
   String optionName = subcommand.name;
 
-  BigInt guildID = interaction.guild_id!;
-
   if (optionName == "logchannel") {
-    configLogChannel(guildID, subcommand.options!, request);
+    configLogChannel(interaction, subcommand.options!, request);
   } else if (optionName == "phish_list") {
-    configPhishingList(guildID, subcommand.options!, request);
+    configPhishingList(interaction, subcommand.options!, request);
   } else if (optionName == "join_event") {
     var selection = subcommand.options![0];
-    configJoinEvent(guildID, selection.value, request);
+    configJoinEvent(interaction, selection.value, request);
   } else if (optionName == "excluded_roles") {
     var inputOption = subcommand.options![0];
-    configExcludedRoles(guildID, inputOption.value, request);
+    configExcludedRoles(interaction, inputOption.value, request);
   }
 }
 
-void configLogChannel(BigInt guildID, List<ApplicationCommandOption> options, HttpRequest request) async {
+void configLogChannel(
+    Interaction interaction, List<ApplicationCommandOption> options, HttpRequest request) async {
+  BigInt guildID = interaction.guild_id!;
   if (options.isEmpty) {
     InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
       "content":
@@ -52,37 +54,41 @@ void configLogChannel(BigInt guildID, List<ApplicationCommandOption> options, Ht
   }
 
   String description = "";
+  late EmbedBuilder embedBuilder;
   for (ApplicationCommandOption option in options) {
     if (option.name == "channel") {
+      embedBuilder = embeds.successEmbed();
       BigInt channelID = BigInt.parse(option.value);
-      description = "• Your log channel is now set to **<#${channelID}>**!";
+      description = "Your log channel is now set to **<#${channelID}>**!";
       storage.updateGuildConfig(serverID: guildID, logchannelID: channelID);
     } else if (option.name == "clear") {
       if (option.value) {
-        description = "• Your set log channel has now been cleared!";
+        embedBuilder = embeds.warningEmbed();
+        description = "Your set log channel has now been cleared!";
         storage.removeGuildField(serverID: guildID, fieldName: "logchannelID");
       } else {
-        description = "• Your set log channel was not modified.";
+        embedBuilder = embeds.errorEmbed();
+        description = "Your set log channel was not modified.";
       }
     }
   }
 
-  var embedBuilder = EmbedBuilder();
-  embedBuilder.title = "Success!";
   embedBuilder.description = description;
-  embedBuilder.color = DiscordColor.fromHexString("69c273");
-  embedBuilder.timestamp = DateTime.now();
+  embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
 
   InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
     "embeds": [
       {...embedBuilder.build()}
-    ]
+    ],
+    "allowed_mentions": {"parse": []}
   });
 
   request.response.send(jsonEncode(response));
 }
 
-void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, HttpRequest request) async {
+void configPhishingList(
+    Interaction interaction, List<ApplicationCommandOption> options, HttpRequest request) async {
+  BigInt guildID = interaction.guild_id!;
   if (options.isEmpty) {
     InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
       "content":
@@ -93,6 +99,9 @@ void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, 
     await request.response.send(jsonEncode(response));
     return;
   }
+
+  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
+  await request.response.send(jsonEncode(response));
 
   StringBuffer choicesString = StringBuffer();
 
@@ -128,76 +137,88 @@ void configPhishingList(BigInt guildID, List<ApplicationCommandOption> options, 
     }
   }
 
-  storage.updateGuildConfig(
+  bool storageResult = await storage.updateGuildConfig(
       serverID: guildID,
       phishingMatchEnabled: phishingMatchEnabled,
       phishingMatchAction: phishingMatchAction,
       fuzzyMatchPercent: fuzzyMatchPercent);
 
-  var embedBuilder = EmbedBuilder();
-  embedBuilder.title = "Success!";
-  embedBuilder.addField(name: "Your Changes", content: choicesString.toString());
-  embedBuilder.color = DiscordColor.fromHexString("69c273");
-  embedBuilder.timestamp = DateTime.now();
+  EmbedBuilder embedBuilder;
+  if (storageResult) {
+    embedBuilder = embeds.successEmbed();
+    embedBuilder.addField(name: "Your Changes", content: choicesString.toString());
+  } else {
+    embedBuilder = embeds.warningEmbed();
+    embedBuilder.description = "Your settings have not been changed from their current state.";
+  }
+  embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
 
-  InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
+  DiscordHTTP discordHTTP = DiscordHTTP();
+  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
     "embeds": [
       {...embedBuilder.build()}
     ]
   });
-
-  await request.response.send(jsonEncode(response));
 }
 
-void configJoinEvent(BigInt guildID, bool selection, HttpRequest request) async {
-  StringBuffer choicesString = StringBuffer();
+void configJoinEvent(Interaction interaction, bool selection, HttpRequest request) async {
+  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
+  await request.response.send(jsonEncode(response));
 
-  choicesString.writeln("• Join event scanning has been **${selection ? 'enabled' : 'disabled'}**.");
-  storage.updateGuildConfig(serverID: guildID, onJoinEvent: selection);
+  bool updateResult =
+      await storage.updateGuildConfig(serverID: interaction.guild_id!, onJoinEvent: selection);
 
-  var embedBuilder = EmbedBuilder();
-  embedBuilder.title = "Success!";
-  embedBuilder.addField(name: "Your Changes", content: choicesString.toString());
-  embedBuilder.color = DiscordColor.fromHexString("69c273");
-  embedBuilder.timestamp = DateTime.now();
+  EmbedBuilder embedBuilder;
+  if (updateResult) {
+    embedBuilder = embeds.successEmbed();
+    embedBuilder.description = "Join event scanning has been **${selection ? 'enabled' : 'disabled'}**.";
+  } else {
+    embedBuilder = embeds.errorEmbed();
+    embedBuilder.description = "Your settings have not been changed from their current state.";
+  }
 
-  InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
+  embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
+
+  DiscordHTTP discordHTTP = DiscordHTTP();
+  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
     "embeds": [
       {...embedBuilder.build()}
     ]
   });
-
-  await request.response.send(jsonEncode(response));
 }
 
 final RegExp ID_REGEX = RegExp(r'(\d{17,})');
-void configExcludedRoles(BigInt guildID, String input, HttpRequest request) async {
+void configExcludedRoles(Interaction interaction, String input, HttpRequest request) async {
+  BigInt guildID = interaction.guild_id!;
+
   var matches = ID_REGEX.allMatches(input);
   List<BigInt> resultList = [];
 
-  StringBuffer choicesString = StringBuffer();
-
+  EmbedBuilder embedBuilder;
   if (input == "none") {
-    choicesString.writeln("Your excluded role list has been cleared.");
+    embedBuilder = embeds.warningEmbed();
+    embedBuilder.description = "Your list of roles that Pyrite will ignore is now empty.";
     storage.removeGuildField(serverID: guildID, fieldName: "excludedRoles");
   } else if (matches.isNotEmpty) {
-    choicesString.writeln("Users with these roles will be ignored on scans & on join:");
+    embedBuilder = embeds.successEmbed();
+    StringBuffer choicesString = StringBuffer();
+
+    choicesString.writeln("Users with these role(s) will be ignored on scans & on join:");
     matches.forEach((element) {
       String match = element[0]!;
       resultList.add(BigInt.parse(match));
       choicesString.writeln("　- <@&$match>");
     });
+
+    embedBuilder.addField(name: "Your Changes", content: choicesString.toString());
     storage.updateGuildConfig(serverID: guildID, excludedRoles: resultList);
   } else {
-    choicesString.writeln(
-        "Your excluded role list has not been modified because no valid options were found (role ID(s) or `none`).");
+    embedBuilder = embeds.errorEmbed();
+    embedBuilder.description =
+        "Your list of roles Pyrite will ignore has not changed because no valid options were found (role ID(s) or `none`).";
   }
 
-  var embedBuilder = EmbedBuilder();
-  embedBuilder.title = "Success!";
-  embedBuilder.addField(name: "Your Changes", content: choicesString.toString());
-  embedBuilder.color = DiscordColor.fromHexString("69c273");
-  embedBuilder.timestamp = DateTime.now();
+  embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
 
   InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
     "embeds": [
