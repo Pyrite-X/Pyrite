@@ -1,5 +1,6 @@
 import 'package:onyx/onyx.dart' show JsonData;
 
+import '../structures/action.dart';
 import '../structures/rule.dart';
 import '../structures/server.dart';
 
@@ -47,6 +48,8 @@ Future<Server?> fetchGuildData(BigInt guildID, {bool withRules = false}) async {
   return result;
 }
 
+/// Fetches custom rule data from the cache and then the database. Empty list
+/// when there are no rules, or an issue occurred when getting the rules.
 Future<List<Rule>> fetchGuildRules(BigInt guildID) async {
   List<Rule> ruleList = [];
   JsonData ruleMap = await redis.getRules(guildID);
@@ -63,4 +66,59 @@ Future<List<Rule>> fetchGuildRules(BigInt guildID) async {
   }
 
   return ruleList;
+}
+
+/// Updates the saved guild config. On success it will clear any cached config.
+Future<bool> updateGuildConfig(
+    {required BigInt serverID,
+    BigInt? logchannelID,
+    bool? onJoinEvent,
+    int? fuzzyMatchPercent,
+    Action? phishingMatchAction,
+    bool? phishingMatchEnabled,
+    List<BigInt>? excludedRoles}) async {
+  bool success = await db.updateGuildConfig(
+      serverID: serverID,
+      logchannelID: logchannelID,
+      onJoinEvent: onJoinEvent,
+      fuzzyMatchPercent: fuzzyMatchPercent,
+      phishingMatchAction: phishingMatchAction,
+      phishingMatchEnabled: phishingMatchEnabled,
+      excludedRoles: excludedRoles);
+
+  if (success) {
+    redis.removeServerConfig(serverID);
+  }
+
+  return success;
+}
+
+/// Inserts a guild rule into the database. Clears all cached rules on success.
+Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) async {
+  bool success = await db.insertGuildRule(serverID: serverID, rule: rule);
+  if (success) {
+    redis.removeCachedRules(serverID);
+  }
+
+  return success;
+}
+
+/// Removes a [fieldName] from the database for a [serverID]. On success clears any cached server config.
+Future<bool> removeGuildField({required BigInt serverID, required String fieldName}) async {
+  var success = await db.removeGuildField(serverID: serverID, fieldName: fieldName);
+  if (success) {
+    redis.removeServerConfig(serverID);
+  }
+
+  return success;
+}
+
+/// Removes a rule from the database. On success clears all cached rules.
+Future<bool> removeGuildRule({required BigInt serverID, required String ruleID}) async {
+  bool success = await db.removeGuildRule(serverID: serverID, ruleID: ruleID);
+  if (success) {
+    redis.removeCachedRules(serverID);
+  }
+
+  return success;
 }
