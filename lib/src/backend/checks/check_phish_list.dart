@@ -31,19 +31,20 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
   String lowercaseUsername = context.user.username.toLowerCase();
   String? lowercaseNickname = context.user.nickname?.toLowerCase();
 
-  for (String name in phishingList) {
-    bool usernameCheck = name.toLowerCase() == lowercaseUsername;
-    bool nicknameCheck = name.toLowerCase() == lowercaseNickname;
+  for (String botName in phishingList) {
+    String lowerBotName = botName.toLowerCase();
+    bool usernameCheck = lowerBotName == lowercaseUsername;
+    bool nicknameCheck = lowerBotName == lowercaseNickname;
     if (usernameCheck || nicknameCheck) {
-      matchString = name;
+      matchString = botName;
       break;
     }
 
     if (fuzzyMatchPercent != null && fuzzyMatchPercent != 100) {
-      usernameCheck = lowercaseUsername.similarityTo(name.toLowerCase()) * 100 >= fuzzyMatchPercent;
-      nicknameCheck = lowercaseNickname.similarityTo(name.toLowerCase()) * 100 >= fuzzyMatchPercent;
+      usernameCheck = lowercaseUsername.similarityTo(lowerBotName) * 100 >= fuzzyMatchPercent;
+      nicknameCheck = lowercaseNickname.similarityTo(lowerBotName) * 100 >= fuzzyMatchPercent;
       if (usernameCheck || nicknameCheck) {
-        matchString = name;
+        matchString = botName;
         break;
       }
     }
