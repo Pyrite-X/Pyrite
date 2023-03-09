@@ -9,6 +9,9 @@ import '../../structures/action.dart';
 import '../../backend/storage.dart' as storage;
 import '../../utilities/base_embeds.dart' as embeds;
 
+final RegExp ID_REGEX = RegExp(r'(\d{17,})');
+
+/// Interaction entrypoint
 void configCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
 
@@ -30,6 +33,7 @@ void configCmd(Interaction interaction) async {
   }
 }
 
+/// Handle logic for configuring a log channel
 void configLogChannel(
     Interaction interaction, List<ApplicationCommandOption> options, HttpRequest request) async {
   BigInt guildID = interaction.guild_id!;
@@ -86,6 +90,7 @@ void configLogChannel(
   request.response.send(jsonEncode(response));
 }
 
+/// Handle logic for configuring the phishing list
 void configPhishingList(
     Interaction interaction, List<ApplicationCommandOption> options, HttpRequest request) async {
   BigInt guildID = interaction.guild_id!;
@@ -161,6 +166,7 @@ void configPhishingList(
   });
 }
 
+/// Handle logic for configuring the join event toggle
 void configJoinEvent(Interaction interaction, bool selection, HttpRequest request) async {
   InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
   await request.response.send(jsonEncode(response));
@@ -187,7 +193,7 @@ void configJoinEvent(Interaction interaction, bool selection, HttpRequest reques
   });
 }
 
-final RegExp ID_REGEX = RegExp(r'(\d{17,})');
+/// Handle logic for configuring roles that Pyrite will ignore
 void configExcludedRoles(Interaction interaction, String input, HttpRequest request) async {
   BigInt guildID = interaction.guild_id!;
 
