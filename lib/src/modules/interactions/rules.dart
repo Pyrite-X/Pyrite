@@ -59,8 +59,6 @@ void viewRules(Interaction interaction) async {
 }
 
 void addRule(Interaction interaction, List<ApplicationCommandOption> options) async {
-  /// TODO: Add premium checks to determine if more can be added or if at limit.
-  /// Also consider the checking for if a rule ID exists or not already.
   HttpRequest request = interaction.metadata["request"];
 
   InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
@@ -115,7 +113,8 @@ void addRule(Interaction interaction, List<ApplicationCommandOption> options) as
   bool success = await storage.insertGuildRule(serverID: interaction.guild_id!, rule: builtRule);
   if (!success) {
     embedBuilder = embeds.warningEmbed();
-    embedBuilder.description = "Your rule could not be created. This is likely because your defined pattern"
+    embedBuilder.description =
+        "Your rule could not be created. This is likely because the pattern `${builtRule.pattern}`"
         " matches the pattern of an already existing rule.";
   } else {
     embedBuilder = embeds.successEmbed();
