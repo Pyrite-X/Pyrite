@@ -13,23 +13,8 @@ Future<Server?> fetchGuildData(BigInt guildID, {bool withRules = false}) async {
 
   if (redisResponse.isNotEmpty) {
     result = Server.fromJson(data: redisResponse);
-    List<Rule> ruleList = [];
     if (withRules) {
-      // Try getting rules from cache.
-      JsonData cachedRules = await redis.getRules(guildID);
-      if (cachedRules.isEmpty) {
-        // Try getting rules from database.
-        var dbRules = await db.fetchGuildRules(serverID: guildID);
-        if (dbRules.isNotEmpty) {
-          dbRules.forEach((element) => ruleList.add(Rule.fromJson(element)));
-          // Cache the rules gotten.
-          redis.cacheRules(guildID, ruleList);
-        }
-        // No rules were found above.
-      } else {
-        cachedRules.forEach((key, value) => ruleList.add(Rule.fromJson(value)));
-      }
-      result.rules = ruleList;
+      result.rules = await fetchGuildRules(guildID);
     }
   } else {
     // Get data from database because cache didn't have the entry.
@@ -43,8 +28,14 @@ Future<Server?> fetchGuildData(BigInt guildID, {bool withRules = false}) async {
       }
       // By default fetchGuildData includes all rules.
       result = Server.fromJson(data: dbResponse);
+
+      // Cache server config and rules if withRules.
+      redis.setServerConfig(result);
+      if (withRules) {
+        redis.cacheRules(guildID, result.rules);
+      }
     } else {
-      // No entry for this guild, add one.
+      // No entry for this guild, add one. Don't cache it.
       var insertedData = await db.insertNewGuild(serverID: guildID);
       if (insertedData != null) {
         result = Server.fromJson(data: insertedData);
@@ -54,4 +45,22 @@ Future<Server?> fetchGuildData(BigInt guildID, {bool withRules = false}) async {
   }
 
   return result;
+}
+
+Future<List<Rule>> fetchGuildRules(BigInt guildID) async {
+  List<Rule> ruleList = [];
+  JsonData ruleMap = await redis.getRules(guildID);
+
+  if (ruleMap.isNotEmpty) {
+    ruleMap.forEach((key, value) => ruleList.add(Rule.fromJson(value)));
+  } else {
+    List<dynamic> data = await db.fetchGuildRules(serverID: guildID);
+    if (data.isNotEmpty) {
+      data.forEach((element) => ruleList.add(Rule.fromJson(element)));
+    }
+    // Cache the retrieved rules.
+    redis.cacheRules(guildID, ruleList);
+  }
+
+  return ruleList;
 }
