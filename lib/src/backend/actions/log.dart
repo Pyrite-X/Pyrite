@@ -4,9 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:nyxx/nyxx.dart' show EmbedBuilder, Snowflake;
 import 'package:onyx/onyx.dart' show JsonData;
 
-import '../../discord_http.dart';
-
+import '../storage.dart' as storage;
 import '../checks/check_result.dart';
+import '../../discord_http.dart';
 import '../../structures/action.dart';
 import '../../structures/server.dart';
 import '../../structures/user.dart';
@@ -61,12 +61,15 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
       name: "User Join Date",
       content: "${userCreationDate.month}/${userCreationDate.day}/${userCreationDate.year} (mm/dd/yyyy)");
 
-  await discordHTTP.sendLogMessage(channelID: logchannelID, payload: {
+  http.Response msgResponse = await discordHTTP.sendLogMessage(channelID: logchannelID, payload: {
     "embeds": [
       {...embed.build()}
     ],
     "allowed_mentions": {"parse": []}
   });
+  if (msgResponse.statusCode == 403 || msgResponse.statusCode == 404) {
+    storage.removeGuildField(serverID: guild.serverID, fieldName: "logchannelID");
+  }
 }
 
 String _actionToSuffix(Action action) => action.containsValue(ActionEnum.ban.value)
