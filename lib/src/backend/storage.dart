@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:onyx/onyx.dart' show JsonData;
 
 import '../structures/action.dart';
@@ -23,13 +25,14 @@ Future<Server?> fetchGuildData(BigInt guildID, {bool withRules = false}) async {
     // Get data from database because cache didn't have the entry.
     JsonData dbResponse = await db.fetchGuildData(serverID: guildID);
     if (dbResponse.isNotEmpty) {
-      // Remove custom rules if not withRules.
+      // Remove custom rules if not withRules bc fetchGuildData includes the entire
+      // rule list. Phishing list settings are technically a rule of type 1, so we
+      // can't just drop the rule list entirely.
       if (dbResponse["rules"] != null && !withRules) {
         List<dynamic> ruleList = dbResponse["rules"];
         ruleList.removeWhere((element) => element["type"] == 0);
         dbResponse["rules"] = ruleList;
       }
-      // By default fetchGuildData includes all rules.
       result = Server.fromJson(data: dbResponse);
 
       // Cache server config and rules if withRules.
@@ -57,7 +60,7 @@ Future<List<Rule>> fetchGuildRules(BigInt guildID) async {
   JsonData ruleMap = await redis.getRules(guildID);
 
   if (ruleMap.isNotEmpty) {
-    ruleMap.forEach((key, value) => ruleList.add(Rule.fromJson(value)));
+    ruleMap.forEach((key, value) => ruleList.add(Rule.fromJson(jsonDecode(value))));
   } else {
     List<dynamic> data = await db.fetchGuildRules(serverID: guildID);
     if (data.isNotEmpty) {
