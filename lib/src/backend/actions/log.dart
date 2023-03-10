@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:nyxx/nyxx.dart' show EmbedBuilder, Snowflake;
+import 'package:nyxx/nyxx.dart' show EmbedBuilder;
 import 'package:onyx/onyx.dart' show JsonData;
 
 import '../storage.dart' as storage;
@@ -17,56 +17,54 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
   Server guild = context.server;
   User user = context.user;
 
+  dynamic typedResult =
+      result.runtimeType == CheckPhishResult ? result as CheckPhishResult : result as CheckRulesResult;
+
   BigInt? logchannelID = context.server.logchannelID;
   // Consider complaining somewhere that there is no log channel set?
   if (logchannelID == null) return;
 
   EmbedBuilder embed = infoEmbed();
-  embed.addField(name: "User", content: "<@${user.userID}>", inline: true);
+
+  DiscordHTTP discordHTTP = DiscordHTTP();
+  http.Response userObject = await discordHTTP.getUser(userID: user.userID);
+  JsonData userData = json.decode(userObject.body);
+
+  embed.addField(
+      name: "User",
+      content: "<@${user.userID}>\n"
+          "**Name**: ${typedResult.userString}",
+      inline: true);
 
   String title = "";
   if (result.runtimeType == CheckPhishResult) {
-    title = "Phishing List Match | ${user.tag} ";
     var pma = guild.phishingMatchAction!;
-    embed.addField(name: "Action", content: _actionToSuffix(pma), inline: true);
-
-    CheckPhishResult phishResult = result as CheckPhishResult;
-    embed.addField(name: "Matching String", content: phishResult.matchingString, inline: true);
+    title = "Bot List Match | ${_actionToSuffix(pma)} | ${user.tag} ";
 
     embed.addField(
-        name: "Match Percentage",
-        content: "~${phishResult.fuzzyMatchPercent?.toStringAsPrecision(4)}%",
+        name: "Match",
+        content: "**Name**: ${typedResult.matchingString}\n"
+            "**Percentage**: ~${typedResult.fuzzyMatchPercent?.toStringAsPrecision(4)}%",
         inline: true);
   } else if (result.runtimeType == CheckRulesResult) {
-    title = "Rule match | ${user.tag}";
+    var rac = typedResult.rule!.action;
+    title = "Rule Match | ${_actionToSuffix(rac)}| ${user.tag}";
 
-    CheckRulesResult checkRulesResult = result as CheckRulesResult;
-    var rac = checkRulesResult.rule!.action;
-    embed.addField(name: "Action", content: _actionToSuffix(rac), inline: true);
-
-    embed.addField(name: "Rule ID", content: checkRulesResult.rule!.ruleID, inline: true);
-    embed.addField(name: "Rule Pattern", content: checkRulesResult.rule!.pattern, inline: true);
+    embed.addField(
+        name: "Rule",
+        content: "**ID**: ${typedResult.rule!.ruleID}\n**Pattern**: ${typedResult.rule!.pattern}",
+        inline: true);
   }
 
   embed.addFooter((footer) {
     footer.text = "User ID: ${user.userID}";
   });
 
-  DiscordHTTP discordHTTP = DiscordHTTP();
-  http.Response userObject = await discordHTTP.getUser(userID: user.userID);
-  JsonData userData = json.decode(userObject.body);
-
   String avatarUrl = "https://cdn.discordapp.com/avatars/${user.userID}/${userData['avatar']}.webp";
   embed.addAuthor((author) {
     author.iconUrl = avatarUrl;
     author.name = title;
   });
-  DateTime userCreationDate = Snowflake(user.userID).toSnowflakeEntity().createdAt;
-
-  embed.addField(
-      name: "User Join Date",
-      content: "<t:${(userCreationDate.millisecondsSinceEpoch / 1000).round()}:D>",
-      inline: true);
 
   http.Response msgResponse = await discordHTTP.sendLogMessage(channelID: logchannelID, payload: {
     "embeds": [
