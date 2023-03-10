@@ -66,7 +66,7 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
     author.name = title;
   });
 
-  http.Response msgResponse = await discordHTTP.sendLogMessage(channelID: logchannelID, payload: {
+  http.Response msgResponse = await discordHTTP.sendMessage(channelID: logchannelID, payload: {
     "embeds": [
       {...embed.build()}
     ],

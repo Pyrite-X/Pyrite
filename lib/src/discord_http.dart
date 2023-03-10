@@ -72,7 +72,7 @@ class DiscordHTTP {
     return await http.delete(uri, headers: headers);
   }
 
-  Future<http.Response> sendLogMessage({required BigInt channelID, required JsonData payload}) async {
+  Future<http.Response> sendMessage({required BigInt channelID, required JsonData payload}) async {
     UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/channels/$channelID/messages");
 
