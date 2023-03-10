@@ -49,7 +49,7 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
   }
 
   embed.addFooter((footer) {
-    footer.text = "User ID: ${user.userID} | Guild ID: ${guild.serverID}";
+    footer.text = "User ID: ${user.userID}";
   });
 
   DiscordHTTP discordHTTP = DiscordHTTP();

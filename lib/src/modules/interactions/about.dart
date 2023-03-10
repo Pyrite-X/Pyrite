@@ -28,7 +28,7 @@ void aboutCmd(Interaction interaction) async {
   embedBuilder.addFooter((footer) {
     footer.text = "Created by: Nub#8399 | Guild ID: ${interaction.guild_id}";
     footer.iconUrl =
-        "https://cdn.discordapp.com/avatars/156872400145874944/8443e3f62d931e469567d27526ce57d1.webp?size=2048";
+        "https://cdn.discordapp.com/avatars/156872400145874944/5c483c6328d43755bc4fa1f476d2e08e.webp";
   });
 
   InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {

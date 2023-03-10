@@ -281,12 +281,12 @@ void viewServerConfig(Interaction interaction, HttpRequest request) async {
         name: "__Phishing List__",
         content: "**Checking enabled?:** ${serverData.checkPhishingList}\n"
             "**Action(s):**\n${actionStr.toString()}"
-            "**Fuzzy matching percent:** ${serverData.fuzzyMatchPercent}%",
+            "**Match Percentage:** ${serverData.fuzzyMatchPercent}%",
         inline: true);
 
     if (serverData.excludedRoles.isNotEmpty) {
       StringBuffer output = StringBuffer();
-      serverData.excludedRoles.forEach((element) => output.writeln("<@&${element}> ($element)"));
+      serverData.excludedRoles.forEach((element) => output.writeln("<@&${element}>"));
       embedBuilder.addField(name: "__Excluded Roles__", content: output, inline: true);
     }
   }
