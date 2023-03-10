@@ -109,7 +109,7 @@ class DiscordHTTP {
 
     UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/guilds/$guildID/members");
-    builder.setQueryParameters({"limit": limit, "after": after});
+    builder.setQueryParameters({"limit": "$limit", "after": "$after"});
 
     var uri = builder.build();
     return await http.get(uri, headers: _buildHeaders());
@@ -119,7 +119,7 @@ class DiscordHTTP {
       {required BigInt guildID, required String query, int limit = 1}) async {
     UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/guilds/$guildID/members/search");
-    builder.setQueryParameters({"query": query, "limit": limit});
+    builder.setQueryParameters({"query": query, "limit": "$limit"});
 
     var uri = builder.build();
     return await http.get(uri, headers: _buildHeaders());
