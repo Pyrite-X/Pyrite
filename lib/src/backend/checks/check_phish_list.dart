@@ -52,9 +52,8 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
       usernameCheck = luSim * 100 >= fuzzyMatchPercent;
       nicknameCheck = lnSim * 100 >= fuzzyMatchPercent;
 
-      similarity = usernameCheck ? luSim * 100 : lnSim * 100;
-
       if (usernameCheck || nicknameCheck) {
+        similarity = usernameCheck ? luSim * 100 : lnSim * 100;
         matchString = botName;
         userString = usernameCheck ? context.user.username : context.user.nickname;
         break;
