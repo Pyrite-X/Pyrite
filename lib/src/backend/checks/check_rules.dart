@@ -17,6 +17,8 @@ Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
 
   User user = context.user;
   Rule? matchRule;
+  String? userString;
+
   for (Rule rule in ruleList) {
     if (rule.regex) {
       RegExp pattern = RegExp(rule.pattern);
@@ -28,6 +30,7 @@ Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
 
       if (usernameMatch != null || nicknameMatch != null) {
         matchRule = rule;
+        userString = (usernameMatch != null) ? user.username : user.nickname;
         break;
       }
     } else {
@@ -35,6 +38,7 @@ Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
       bool nicknameCheck = user.nickname?.toLowerCase() == rule.pattern.toLowerCase();
       if (usernameCheck || nicknameCheck) {
         matchRule = rule;
+        userString = usernameCheck ? user.username : user.nickname;
         break;
       }
     }
@@ -42,5 +46,5 @@ Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
 
   return (matchRule == null)
       ? CheckRulesResult(match: false)
-      : CheckRulesResult(match: true, rule: matchRule);
+      : CheckRulesResult(match: true, rule: matchRule, userString: userString);
 }

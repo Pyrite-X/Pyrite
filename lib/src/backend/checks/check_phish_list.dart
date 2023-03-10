@@ -23,6 +23,7 @@ void loadPhishingList() async {
 
 CheckPhishResult checkPhishingList(TriggerContext context) {
   String? matchString;
+  String? userString;
   if (context.server.checkPhishingList != null && !context.server.checkPhishingList!) {
     return CheckPhishResult(match: false);
   }
@@ -40,6 +41,7 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
     bool nicknameCheck = lowerBotName == lowercaseNickname;
     if (usernameCheck || nicknameCheck) {
       matchString = botName;
+      userString = usernameCheck ? context.user.username : context.user.nickname;
       break;
     }
 
@@ -49,14 +51,12 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
 
       usernameCheck = luSim * 100 >= fuzzyMatchPercent;
       nicknameCheck = lnSim * 100 >= fuzzyMatchPercent;
-      if (usernameCheck) {
-        similarity = (luSim * 100);
-      } else if (nicknameCheck) {
-        similarity = (lnSim * 100);
-      }
+
+      similarity = usernameCheck ? luSim * 100 : lnSim * 100;
 
       if (usernameCheck || nicknameCheck) {
         matchString = botName;
+        userString = usernameCheck ? context.user.username : context.user.nickname;
         break;
       }
     }
@@ -64,5 +64,6 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
 
   return (matchString == null)
       ? CheckPhishResult(match: false)
-      : CheckPhishResult(match: true, matchingString: matchString, fuzzyMatchPercent: similarity);
+      : CheckPhishResult(
+          match: true, matchingString: matchString, fuzzyMatchPercent: similarity, userString: userString);
 }
