@@ -41,14 +41,18 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
     var pma = guild.phishingMatchAction!;
     title = "Bot List Match | ${_actionToSuffix(pma)} | ${user.tag} ";
 
+    print(typedResult.fuzzyMatchPercent);
+    String percentage = (typedResult.fuzzyMatchPercent == 100)
+        ? "100"
+        : typedResult.fuzzyMatchPercent?.toStringAsPrecision(4);
     embed.addField(
         name: "Match",
         content: "**Name**: ${typedResult.matchingString}\n"
-            "**Percentage**: ~${typedResult.fuzzyMatchPercent?.toStringAsPrecision(4)}%",
+            "**Percentage**: ~$percentage%",
         inline: true);
   } else if (result.runtimeType == CheckRulesResult) {
     var rac = typedResult.rule!.action;
-    title = "Rule Match | ${_actionToSuffix(rac)}| ${user.tag}";
+    title = "Rule Match | ${_actionToSuffix(rac)} | ${user.tag}";
 
     embed.addField(
         name: "Rule",
