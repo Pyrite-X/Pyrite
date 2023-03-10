@@ -41,7 +41,6 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
     var pma = guild.phishingMatchAction!;
     title = "Bot List Match | ${_actionToSuffix(pma)} | ${user.tag} ";
 
-    print(typedResult.fuzzyMatchPercent);
     String percentage = (typedResult.fuzzyMatchPercent == 100)
         ? "100"
         : typedResult.fuzzyMatchPercent?.toStringAsPrecision(4);
