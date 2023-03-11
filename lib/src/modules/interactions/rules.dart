@@ -10,6 +10,10 @@ import '../../structures/rule.dart';
 import '../../backend/storage.dart' as storage;
 import '../../utilities/base_embeds.dart' as embeds;
 
+const MAX_PER_PAGE = 4;
+const PREV_PAGE_ID = "rl:prev";
+const NEXT_PAGE_ID = "rl:next";
+
 void rulesCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
 
@@ -41,10 +45,13 @@ void viewRules(Interaction interaction) async {
     embedBuilder = embeds.warningEmbed();
     description.writeln("You have no custom rules configured!");
     description.writeln("Get started with </rules add:1022784407704191009>!");
-  } else {
+  } else if (result.length <= MAX_PER_PAGE) {
     embedBuilder = embeds.infoEmbed();
     embedBuilder.title = "Your guild's custom rules:";
     result.forEach((element) => description.writeln(element.toString()));
+  } else {
+    _paginatedRuleView(interaction, result);
+    return;
   }
 
   embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
@@ -55,6 +62,138 @@ void viewRules(Interaction interaction) async {
     "embeds": [
       {...embedBuilder.build()}
     ]
+  });
+}
+
+void _paginatedRuleView(Interaction interaction, List<Rule> ruleList) async {
+  EmbedBuilder embedBuilder = embeds.infoEmbed();
+  embedBuilder.title = "Your guild's custom rules:";
+
+  int maxPages = (ruleList.length / MAX_PER_PAGE).ceil();
+  int currentPage = 0;
+
+  List<String> pages = [];
+
+  StringBuffer sb = StringBuffer();
+  for (int i = 0; i < maxPages; i++) {
+    int x = i * MAX_PER_PAGE;
+    int y = (x + MAX_PER_PAGE >= ruleList.length) ? ruleList.length : x + MAX_PER_PAGE;
+
+    Iterable<Rule> ruleRange = ruleList.getRange(x, y);
+    ruleRange.forEach((element) => sb.writeln(element.toString()));
+
+    pages.insert(i, sb.toString());
+    sb.clear();
+  }
+
+  embedBuilder.description = pages[0];
+  EmbedFooterBuilder footerBuilder = EmbedFooterBuilder();
+  footerBuilder.text = "Page ${currentPage + 1}/${pages.length}";
+
+  embedBuilder.footer = footerBuilder;
+
+  ActionRow buttonRow = ActionRow();
+  buttonRow
+      .addComponent(Button(style: ButtonStyle.primary, label: "<", disabled: true, custom_id: PREV_PAGE_ID));
+  buttonRow
+      .addComponent(Button(style: ButtonStyle.primary, label: ">", disabled: false, custom_id: NEXT_PAGE_ID));
+
+  DiscordHTTP discordHTTP = DiscordHTTP();
+  var bleh = await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+    "embeds": [
+      {...embedBuilder.build()}
+    ],
+    "components": [
+      {...buttonRow.toJson()}
+    ]
+  });
+
+  var thisStream = OnyxStreams.componentStream.where((event) =>
+      event.guild_id == interaction.guild_id &&
+      event.channel_id == interaction.channel_id &&
+      event.member!["user"]["id"] == interaction.member!["user"]["id"]);
+
+  thisStream = thisStream.timeout(Duration(minutes: 1), onTimeout: (sink) async {
+    buttonRow.components.forEach((element) {
+      (element as Button).disabled = true;
+    });
+
+    discordHTTP.editFollowupMessage(
+        interactionToken: interaction.token,
+        messageID: BigInt.parse(jsonDecode(bleh.body)["id"]),
+        payload: {
+          "embeds": [
+            {...embedBuilder.build()}
+          ],
+          "components": [
+            {...buttonRow.toJson()}
+          ]
+        });
+    sink.close();
+    return;
+  });
+
+  thisStream.listen((event) async {
+    MessageComponentData data = event.data! as MessageComponentData;
+    HttpRequest request = event.metadata["request"];
+    InteractionResponse response = InteractionResponse(InteractionResponseType.update_message, {});
+
+    switch (data.custom_id) {
+      case (PREV_PAGE_ID):
+        {
+          currentPage = (currentPage - 1 < 0) ? 0 : currentPage - 1;
+          if (currentPage == 0) {
+            (buttonRow.components[0] as Button).disabled = true;
+            (buttonRow.components[1] as Button).disabled = false;
+          } else {
+            (buttonRow.components[0] as Button).disabled = false;
+            (buttonRow.components[1] as Button).disabled = false;
+          }
+
+          embedBuilder.description = pages[currentPage];
+          footerBuilder.text = "Page ${currentPage + 1}/${pages.length}";
+          response.data = {
+            "embeds": [
+              {...embedBuilder.build()}
+            ],
+            "components": [
+              {...buttonRow.toJson()}
+            ]
+          };
+
+          await request.response.send(jsonEncode(response));
+        }
+        break;
+
+      case (NEXT_PAGE_ID):
+        {
+          currentPage = (currentPage + 1 >= maxPages) ? maxPages : currentPage + 1;
+          if (currentPage + 1 == maxPages) {
+            (buttonRow.components[0] as Button).disabled = false;
+            (buttonRow.components[1] as Button).disabled = true;
+          } else {
+            (buttonRow.components[0] as Button).disabled = false;
+            (buttonRow.components[1] as Button).disabled = false;
+          }
+
+          embedBuilder.description = pages[currentPage];
+          footerBuilder.text = "Page ${currentPage + 1}/${pages.length}";
+          response.data = {
+            "embeds": [
+              {...embedBuilder.build()}
+            ],
+            "components": [
+              {...buttonRow.toJson()}
+            ]
+          };
+
+          await request.response.send(jsonEncode(response));
+        }
+        break;
+
+      default:
+        break;
+    }
   });
 }
 
