@@ -21,6 +21,8 @@ import 'src/modules/interactions/rules.dart' as rules;
 import 'src/modules/interactions/scan.dart' as scan;
 import 'src/modules/interactions/transfer.dart' as transfer;
 
+import 'src/utilities/ignore_exceptions.dart' as IE;
+
 class Pyrite {
   final String token;
   final String publicKey;
@@ -83,9 +85,8 @@ class Pyrite {
     print(_styleLogOutput(record));
   }
 
-  void startGateway() async {
-    gateway = NyxxFactory.createNyxxWebsocket(token, GatewayIntents.guildMembers | GatewayIntents.guilds)
-      ..registerPlugin(CliIntegration());
+  void startGateway({bool ignoreExceptions = false, bool handleSignals = false}) async {
+    gateway = NyxxFactory.createNyxxWebsocket(token, GatewayIntents.guildMembers | GatewayIntents.guilds);
 
     gateway.eventsWs.onGuildMemberAdd.listen((event) => on_join_event.on_join_event(event));
     gateway.eventsWs.onGuildMemberUpdate.listen((event) => on_member_update.om_member_update(event));
@@ -97,10 +98,12 @@ class Pyrite {
           activity: ActivityBuilder("for suspicious users...", ActivityType.watching)));
     });
 
+    if (ignoreExceptions) IE.ignoreExceptions();
+
     await gateway.connect();
   }
 
-  void startServer() async {
+  void startServer({bool ignoreExceptions = false, bool handleSignals = false}) async {
     onyx = Onyx();
     onyx.registerAppCommandHandler("about", about.aboutCmd);
     onyx.registerAppCommandHandler("config", config.configCmd);
@@ -128,5 +131,7 @@ class Pyrite {
 
     /// Have the queue check status and/or start a server scan every minute.
     Timer.periodic(Duration(minutes: 1), ((timer) => scan.queueHandler()));
+
+    if (ignoreExceptions) IE.ignoreExceptions();
   }
 }
