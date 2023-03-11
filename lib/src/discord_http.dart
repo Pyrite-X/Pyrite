@@ -36,13 +36,13 @@ class DiscordHTTP {
   }
 
   /// Build the headers that will be sent in the REST request.
-  Map<String, String> _buildHeaders() {
-    return {
-      "Accept": "application/json",
-      "Authorization": _authorizationStr,
-      "User-Agent": _userAgent,
-      "Content-Type": "application/json"
-    };
+  Map<String, String> _buildHeaders({bool includeToken = true}) {
+    var result = {"Accept": "application/json", "User-Agent": _userAgent, "Content-Type": "application/json"};
+    if (includeToken) {
+      result["Authorization"] = _authorizationStr;
+    }
+
+    return result;
   }
 
   Future<http.Response> banUser(
@@ -132,6 +132,15 @@ class DiscordHTTP {
 
     var uri = builder.build();
     return await http.post(uri, headers: _buildHeaders(), body: jsonEncode(payload));
+  }
+
+  Future<http.Response> editFollowupMessage(
+      {required String interactionToken, required BigInt messageID, required JsonData payload}) async {
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
+    builder.setPath("/api/$apiVersion/webhooks/$applicationID/$interactionToken/messages/$messageID");
+
+    var uri = builder.build();
+    return await http.patch(uri, headers: _buildHeaders(), body: jsonEncode(payload));
   }
 }
 
