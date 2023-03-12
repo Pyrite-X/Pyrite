@@ -1,0 +1,3 @@
+name = "invite"
+description = "Get an invite link for the bot!"
+type = 1
