@@ -11,6 +11,7 @@ void main() async {
     'commands/about.toml',
     'commands/config.toml',
     'commands/help.toml',
+    'commands/invite.toml',
     'commands/rules.toml',
     'commands/scan.toml'
   ]);
