@@ -16,6 +16,7 @@ import 'src/modules/gateway/on_member_update.dart' as on_member_update;
 import 'src/modules/interactions/about.dart' as about;
 import 'src/modules/interactions/config.dart' as config;
 import 'src/modules/interactions/help.dart' as help;
+import 'src/modules/interactions/invite.dart' as invite;
 import 'src/modules/interactions/redeem.dart' as redeem;
 import 'src/modules/interactions/rules.dart' as rules;
 import 'src/modules/interactions/scan.dart' as scan;
@@ -108,10 +109,11 @@ class Pyrite {
     onyx.registerAppCommandHandler("about", about.aboutCmd);
     onyx.registerAppCommandHandler("config", config.configCmd);
     onyx.registerAppCommandHandler("help", help.helpCmd);
-    onyx.registerAppCommandHandler("redeem", redeem.redeemCmd);
+    onyx.registerAppCommandHandler("invite", invite.helpCmd);
+    // onyx.registerAppCommandHandler("redeem", redeem.redeemCmd);
     onyx.registerAppCommandHandler("rules", rules.rulesCmd);
     onyx.registerAppCommandHandler("scan", scan.scanCmd);
-    onyx.registerAppCommandHandler("transfer", transfer.transferCmd);
+    // onyx.registerAppCommandHandler("transfer", transfer.transferCmd);
 
     Alfred alfred = Alfred();
     alfred.logWriter = _interceptAlfredLogs;
