@@ -80,6 +80,46 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
   }
 }
 
+Map<BigInt, StringBuffer> logBufferMap = Map();
+
+Future<void> writeScanLog({required TriggerContext context, required CheckResult result}) async {
+  Server guild = context.server;
+  User user = context.user;
+
+  dynamic typedResult =
+      result.runtimeType == CheckPhishResult ? result as CheckPhishResult : result as CheckRulesResult;
+
+  StringBuffer sb = logBufferMap.putIfAbsent(context.server.serverID, () => StringBuffer());
+
+  if (typedResult is CheckPhishResult) {
+    var action = guild.phishingMatchAction!;
+    String percentage = (typedResult.fuzzyMatchPercent == 100)
+        ? "100"
+        : typedResult.fuzzyMatchPercent!.toStringAsPrecision(4);
+
+    sb.writeln("${_actionToSuffix(action)} - ${user.tag} (${user.userID}) - "
+        "Username/Nickname matched \"${typedResult.matchingString}\" from the bot list "
+        "as a ~$percentage% match.");
+  } else if (typedResult is CheckRulesResult) {
+    var action = typedResult.rule!.action;
+
+    sb.writeln("${_actionToSuffix(action)} - ${user.tag} (${user.userID}) - "
+        "Username/Nickname matched Rule \"${typedResult.rule!.ruleID}\" with "
+        "the pattern ${typedResult.rule!.pattern}.");
+  }
+}
+
+String dumpServerScanLog({required BigInt serverID}) {
+  StringBuffer? outputBuffer = logBufferMap[serverID];
+  String output = "";
+  if (outputBuffer != null) {
+    output = outputBuffer.toString();
+  }
+
+  logBufferMap.remove(serverID);
+  return output;
+}
+
 String _actionToSuffix(Action action) => action.containsValue(ActionEnum.ban.value)
     ? "Banned"
     : action.containsValue(ActionEnum.kick.value)

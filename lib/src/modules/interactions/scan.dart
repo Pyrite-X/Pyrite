@@ -7,6 +7,7 @@ import 'package:nyxx/nyxx.dart';
 import 'package:onyx/onyx.dart';
 
 import '../../discord_http.dart';
+import '../../backend/actions/log.dart' as log;
 import '../../backend/storage.dart' as storage;
 import '../../structures/scan_types.dart';
 import '../../structures/server.dart';
@@ -132,8 +133,6 @@ void queueHandler() async {
 void scanServer(Server server) async {
   BigInt lastUserID = BigInt.zero;
   DiscordHTTP discordHTTP = DiscordHTTP();
-  bool keepScanning = true;
-  StringBuffer logBuffer = StringBuffer();
 
   TriggerContextBuilder contextBuilder = TriggerContextBuilder();
   EventSource eventSource =
@@ -142,7 +141,7 @@ void scanServer(Server server) async {
   contextBuilder.setEventSource(eventSource);
   contextBuilder.setServer(server);
 
-  do {
+  await Future.doWhile(() async {
     http.Response getMembers =
         await discordHTTP.listGuildMembers(guildID: runningServer!.serverID, limit: 1000, after: lastUserID);
 
@@ -159,40 +158,52 @@ void scanServer(Server server) async {
       if (getMembers.statusCode == 429) {
         // log that there was some issue with getting the members - cancel the scan.
         runningServer = null;
-        return;
+        return false;
       }
     } else if (getMembers.statusCode == 408) {
       print("something weird happened when getting guild members?");
     }
 
     Iterable<dynamic> body = jsonDecode(getMembers.body);
-    for (var element in body) {
+    await Future.forEach(body, (element) {
       User? user = _handleMember(element);
-      if (user == null) {
-        /// 'user' is a bot account, don't act on it.
-        continue;
+      if (user != null) {
+        contextBuilder.setUser(user);
+        check.checkUser(contextBuilder.build());
+        lastUserID = user.userID;
       }
-
-      contextBuilder.setUser(user);
-      check.checkUser(contextBuilder.build());
-      lastUserID = user.userID;
-    }
+    });
 
     if (body.length < 1000) {
-      keepScanning = false;
+      return false;
+    } else {
+      return true;
     }
-  } while (keepScanning);
+  }).then((value) async {
+    EmbedBuilder embedBuilder = embeds.infoEmbed();
+    embedBuilder.description = "Your server has finished scanning!";
+    embedBuilder.addFooter((footer) {
+      footer.text = "Guild ID: ${server.serverID}";
+    });
 
-  EmbedBuilder embedBuilder = embeds.infoEmbed();
-  embedBuilder.description = "Your server has finished scanning!";
-  embedBuilder.addFooter((footer) {
-    footer.text = "Guild ID: ${server.serverID}";
-  });
+    String logOutput = log.dumpServerScanLog(serverID: runningServer!.serverID);
+    if (logOutput.isNotEmpty) {
+      var logOutputFile = http.MultipartFile.fromString("result", logOutput, filename: "result.txt");
 
-  await discordHTTP.sendMessage(channelID: runningServer!.channelID, payload: {
-    "embeds": [
-      {...embedBuilder.build()}
-    ]
+      await discordHTTP
+          .sendMessageWithFile(channelID: runningServer!.channelID, file: logOutputFile, payload: {
+        "embeds": [
+          {...embedBuilder.build()}
+        ]
+      });
+    } else {
+      embedBuilder.description = embedBuilder.description! + "\nNo matches were found.";
+      await discordHTTP.sendMessage(channelID: runningServer!.channelID, payload: {
+        "embeds": [
+          {...embedBuilder.build()}
+        ]
+      });
+    }
   });
 
   runningServer = null;
@@ -208,7 +219,7 @@ User? _handleMember(JsonData member) {
 
   userBuilder.username = userJson["username"];
   userBuilder.nickname = member["nick"];
-  userBuilder.tag = "${userBuilder.username}${userJson['discriminator']}";
+  userBuilder.tag = "${userBuilder.username}#${userJson['discriminator']}";
   userBuilder.userID = BigInt.parse("${userJson['id']}");
   List<BigInt> roleList = [];
   (member["roles"] as List<dynamic>).forEach((element) => roleList.add(BigInt.parse("$element")));

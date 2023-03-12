@@ -6,7 +6,7 @@ import '../checks/check_result.dart';
 
 import 'ban.dart';
 import 'kick.dart';
-import 'log.dart';
+import 'log.dart' as log;
 
 void runActions(TriggerContext context, CheckResult result) async {
   //If batching log msgs someday for scan cmd, need this
@@ -26,5 +26,11 @@ void triggerActions(Action action, TriggerContext context, CheckResult result) {
 
   if (action.containsValue(ActionEnum.ban.value)) banUser(context: context, result: result);
 
-  if (action.containsValue(ActionEnum.log.value)) sendLogMessage(context: context, result: result);
+  if (action.containsValue(ActionEnum.log.value)) {
+    if (context.eventSource.sourceType == EventSourceType.join) {
+      log.sendLogMessage(context: context, result: result);
+    } else if (context.eventSource.sourceType == EventSourceType.scan) {
+      log.writeScanLog(context: context, result: result);
+    }
+  }
 }

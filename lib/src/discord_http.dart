@@ -80,6 +80,19 @@ class DiscordHTTP {
     return await http.post(uri, headers: _buildHeaders(), body: jsonEncode(payload));
   }
 
+  Future<http.StreamedResponse> sendMessageWithFile(
+      {required BigInt channelID, required http.MultipartFile file, JsonData? payload}) async {
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
+    builder.setPath("/api/$apiVersion/channels/$channelID/messages");
+
+    var uri = builder.build();
+    var request = http.MultipartRequest("POST", uri)..files.add(file);
+    request.fields.addAll({"payload_json": jsonEncode(payload)});
+    request.headers.addAll(_buildHeaders());
+
+    return await request.send();
+  }
+
   Future<http.Response> getUser({required BigInt userID}) async {
     UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL);
     builder.setPath("/api/$apiVersion/users/$userID");
