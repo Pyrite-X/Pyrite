@@ -7,8 +7,9 @@ import 'package:nyxx/nyxx.dart';
 import 'package:onyx/onyx.dart';
 
 import '../../discord_http.dart';
-import '../../backend/actions/log.dart' as log;
+import '../../backend/cache.dart' show decreaseScanCount;
 import '../../backend/storage.dart' as storage;
+import '../../backend/actions/log.dart' as log;
 import '../../structures/scan_types.dart';
 import '../../structures/server.dart';
 import '../../structures/user.dart';
@@ -127,6 +128,7 @@ void queueHandler() async {
     ]
   });
 
+  decreaseScanCount(server.serverID);
   scanServer(serverObject);
 }
 
