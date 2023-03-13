@@ -7,7 +7,13 @@ import 'package:pyrite/src/backend/database.dart';
 import 'package:pyrite/src/backend/cache.dart';
 
 void main(List<String> arguments) async {
-  var env = DotEnv(includePlatformEnvironment: true)..load(['bin/.env']);
+  var env = DotEnv(includePlatformEnvironment: true);
+  try {
+    env.load(['bin/.env']);
+  } on UnsupportedError {
+    env.load();
+  }
+
   final BigInt appID = BigInt.parse(env["APP_ID"]!);
   final String publicKey = env["PUB_KEY"]!;
   final String token = env["TOKEN"]!;
@@ -19,7 +25,11 @@ void main(List<String> arguments) async {
 
   /// Initialize DiscordHTTP with custom settings
   DiscordHTTP(
-      authToken: token, applicationID: appID, discordURL: env["DISCORD_URL"], scheme: env["DISCORD_SCHEME"]);
+      authToken: token,
+      applicationID: appID,
+      discordURL: env["DISCORD_URL"],
+      scheme: env["DISCORD_SCHEME"],
+      port: int.tryParse(env["PORT"]!));
 
   /// Start the database connection.
   await DatabaseClient.create(initializing: true, uri: env["MONGO_URI"]);
