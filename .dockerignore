@@ -1,0 +1,17 @@
+.dockerignore
+Dockerfile
+build/
+.dart_tool/
+.git/
+.github/
+.gitignore
+.packages
+bin/.env
+bin/example.env
+README.md
+docker-compose.yml
+bin_proto/
+.vscode/
+LICENSE.txt
+pubspec.lock
+bin/pyrite_cmds.dart
