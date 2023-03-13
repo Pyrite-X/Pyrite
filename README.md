@@ -26,7 +26,7 @@ Before you can run the bot, you will need a MongoDB instance that you can connec
 Then do `docker compose up -d` which will start downloading the necessary containers, and building the ones that need to be built. From there, the bot should be fully self contained and running! Other than for the database, which you will need a MongoDB instance for.
 
 Pyrite receives interactions via HTTP POST requests, rather than over the gateway. Because of this, you will need to have your port for the `pyrite_http` container published. This port by default is 8008, but can be changed by modifying `bin/pyrite_http.dart` and the `docker-compose.yml` accordingly. 
-> Interactions are recieved on `/ws` rather than root, so for example `127.0.0.1:8008/ws`, if there was a domain it would be `example.com:8008/ws`, would be the URL to put into the endpoint URL on Discord.
+> Interactions are received on `/ws` rather than root, so for example `127.0.0.1:8008/ws`, if there was a domain it would be `example.com:8008/ws`, would be the URL to put into the endpoint URL on Discord.
 
 ---
 ### Donations
