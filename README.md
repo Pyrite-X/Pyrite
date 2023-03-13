@@ -30,6 +30,6 @@ Pyrite receives interactions via HTTP POST requests, rather than over the gatewa
 
 ---
 ### Donations
-If Pyrite has helped you or your server, please send a donation my way! <br> I have no integrations for payments or premium upgrades at this time, so any money will give me motivation to keep the bot up-to-date for all to use!
+If Pyrite has helped you or your server, please send a donation my way! <br> I have no integrations for payments or premium upgrades at this time, so any money will give me motivation to keep the bot up-to-date for all to use! (Along with my desire to simply improve the community, but money helps me cover hosting costs!)
 
 There are no methods at this time to donate though, so unless you're really keen on donating, please hold onto your money lol.
