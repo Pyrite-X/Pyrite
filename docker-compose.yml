@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  gateway:
+    container_name: pyrite_gateway
+    hostname: gateway
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    pull_policy: build
+    depends_on:
+      - redis
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    env_file:
+      - stack.env
+
+  webserver:
+    container_name: pyrite_http
+    hostname: webserver
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: Dockerfile.http
+    pull_policy: build
+    ports:
+      - "8008:8080"
+    depends_on:
+      - redis
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    env_file:
+      - stack.env
+
+  redis:
+    container_name: pyrite_redis
+    hostname: redis
+    restart: on-failure
+    image: redis:7.0-alpine
+    volumes:
+      - /redis_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    env_file:
+      - stack.env
+    command: /bin/sh -c "redis-server --save 60 1 --loglevel warning --requirepass $$REDIS_PASS"
+
+  proxy:
+    container_name: pyrite_nirn
+    hostname: nirn
+    restart: unless-stopped
+    image: ghcr.io/germanoeich/nirn-proxy:v1.3.2
+    env_file:
+      - stack.env
