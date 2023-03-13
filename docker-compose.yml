@@ -27,7 +27,7 @@ services:
       dockerfile: Dockerfile.http
     pull_policy: build
     ports:
-      - "8008:8080"
+      - "8008:8008"
     depends_on:
       - redis
     deploy:

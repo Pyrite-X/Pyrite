@@ -39,5 +39,5 @@ void main(List<String> arguments) async {
 
   /// Start bot features.
   Pyrite bot = Pyrite(token: token, publicKey: publicKey, appID: appID);
-  bot.startServer(ignoreExceptions: true);
+  bot.startServer(ignoreExceptions: true, serverPort: 8008);
 }

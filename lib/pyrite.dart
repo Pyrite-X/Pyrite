@@ -104,7 +104,7 @@ class Pyrite {
     await gateway.connect();
   }
 
-  void startServer({bool ignoreExceptions = false, bool handleSignals = false}) async {
+  void startServer({bool ignoreExceptions = false, bool handleSignals = false, int serverPort = 8080}) async {
     onyx = Onyx();
     onyx.registerAppCommandHandler("about", about.aboutCmd);
     onyx.registerAppCommandHandler("config", config.configCmd);
@@ -119,13 +119,15 @@ class Pyrite {
     alfred.logWriter = _interceptAlfredLogs;
 
     WebServer server = WebServer(alfred, publicKey);
-    server.startServer(dispatchFunc: ((p0) {
-      var currentMetadata = p0.metadata;
-      Map<String, dynamic> newMetadata = {"request": currentMetadata, "pyrite": this};
+    server.startServer(
+        dispatchFunc: ((p0) {
+          var currentMetadata = p0.metadata;
+          Map<String, dynamic> newMetadata = {"request": currentMetadata, "pyrite": this};
 
-      p0.setMetadata(newMetadata);
-      onyx.dispatchInteraction(p0);
-    }));
+          p0.setMetadata(newMetadata);
+          onyx.dispatchInteraction(p0);
+        }),
+        port: serverPort);
 
     /// Load the list on init, then update every 30 minutes.
     loadPhishingList();
