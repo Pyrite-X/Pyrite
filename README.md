@@ -29,4 +29,8 @@ Then do `docker compose up -d` which will start downloading the necessary contai
 Pyrite receives interactions via HTTP POST requests, rather than over the gateway. Because of this, you will need to have your port for the `pyrite_http` container published. This port by default is 8008, but can be changed by modifying `bin/pyrite_http.dart` and the `docker-compose.yml` accordingly. 
 > Interactions are recieved on `/ws` rather than root, so for example `127.0.0.1:8008/ws`, if there was a domain it would be `example.com:8008/ws`, would be the URL to put into the endpoint URL on Discord.
 
+---
+### Donations
+If Pyrite has helped you or your server, please send a donation my way! <br> I have no integrations for payments or premium upgrades at this time, so any money will give me motivation to keep the bot up-to-date for all to use!
 
+There are no methods at this time to donate though, so unless you're really keen on donating, please hold onto your money lol.
