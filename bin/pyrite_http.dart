@@ -24,12 +24,17 @@ void main(List<String> arguments) async {
   });
 
   /// Initialize DiscordHTTP with custom settings
+  int? proxyPort;
+  if (env["PORT"] != null) {
+    proxyPort = int.tryParse(env["PORT"]!);
+  }
+
   DiscordHTTP(
       authToken: token,
       applicationID: appID,
       discordURL: env["DISCORD_URL"],
       scheme: env["DISCORD_SCHEME"],
-      port: int.tryParse(env["PORT"]!));
+      port: proxyPort);
 
   /// Start the database connection.
   await DatabaseClient.create(initializing: true, uri: env["MONGO_URI"]);
