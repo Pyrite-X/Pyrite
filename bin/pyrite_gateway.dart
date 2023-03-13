@@ -7,7 +7,7 @@ import 'package:pyrite/src/backend/database.dart';
 import 'package:pyrite/src/backend/cache.dart';
 
 void main(List<String> arguments) async {
-  var env = DotEnv()..load(['bin/.env']);
+  var env = DotEnv(includePlatformEnvironment: true)..load(['bin/.env']);
   final BigInt appID = BigInt.parse(env["APP_ID"]!);
   final String publicKey = env["PUB_KEY"]!;
   final String token = env["TOKEN"]!;
@@ -29,6 +29,5 @@ void main(List<String> arguments) async {
 
   /// Start bot features.
   Pyrite bot = Pyrite(token: token, publicKey: publicKey, appID: appID);
-  bot.startServer(ignoreExceptions: true, handleSignals: false);
-  bot.startGateway();
+  bot.startGateway(ignoreExceptions: true);
 }
