@@ -37,7 +37,6 @@ void viewRules(Interaction interaction) async {
 
   List<Rule> result = await storage.fetchGuildRules(interaction.guild_id!);
 
-  ///TODO: Add pagination capabilities.
   late EmbedBuilder embedBuilder;
   StringBuffer description = StringBuffer();
 
@@ -99,7 +98,7 @@ void _paginatedRuleView(Interaction interaction, List<Rule> ruleList) async {
       .addComponent(Button(style: ButtonStyle.primary, label: ">", disabled: false, custom_id: NEXT_PAGE_ID));
 
   DiscordHTTP discordHTTP = DiscordHTTP();
-  var bleh = await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+  var followupMessage = await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
     "embeds": [
       {...embedBuilder.build()}
     ],
@@ -120,7 +119,7 @@ void _paginatedRuleView(Interaction interaction, List<Rule> ruleList) async {
 
     discordHTTP.editFollowupMessage(
         interactionToken: interaction.token,
-        messageID: BigInt.parse(jsonDecode(bleh.body)["id"]),
+        messageID: BigInt.parse(jsonDecode(followupMessage.body)["id"]),
         payload: {
           "embeds": [
             {...embedBuilder.build()}
