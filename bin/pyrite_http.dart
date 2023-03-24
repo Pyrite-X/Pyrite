@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dotenv/dotenv.dart';
 import 'package:logging/logging.dart';
 
@@ -44,5 +46,15 @@ void main(List<String> arguments) async {
 
   /// Start bot features.
   Pyrite bot = Pyrite(token: token, publicKey: publicKey, appID: appID);
-  bot.startServer(ignoreExceptions: true, serverPort: 8008);
+
+  String? certPath = env["CERT_BASE_PATH"];
+  if (certPath != null) {
+    SecurityContext securityContext = SecurityContext();
+    securityContext.useCertificateChain("$certPath/fullchain.pem");
+    securityContext.usePrivateKey("$certPath/privkey.pem");
+
+    bot.startServer(ignoreExceptions: true, serverPort: 8008, securityContext: securityContext);
+  } else {
+    bot.startServer(ignoreExceptions: true, serverPort: 8008);
+  }
 }

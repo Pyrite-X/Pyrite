@@ -13,7 +13,10 @@ class WebServer {
 
   WebServer(this.server, this.PUB_KEY);
 
-  Future<void> startServer({required Function(Interaction) dispatchFunc, int port = 8080}) async {
+  Future<void> startServer(
+      {required Function(Interaction) dispatchFunc,
+      int port = 8080,
+      SecurityContext? securityContext}) async {
     server.get("/ws", (req, res) => "You're not supposed to \"GET\" this endpoint... But it's working!");
 
     server.post("/ws", (req, res) async {
@@ -30,7 +33,11 @@ class WebServer {
       }
     }, middleware: [_validateDiscordWebhook]);
 
-    await server.listen(port);
+    if (securityContext != null) {
+      await server.listenSecure(securityContext: securityContext, port: port);
+    } else {
+      await server.listen(port);
+    }
   }
 
   /// Middleware logic to validate that the incoming webhooks are from Discord.

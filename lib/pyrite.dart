@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:alfred/alfred.dart';
 import 'package:ansicolor/ansicolor.dart';
@@ -104,7 +105,11 @@ class Pyrite {
     await gateway.connect();
   }
 
-  void startServer({bool ignoreExceptions = false, bool handleSignals = false, int serverPort = 8080}) async {
+  void startServer(
+      {bool ignoreExceptions = false,
+      bool handleSignals = false,
+      int serverPort = 8080,
+      SecurityContext? securityContext}) async {
     onyx = Onyx();
     onyx.registerAppCommandHandler("about", about.aboutCmd);
     onyx.registerAppCommandHandler("config", config.configCmd);
@@ -127,7 +132,8 @@ class Pyrite {
           p0.setMetadata(newMetadata);
           onyx.dispatchInteraction(p0);
         }),
-        port: serverPort);
+        port: serverPort,
+        securityContext: securityContext);
 
     /// Load the list on init, then update every 30 minutes.
     loadPhishingList();
