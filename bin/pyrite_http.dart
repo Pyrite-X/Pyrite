@@ -50,8 +50,11 @@ void main(List<String> arguments) async {
   String? certPath = env["CERT_BASE_PATH"];
   if (certPath != null) {
     SecurityContext securityContext = SecurityContext();
-    securityContext.useCertificateChain("$certPath/fullchain.pem");
-    securityContext.usePrivateKey("$certPath/privkey.pem");
+    String chainPath = Platform.script.resolve("$certPath/fullchain.pem").toFilePath();
+    String privKeyPath = Platform.script.resolve("$certPath/privkey.pem").toFilePath();
+
+    securityContext.useCertificateChain(chainPath);
+    securityContext.usePrivateKey(privKeyPath);
 
     bot.startServer(ignoreExceptions: true, serverPort: 8008, securityContext: securityContext);
   } else {
