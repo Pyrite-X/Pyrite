@@ -1,8 +1,11 @@
+import 'package:logging/logging.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:onyx/onyx.dart' show JsonData;
 
 import '../structures/action.dart';
 import '../structures/rule.dart';
+
+Logger _logger = Logger("Database");
 
 class DatabaseClient {
   static final DatabaseClient _instance = DatabaseClient._init();
@@ -13,6 +16,7 @@ class DatabaseClient {
 
   static Future<DatabaseClient> create({bool initializing = false, String? uri}) async {
     if (initializing) {
+      _logger.info("Initializing connection to the database.");
       if (uri != null) {
         _instance.uri = uri;
         _instance.client = await Db.create(uri);
@@ -22,9 +26,11 @@ class DatabaseClient {
     }
 
     if (!_instance.client.isConnected) {
+      _logger.info("Opening connection to the database.");
       await _instance.client.open();
     }
 
+    _logger.info("Connected to the database!");
     return _instance;
   }
 
@@ -33,6 +39,7 @@ class DatabaseClient {
       await _instance.client.close();
       _instance.client = await Db.create(_instance.uri);
       await _instance.client.open();
+      _logger.warning("Reconnected to the database.");
     }
   }
 }
