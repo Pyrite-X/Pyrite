@@ -23,7 +23,7 @@ void banUser({required TriggerContext context, CheckResult? result}) async {
         "the pattern ${result.rule!.pattern}.";
   }
 
-  _logger.info("${user.tag}|${user.nickname} (${user.userID}) was kicked from ${context.server.serverID}");
+  _logger.info("${user.tag} | ${user.nickname} (${user.userID}) was kicked from ${context.server.serverID}");
 
   if (logReason.isEmpty) {
     await DiscordHTTP()
