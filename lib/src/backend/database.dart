@@ -14,6 +14,10 @@ class DatabaseClient {
   late final Db client;
   late final String uri;
 
+  factory DatabaseClient() {
+    return _instance;
+  }
+
   static Future<DatabaseClient> create({bool initializing = false, String? uri}) async {
     if (initializing) {
       _logger.info("Initializing connection to the database.");
@@ -44,7 +48,7 @@ class DatabaseClient {
   }
 }
 
-Future<DatabaseClient> _dbClass = DatabaseClient.create(initializing: false);
+DatabaseClient _db = DatabaseClient();
 final _defaultData = {
   "onJoinEnabled": true,
   "fuzzyMatchPercent": 100,
@@ -56,7 +60,6 @@ final _defaultData = {
 Future<JsonData?> insertNewGuild({required BigInt serverID}) async {
   await DatabaseClient.tryReconnect();
 
-  var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
   var result =
       await collection.updateOne({"_id": serverID.toString()}, {"\$setOnInsert": _defaultData}, upsert: true);
@@ -66,7 +69,6 @@ Future<JsonData?> insertNewGuild({required BigInt serverID}) async {
 Future<JsonData> fetchGuildData({required BigInt serverID, List<String>? fields}) async {
   await DatabaseClient.tryReconnect();
 
-  var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
   JsonData? data = await collection.findOne({"_id": serverID.toString()});
 
@@ -91,7 +93,6 @@ Future<bool> updateGuildConfig(
     List<BigInt>? excludedRoles}) async {
   await DatabaseClient.tryReconnect();
 
-  var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
 
   JsonData queryMap = {"_id": serverID.toString()};
@@ -133,7 +134,6 @@ Future<bool> updateGuildConfig(
 Future<bool> removeGuildField({required BigInt serverID, required String fieldName}) async {
   await DatabaseClient.tryReconnect();
 
-  var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
   JsonData queryMap = {"_id": serverID.toString()};
 
@@ -148,7 +148,6 @@ Future<bool> removeGuildField({required BigInt serverID, required String fieldNa
 Future<List<dynamic>> fetchGuildRules({required BigInt serverID, int ruleType = 0}) async {
   await DatabaseClient.tryReconnect();
 
-  var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
 
   /// Since I'll forget, projection chooses what is returned in the result. 1 for true, 0 for false.
@@ -172,7 +171,6 @@ Future<List<dynamic>> fetchGuildRules({required BigInt serverID, int ruleType = 
 Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) async {
   await DatabaseClient.tryReconnect();
 
-  var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
   WriteResult result = await collection.updateOne({
     "_id": serverID.toString(),
@@ -205,7 +203,6 @@ Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) asy
 Future<bool> removeGuildRule({required BigInt serverID, required String ruleID}) async {
   await DatabaseClient.tryReconnect();
 
-  var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
   WriteResult result = await collection.updateOne({
     "_id": serverID.toString()
