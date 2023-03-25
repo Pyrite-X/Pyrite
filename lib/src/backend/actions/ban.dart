@@ -1,7 +1,11 @@
+import 'package:logging/logging.dart';
+
 import '../../discord_http.dart';
 
 import '../checks/check_result.dart';
 import '../../structures/trigger/trigger_context.dart';
+
+Logger _logger = Logger("Action Log");
 
 void banUser({required TriggerContext context, CheckResult? result}) async {
   String logReason = "";
@@ -18,6 +22,8 @@ void banUser({required TriggerContext context, CheckResult? result}) async {
         "Username/Nickname matched Rule \"${result.rule!.ruleID}\" with "
         "the pattern ${result.rule!.pattern}.";
   }
+
+  _logger.info("${user.tag}|${user.nickname} (${user.userID}) was kicked from ${context.server.serverID}");
 
   if (logReason.isEmpty) {
     await DiscordHTTP()

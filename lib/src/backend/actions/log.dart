@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart' show EmbedBuilder;
 import 'package:onyx/onyx.dart' show JsonData;
 
@@ -13,12 +14,16 @@ import '../../structures/user.dart';
 import '../../structures/trigger/trigger_context.dart';
 import '../../utilities/base_embeds.dart';
 
+Logger _logger = Logger("Action Log");
+
 void sendLogMessage({required TriggerContext context, required CheckResult result}) async {
   Server guild = context.server;
   User user = context.user;
 
   dynamic typedResult =
       result.runtimeType == CheckPhishResult ? result as CheckPhishResult : result as CheckRulesResult;
+
+  _logger.info("${user.tag}|${user.nickname} (${user.userID}) logged a match in ${context.server.serverID}");
 
   BigInt? logchannelID = context.server.logchannelID;
   // Consider complaining somewhere that there is no log channel set?
@@ -107,6 +112,8 @@ Future<void> writeScanLog({required TriggerContext context, required CheckResult
         "Username/Nickname matched Rule \"${typedResult.rule!.ruleID}\" with "
         "the pattern ${typedResult.rule!.pattern}.");
   }
+
+  _logger.info("${user.tag}|${user.nickname} (${user.userID}) logged a match in ${context.server.serverID}");
 }
 
 String dumpServerScanLog({required BigInt serverID}) {
