@@ -41,7 +41,6 @@ class DatabaseClient {
   static tryReconnect() async {
     if (!_instance.client.isConnected) {
       await _instance.client.close();
-      _instance.client = await Db.create(_instance.uri);
       await _instance.client.open();
       _logger.warning("Reconnected to the database.");
     }
