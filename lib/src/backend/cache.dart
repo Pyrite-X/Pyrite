@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:logging/logging.dart';
 import 'package:onyx/onyx.dart' show JsonData;
 import 'package:resp_client/resp_client.dart';
 import 'package:resp_client/resp_commands.dart';
@@ -7,6 +8,8 @@ import 'package:resp_client/resp_server.dart' as resp_server;
 
 import '../structures/rule.dart';
 import '../structures/server.dart';
+
+Logger _logger = Logger("Redis");
 
 /// Base class for holding the cache object.
 class AppCache {
@@ -20,14 +23,17 @@ class AppCache {
   }
 
   static Future<AppCache> init({String host = "localhost", int port = 6379, String? auth}) async {
+    _logger.info("Connecting to Redis at host $host:$port.");
     var serverConnection = await resp_server.connectSocket(host, port: port);
     RespClient client = RespClient(serverConnection);
     _instance.cacheConnection = client;
 
     if (auth != null) {
+      _logger.info("Authenticating with Redis.");
       RespCommandsTier2(client).auth(auth);
     }
 
+    _logger.info("Connected to the Redis cache!");
     return _instance;
   }
 }
