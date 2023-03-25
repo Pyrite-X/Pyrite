@@ -48,7 +48,7 @@ class DatabaseClient {
   }
 }
 
-DatabaseClient _db = DatabaseClient();
+final DatabaseClient _db = DatabaseClient();
 final _defaultData = {
   "onJoinEnabled": true,
   "fuzzyMatchPercent": 100,
