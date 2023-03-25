@@ -16,7 +16,10 @@ join the **[Pyrite HQ](https://discord.gg/xzeWEDu4mj)** discord server!
 
 ---
 ### Self Hosting
-Although I would much appreciate if you use the hosted version instead, it is possible to self-host Pyrite!<br>This is not a completely thorough guide as it is presumed that if you are self hosting, you know how to do things like setup SSL certificates (or use a reverse proxy), open ports if necessary, and edit docker files where necessary.
+Although I would much appreciate if you use the hosted version instead, it is possible to self-host Pyrite!
+> This is not a completely thorough guide as it is presumed that if you are self hosting, you know how to do things like setup SSL certificates (or use a reverse proxy), open ports if necessary, and edit Docker files where necessary. 
+
+<br>
 
 Pyrite is fully self contained in Docker files, but it requires you to build it yourself. A `docker-compose.yml` is included in the repository which can be used to run all the necessary services (other than MongoDB) for the bot.
 
