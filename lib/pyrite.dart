@@ -100,6 +100,10 @@ class Pyrite {
           activity: ActivityBuilder("for suspicious users...", ActivityType.watching)));
     });
 
+    /// Load the list on init, then update every 30 minutes.
+    loadPhishingList();
+    Timer.periodic(Duration(minutes: 30), ((timer) => loadPhishingList()));
+
     if (ignoreExceptions) IE.ignoreExceptions();
 
     await gateway.connect();
