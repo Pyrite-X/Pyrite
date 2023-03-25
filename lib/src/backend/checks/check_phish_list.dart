@@ -1,12 +1,15 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:logging/logging.dart';
 import 'package:string_similarity/string_similarity.dart';
 
 import '../../structures/trigger/trigger_context.dart';
 import 'check_result.dart';
 
 List<String> phishingList = [];
+Logger _logger = Logger("Phishing List");
+
 void loadPhishingList() async {
   var result =
       await http.get(Uri.parse("https://raw.githubusercontent.com/Pyrite-X/Bot-List/main/botlist.json"));
@@ -15,9 +18,9 @@ void loadPhishingList() async {
   try {
     var botList = resultBody["bots"];
     phishingList = [...botList];
-    print("Phishing list has been updated. There are ${phishingList.length} elements in the list.");
+    _logger.info("Phishing list has been updated. There are ${phishingList.length} elements in the list.");
   } catch (e) {
-    print("Error loading the phishing list: $e");
+    _logger.severe("The phishing list could not be updated due to an exception.", e);
   }
 }
 
