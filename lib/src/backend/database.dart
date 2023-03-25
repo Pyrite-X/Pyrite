@@ -9,10 +9,12 @@ class DatabaseClient {
   DatabaseClient._init();
 
   late final Db client;
+  late final String uri;
 
   static Future<DatabaseClient> create({bool initializing = false, String? uri}) async {
     if (initializing) {
       if (uri != null) {
+        _instance.uri = uri;
         _instance.client = await Db.create(uri);
       } else {
         throw UnsupportedError("Cannot initialize a database client without a URI.");
@@ -24,6 +26,14 @@ class DatabaseClient {
     }
 
     return _instance;
+  }
+
+  static tryReconnect() async {
+    if (!_instance.client.isConnected) {
+      await _instance.client.close();
+      _instance.client = await Db.create(_instance.uri);
+      await _instance.client.open();
+    }
   }
 }
 
@@ -37,6 +47,8 @@ final _defaultData = {
 };
 
 Future<JsonData?> insertNewGuild({required BigInt serverID}) async {
+  await DatabaseClient.tryReconnect();
+
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
   var result =
@@ -45,6 +57,8 @@ Future<JsonData?> insertNewGuild({required BigInt serverID}) async {
 }
 
 Future<JsonData> fetchGuildData({required BigInt serverID, List<String>? fields}) async {
+  await DatabaseClient.tryReconnect();
+
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
   JsonData? data = await collection.findOne({"_id": serverID.toString()});
@@ -68,6 +82,8 @@ Future<bool> updateGuildConfig(
     Action? phishingMatchAction,
     bool? phishingMatchEnabled,
     List<BigInt>? excludedRoles}) async {
+  await DatabaseClient.tryReconnect();
+
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
 
@@ -108,6 +124,8 @@ Future<bool> updateGuildConfig(
 }
 
 Future<bool> removeGuildField({required BigInt serverID, required String fieldName}) async {
+  await DatabaseClient.tryReconnect();
+
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
   JsonData queryMap = {"_id": serverID.toString()};
@@ -121,6 +139,8 @@ Future<bool> removeGuildField({required BigInt serverID, required String fieldNa
 /// Query for the rules in a guild. Default [ruleType] is 0, which is custom rules.
 /// [ruleType] of 1 returns the "phishing list" rule entry.
 Future<List<dynamic>> fetchGuildRules({required BigInt serverID, int ruleType = 0}) async {
+  await DatabaseClient.tryReconnect();
+
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
 
@@ -143,6 +163,8 @@ Future<List<dynamic>> fetchGuildRules({required BigInt serverID, int ruleType = 
 }
 
 Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) async {
+  await DatabaseClient.tryReconnect();
+
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
   WriteResult result = await collection.updateOne({
@@ -174,6 +196,8 @@ Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) asy
 }
 
 Future<bool> removeGuildRule({required BigInt serverID, required String ruleID}) async {
+  await DatabaseClient.tryReconnect();
+
   var _db = await _dbClass;
   DbCollection collection = _db.client.collection("guilds");
   WriteResult result = await collection.updateOne({
