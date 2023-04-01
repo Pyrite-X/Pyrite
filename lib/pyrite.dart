@@ -32,6 +32,8 @@ class Pyrite {
   late final Onyx onyx;
   late final INyxxWebsocket gateway;
 
+  Logger _logger = Logger("Pyrite");
+
   Pyrite({required this.token, required this.publicKey, required this.appID});
 
   static final ELEVATED_INFO = Level("INFO", 825);
@@ -128,7 +130,7 @@ class Pyrite {
     alfred.logWriter = _interceptAlfredLogs;
 
     WebServer server = WebServer(alfred, publicKey);
-    server.startServer(
+    await server.startServer(
         dispatchFunc: ((p0) {
           var currentMetadata = p0.metadata;
           Map<String, dynamic> newMetadata = {"request": currentMetadata, "pyrite": this};
