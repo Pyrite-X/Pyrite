@@ -36,14 +36,6 @@ class DatabaseClient {
     _logger.info("Connected to the database!");
     return _instance;
   }
-
-  // static tryReconnect() async {
-  //   if (!_instance.client.isConnected) {
-  //     await _instance.client.close();
-  //     await _instance.client.open();
-  //     _logger.warning("Reconnected to the database.");
-  //   }
-  // }
 }
 
 final DatabaseClient _db = DatabaseClient();
