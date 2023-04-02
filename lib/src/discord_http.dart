@@ -19,7 +19,7 @@ class DiscordHTTP {
   late String scheme = "https";
   late String discordURL = "discord.com";
   late String apiVersion = "v10";
-  late int port = 80;
+  late int port = 443;
 
   factory DiscordHTTP(
       {String? authToken,
