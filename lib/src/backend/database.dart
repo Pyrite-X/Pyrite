@@ -58,7 +58,8 @@ Future<dynamic> handlePool(String collection, Future<dynamic> func(DbCollection 
 
 Future<JsonData?> insertNewGuild({required BigInt serverID}) async {
   var result = await handlePool("guilds", (collection) async {
-    await collection.updateOne({"_id": serverID.toString()}, {"\$setOnInsert": _defaultData}, upsert: true);
+    return await collection
+        .updateOne({"_id": serverID.toString()}, {"\$setOnInsert": _defaultData}, upsert: true);
   });
 
   return result.nUpserted == 1 && result.isSuccess ? {"_id": serverID, ..._defaultData} : null;
@@ -121,7 +122,7 @@ Future<bool> updateGuildConfig(
   }
 
   var result = await handlePool("guilds", (collection) async {
-    await collection.updateOne(queryMap, {"\$set": updateMap});
+    return await collection.updateOne(queryMap, {"\$set": updateMap});
   });
 
   return result.nModified == 1 && result.isSuccess;
@@ -131,7 +132,7 @@ Future<bool> removeGuildField({required BigInt serverID, required String fieldNa
   JsonData queryMap = {"_id": serverID.toString()};
 
   var result = await handlePool("guilds", (collection) async {
-    await collection.updateOne(queryMap, {
+    return await collection.updateOne(queryMap, {
       r"$unset": {fieldName: ""}
     });
   });
@@ -145,7 +146,7 @@ Future<List<dynamic>> fetchGuildRules({required BigInt serverID, int ruleType = 
   /// Since I'll forget, projection chooses what is returned in the result. 1 for true, 0 for false.
   /// filter is filter, basically is used to figure out what document to select.
   var query = await handlePool("guilds", (collection) async {
-    await collection.modernFindOne(
+    return await collection.modernFindOne(
         filter: {"_id": serverID.toString(), "rules.type": ruleType}, projection: {"rules": 1, "_id": 0});
   });
 
@@ -164,7 +165,7 @@ Future<List<dynamic>> fetchGuildRules({required BigInt serverID, int ruleType = 
 
 Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) async {
   WriteResult result = await handlePool("guilds", (collection) async {
-    await collection.updateOne({
+    return await collection.updateOne({
       "_id": serverID.toString(),
       "rules": {
         "\$not": {
@@ -195,7 +196,7 @@ Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) asy
 
 Future<bool> removeGuildRule({required BigInt serverID, required String ruleID}) async {
   WriteResult result = await handlePool("guilds", (collection) async {
-    await collection.updateOne({
+    return await collection.updateOne({
       "_id": serverID.toString()
     }, {
       "\$pull": {
