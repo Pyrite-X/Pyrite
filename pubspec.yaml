@@ -15,7 +15,7 @@ dependencies:
   lirx:
     git: https://github.com/One-Nub/Lirx
   logging: ^1.1.1
-  mongo_dart: ^0.9.0
+  mongo_pool: ^1.1.1
   nyxx: ^5.0.0
   onyx:
     git: https://github.com/One-Nub/Onyx
