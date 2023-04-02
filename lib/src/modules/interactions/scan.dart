@@ -83,6 +83,15 @@ void scanCmd(Interaction interaction) async {
   ApplicationCommandOption subcommand = interactionData.options![0];
   ScanMode scanMode = ScanMode.fromString(subcommand.value);
 
+  int ruleCnt = await storage.getGuildRuleCount(interaction.guild_id!);
+  if (ruleCnt == 0 && scanMode.containsType(ScanModeOptions.rules)) {
+    await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+      "content":
+          "You have no rules, so you cannot use this scan type. Try only scanning with the phishing list instead."
+    });
+    return;
+  }
+
   QueuedServer queuedServer = QueuedServer(interaction.guild_id!, interaction.channel_id!,
       BigInt.parse(interaction.member!["user"]["id"]), scanMode);
   serverQueue.add(queuedServer);
@@ -100,7 +109,9 @@ void queueHandler() async {
   }
 
   QueuedServer server = serverQueue.removeFirst();
-  Server? serverObject = (server.scanMode.containsType(ScanModeOptions.rules))
+
+  int ruleCnt = await storage.getGuildRuleCount(server.serverID);
+  Server? serverObject = (server.scanMode.containsType(ScanModeOptions.rules) && ruleCnt != 0)
       ? await storage.fetchGuildData(server.serverID, withRules: true)
       : await storage.fetchGuildData(server.serverID);
 
