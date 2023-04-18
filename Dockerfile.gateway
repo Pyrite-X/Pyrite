@@ -3,6 +3,7 @@ FROM dart:stable AS build
 
 # Resolve app dependencies.
 WORKDIR /app
+ENV PUB_CACHE=.pub-cache
 COPY pubspec.* ./
 RUN dart pub get
 
@@ -12,11 +13,19 @@ COPY . .
 RUN dart pub get --offline
 RUN dart compile exe bin/pyrite_gateway.dart -o bin/pyrite_gateway
 
+# Build golang FFI (mongo_go.so) for mongo_go dart package.
+FROM golang:1.20 AS mongo_build
+COPY --from=build /app/.pub-cache /
+
+# mongo_go includes the go library to use, so go there and build it, then copy to topmost dir.
+RUN cd /hosted/pub.dev/mongo_go*/go && go build -buildmode=c-shared -o mongo_go.so && mv mongo_go.so ../../../../mongo_go.so
+
 # Build minimal serving image from AOT-compiled `/server` and required system
 # libraries and configuration files stored in `/runtime/` from the build stage.
 FROM scratch
 COPY --from=build /runtime/ /
-COPY --from=build /app/bin/pyrite_gateway /app/bin/
+COPY --from=build /app/bin/pyrite_gateway /bin/
+COPY --from=mongo_build mongo_go.so /bin/
 
 # Start bot.
-CMD ["/app/bin/pyrite_gateway"]
+CMD ["/bin/pyrite_gateway"]

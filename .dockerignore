@@ -15,3 +15,4 @@ bin_proto/
 LICENSE.txt
 pubspec.lock
 bin/pyrite_cmds.dart
+bin/mongo_go.so
