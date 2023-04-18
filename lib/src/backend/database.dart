@@ -21,7 +21,8 @@ class DatabaseClient {
     return _instance;
   }
 
-  static Future<DatabaseClient> create({bool initializing = false, String? uri}) async {
+  static Future<DatabaseClient> create(
+      {bool initializing = false, String? uri, String databaseName = "pyrite"}) async {
     if (initializing) {
       _logger.info("Initializing connection to the database.");
       if (uri != null) {
@@ -32,7 +33,7 @@ class DatabaseClient {
       }
 
       _logger.info("Opening connection to the database.");
-      _instance.database = await _instance.connection.database("pyrite");
+      _instance.database = await _instance.connection.database(databaseName);
     }
 
     _logger.info("Connected to the database!");
