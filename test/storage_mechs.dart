@@ -10,13 +10,18 @@ void main() async {
   var env = DotEnv(includePlatformEnvironment: true);
   env.load(['bin/.env']);
 
-  await db.DatabaseClient.create(initializing: true, uri: env["MONGO_URI"], databaseName: "test");
+  var cli = await db.DatabaseClient.create(initializing: true, uri: env["MONGO_URI"], databaseName: "test");
 
   /// Start the connection to Redis.
-  AppCache redis = await AppCache.init(
-      host: env["REDIS_HOST"]!, port: int.parse(env["REDIS_PORT"]!), auth: env["REDIS_PASS"]);
+  // AppCache redis = await AppCache.init(
+  //     host: env["REDIS_HOST"]!, port: int.parse(env["REDIS_PORT"]!), auth: env["REDIS_PASS"]);
 
   BigInt GUILD_ID = BigInt.from(440350951572897812);
+
+  // Delete any guild data for the sample guild from the database - or else tests will complain.
+  var guildCol = await cli.database.collection("guilds");
+  await guildCol.deleteOne({"_id": GUILD_ID.toString()});
+
   group("database:", () {
     test("Create a new guild with default settings", () async {
       var result = await db.insertNewGuild(serverID: GUILD_ID);
