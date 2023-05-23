@@ -1,5 +1,7 @@
 import 'package:logging/logging.dart';
-import 'package:mongo_pool/mongo_pool.dart';
+// import 'package:mongo_pool/mongo_pool.dart';
+import 'package:mongo_go/mongo_go.dart';
+import 'package:mongo_go/src/update_options.dart';
 import 'package:onyx/onyx.dart' show JsonData;
 
 import '../structures/action.dart';
@@ -11,25 +13,27 @@ class DatabaseClient {
   static final DatabaseClient _instance = DatabaseClient._init();
   DatabaseClient._init();
 
-  late final MongoDbPoolService poolService;
+  late final Connection connection;
+  late final Database database;
   late final String uri;
 
   factory DatabaseClient() {
     return _instance;
   }
 
-  static Future<DatabaseClient> create({bool initializing = false, String? uri}) async {
+  static Future<DatabaseClient> create(
+      {bool initializing = false, String? uri, String databaseName = "pyrite"}) async {
     if (initializing) {
       _logger.info("Initializing connection to the database.");
       if (uri != null) {
+        _instance.connection = await Connection.connectWithString(uri);
         _instance.uri = uri;
-        _instance.poolService = MongoDbPoolService(poolSize: 5, mongoDbUri: uri);
       } else {
         throw UnsupportedError("Cannot initialize a database client without a URI.");
       }
 
       _logger.info("Opening connection to the database.");
-      await _instance.poolService.open();
+      _instance.database = await _instance.connection.database(databaseName);
     }
 
     _logger.info("Connected to the database!");
@@ -46,27 +50,24 @@ final _defaultData = {
   ]
 };
 
-Future<dynamic> handlePool(String collection, Future<dynamic> func(DbCollection collection)) async {
-  Db dbConnection = await _db.poolService.acquire();
-
-  DbCollection col = dbConnection.collection(collection);
+Future<dynamic> handleQuery(String collection, Future<dynamic> func(Collection collection)) async {
+  Collection col = await _db.database.collection(collection);
   var result = await func(col);
 
-  await _db.poolService.release(dbConnection);
   return result;
 }
 
 Future<JsonData?> insertNewGuild({required BigInt serverID}) async {
-  var result = await handlePool("guilds", (collection) async {
-    return await collection
-        .updateOne({"_id": serverID.toString()}, {"\$setOnInsert": _defaultData}, upsert: true);
+  UpdateResult result = await handleQuery("guilds", (collection) async {
+    return await collection.updateOne({"_id": serverID.toString()}, {"\$setOnInsert": _defaultData},
+        options: UpdateOptions(isUpsert: true));
   });
 
-  return result.nUpserted == 1 && result.isSuccess ? {"_id": serverID, ..._defaultData} : null;
+  return result.upsertedCount == 1 ? {"_id": serverID, ..._defaultData} : null;
 }
 
 Future<JsonData> fetchGuildData({required BigInt serverID, List<String>? fields}) async {
-  JsonData? data = await handlePool("guilds", (collection) async {
+  JsonData? data = await handleQuery("guilds", (collection) async {
     return await collection.findOne({"_id": serverID.toString()});
   });
 
@@ -121,23 +122,23 @@ Future<bool> updateGuildConfig(
     updateMap["excludedRoles"] = convertedRoleList;
   }
 
-  var result = await handlePool("guilds", (collection) async {
+  UpdateResult result = await handleQuery("guilds", (collection) async {
     return await collection.updateOne(queryMap, {"\$set": updateMap});
   });
 
-  return result.nModified == 1 && result.isSuccess;
+  return result.modifiedCount == 1;
 }
 
 Future<bool> removeGuildField({required BigInt serverID, required String fieldName}) async {
   JsonData queryMap = {"_id": serverID.toString()};
 
-  var result = await handlePool("guilds", (collection) async {
+  UpdateResult result = await handleQuery("guilds", (collection) async {
     return await collection.updateOne(queryMap, {
       r"$unset": {fieldName: ""}
     });
   });
 
-  return result.nModified == 1 && result.isSuccess;
+  return result.modifiedCount == 1;
 }
 
 /// Query for the rules in a guild. Default [ruleType] is 0, which is custom rules.
@@ -145,9 +146,10 @@ Future<bool> removeGuildField({required BigInt serverID, required String fieldNa
 Future<List<dynamic>> fetchGuildRules({required BigInt serverID, int ruleType = 0}) async {
   /// Since I'll forget, projection chooses what is returned in the result. 1 for true, 0 for false.
   /// filter is filter, basically is used to figure out what document to select.
-  var query = await handlePool("guilds", (collection) async {
-    return await collection.modernFindOne(
-        filter: {"_id": serverID.toString(), "rules.type": ruleType}, projection: {"rules": 1, "_id": 0});
+  ///
+  /// TODO: complain to mongo_go devs about a lack of options on findOne... can't provide projection.
+  var query = await handleQuery("guilds", (collection) async {
+    return await collection.findOne({"_id": serverID.toString()});
   });
 
   // Rules of type 0 are custom rules. Filter out phishing rule entry.
@@ -164,7 +166,7 @@ Future<List<dynamic>> fetchGuildRules({required BigInt serverID, int ruleType = 
 }
 
 Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) async {
-  WriteResult result = await handlePool("guilds", (collection) async {
+  UpdateResult result = await handleQuery("guilds", (collection) async {
     return await collection.updateOne({
       "_id": serverID.toString(),
       "rules": {
@@ -191,11 +193,11 @@ Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) asy
     });
   });
 
-  return result.nModified == 1 && result.isSuccess;
+  return result.modifiedCount == 1;
 }
 
 Future<bool> removeGuildRule({required BigInt serverID, required String ruleID}) async {
-  WriteResult result = await handlePool("guilds", (collection) async {
+  UpdateResult result = await handleQuery("guilds", (collection) async {
     return await collection.updateOne({
       "_id": serverID.toString()
     }, {
@@ -205,5 +207,5 @@ Future<bool> removeGuildRule({required BigInt serverID, required String ruleID})
     });
   });
 
-  return result.nModified == 1 && result.isSuccess;
+  return result.modifiedCount == 1;
 }

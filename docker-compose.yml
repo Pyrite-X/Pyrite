@@ -4,7 +4,7 @@ services:
   gateway:
     container_name: pyrite_gateway
     hostname: gateway
-    restart: on-failure
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile.gateway
@@ -21,7 +21,7 @@ services:
   webserver:
     container_name: pyrite_http
     hostname: webserver
-    restart: on-failure
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile.http
@@ -40,7 +40,7 @@ services:
   redis:
     container_name: pyrite_redis
     hostname: redis
-    restart: on-failure
+    restart: unless-stopped
     image: redis:7.0-alpine
     volumes:
       - /redis_data:/data
