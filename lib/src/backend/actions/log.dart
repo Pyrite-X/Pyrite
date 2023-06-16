@@ -23,8 +23,8 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
   dynamic typedResult =
       result.runtimeType == CheckPhishResult ? result as CheckPhishResult : result as CheckRulesResult;
 
-  _logger
-      .info("${user.tag} | ${user.nickname} (${user.userID}) logged a match in ${context.server.serverID}");
+  _logger.info("Username: ${user.tag} | Nickname: ${user.nickname} | "
+      "Display name: ${user.globalName} (${user.userID}) logged a match in ${context.server.serverID}");
 
   BigInt? logchannelID = context.server.logchannelID;
   // Consider complaining somewhere that there is no log channel set?
@@ -103,19 +103,21 @@ Future<void> writeScanLog({required TriggerContext context, required CheckResult
         ? "100"
         : typedResult.fuzzyMatchPercent!.toStringAsPrecision(4);
 
-    sb.writeln("${_actionToSuffix(action)} - ${user.tag}, ${user.nickname} (${user.userID}) - "
-        "Username/Nickname matched \"${typedResult.matchingString}\" from the bot list "
+    sb.writeln("${_actionToSuffix(action)} - Username: ${user.tag}, Nickname: ${user.nickname}, "
+        "Display name: ${user.globalName} (${user.userID}) - "
+        "This user has a name that matched \"${typedResult.matchingString}\" from the bot list "
         "as a ~$percentage% match.");
   } else if (typedResult is CheckRulesResult) {
     var action = typedResult.rule!.action;
 
-    sb.writeln("${_actionToSuffix(action)} - ${user.tag}, ${user.nickname} (${user.userID}) - "
-        "Username/Nickname matched Rule \"${typedResult.rule!.ruleID}\" with "
+    sb.writeln("${_actionToSuffix(action)} - Username: ${user.tag}, Nickname: ${user.nickname}, "
+        "Display name: ${user.globalName} (${user.userID}) - "
+        "This user has a name that matched Rule \"${typedResult.rule!.ruleID}\" with "
         "the pattern ${typedResult.rule!.pattern}.");
   }
 
-  _logger
-      .info("${user.tag} | ${user.nickname} (${user.userID}) logged a match in ${context.server.serverID}");
+  _logger.info(
+      "${user.tag} | ${user.nickname} | ${user.globalName} (${user.userID}) logged a match in ${context.server.serverID}");
 }
 
 String dumpServerScanLog({required BigInt serverID}) {
