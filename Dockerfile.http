@@ -15,6 +15,7 @@ RUN dart compile exe bin/pyrite_http.dart -o bin/pyrite_http
 
 # Build golang FFI (mongo_go.so) for mongo_go dart package.
 FROM golang:1.20 AS mongo_build
+ENV CGO_ENABLED=0
 COPY --from=build /app/.pub-cache /
 
 # mongo_go includes the go library to use, so go there and build it, then copy to topmost dir.
