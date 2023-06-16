@@ -35,32 +35,55 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
   // Set to 100 (no fuzzy matching) if not found.
   fuzzyMatchPercent ??= 100;
   String lowercaseUsername = context.user.username.toLowerCase();
+  String? lowercaseGlobalName = context.user.globalName?.toLowerCase();
   String? lowercaseNickname = context.user.nickname?.toLowerCase();
 
   double similarity = 100;
   for (String botName in phishingList) {
     String lowerBotName = botName.toLowerCase();
+
     bool usernameCheck = lowerBotName == lowercaseUsername;
+    bool globalNameCheck = lowerBotName == lowercaseGlobalName;
     bool nicknameCheck = lowerBotName == lowercaseNickname;
-    if (usernameCheck || nicknameCheck) {
+
+    if (usernameCheck || nicknameCheck || globalNameCheck) {
       matchString = botName;
-      userString = usernameCheck ? context.user.username : context.user.nickname;
+
+      userString = usernameCheck
+          ? context.user.username
+          : globalNameCheck
+              ? context.user.globalName
+              : context.user.nickname;
+
       break;
     }
 
     if (fuzzyMatchPercent != 100) {
-      double luSim = lowercaseUsername.similarityTo(lowerBotName);
-      double lnSim = lowercaseNickname.similarityTo(lowerBotName);
+      double usernameSim = lowercaseUsername.similarityTo(lowerBotName);
+      double globalNameSim = lowercaseGlobalName.similarityTo(lowerBotName);
+      double nicknameSim = lowercaseNickname.similarityTo(lowerBotName);
 
-      usernameCheck = luSim * 100 >= fuzzyMatchPercent;
-      nicknameCheck = lnSim * 100 >= fuzzyMatchPercent;
+      usernameCheck = usernameSim * 100 >= fuzzyMatchPercent;
+      globalNameCheck = globalNameSim * 100 >= fuzzyMatchPercent;
+      nicknameCheck = nicknameSim * 100 >= fuzzyMatchPercent;
 
-      if (usernameCheck || nicknameCheck) {
-        similarity = usernameCheck ? luSim * 100 : lnSim * 100;
+      if (usernameCheck || globalNameCheck || nicknameCheck) {
+        similarity = usernameCheck
+            ? usernameSim * 100
+            : globalNameCheck
+                ? globalNameSim * 100
+                : nicknameSim * 100;
+
         matchString = botName;
-        userString = usernameCheck ? context.user.username : context.user.nickname;
-        break;
+
+        userString = usernameCheck
+            ? context.user.username
+            : globalNameCheck
+                ? context.user.globalName
+                : context.user.nickname;
       }
+
+      break;
     }
   }
 

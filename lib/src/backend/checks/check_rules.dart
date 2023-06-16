@@ -23,22 +23,37 @@ Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
     if (rule.regex) {
       RegExp pattern = RegExp(rule.pattern);
       RegExpMatch? usernameMatch = pattern.firstMatch(user.username);
+
+      RegExpMatch? globalNameMatch;
+      if (user.globalName != null) {
+        globalNameMatch = pattern.firstMatch(user.globalName!);
+      }
+
       RegExpMatch? nicknameMatch;
       if (user.nickname != null) {
         nicknameMatch = pattern.firstMatch(user.nickname!);
       }
 
-      if (usernameMatch != null || nicknameMatch != null) {
+      if (usernameMatch != null || globalNameMatch != null || nicknameMatch != null) {
         matchRule = rule;
-        userString = (usernameMatch != null) ? user.username : user.nickname;
+        userString = (usernameMatch != null)
+            ? user.username
+            : (globalNameMatch != null)
+                ? user.globalName
+                : user.nickname;
         break;
       }
     } else {
       bool usernameCheck = user.username.toLowerCase() == rule.pattern.toLowerCase();
       bool nicknameCheck = user.nickname?.toLowerCase() == rule.pattern.toLowerCase();
-      if (usernameCheck || nicknameCheck) {
+      bool globalNameCheck = user.globalName?.toLowerCase() == rule.pattern.toLowerCase();
+      if (usernameCheck || nicknameCheck || globalNameCheck) {
         matchRule = rule;
-        userString = usernameCheck ? user.username : user.nickname;
+        userString = usernameCheck
+            ? user.username
+            : nicknameCheck
+                ? user.nickname
+                : user.globalName;
         break;
       }
     }
