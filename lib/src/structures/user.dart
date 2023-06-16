@@ -4,6 +4,7 @@ class User {
   BigInt userID;
   late String username;
   String tag;
+  String? globalName;
   String? nickname;
   List<BigInt> roles = [];
 
@@ -11,6 +12,7 @@ class User {
       {required this.userID,
       required String username,
       required this.tag,
+      String? globalName,
       String? nickname,
       List<BigInt>? roles}) {
     if (roles != null) this.roles = roles;
@@ -25,6 +27,7 @@ class UserBuilder {
   late BigInt userID;
   late String username;
   late String tag;
+  late String? globalName;
   late String? nickname;
   List<BigInt> roles = [];
 
@@ -36,9 +39,12 @@ class UserBuilder {
 
   void setTag(String tag) => this.tag = tag;
 
+  void setGlobalName(String? globalName) => this.globalName = globalName;
+
   void setNickname(String? nickname) => this.nickname = nickname;
 
   void addRole(BigInt roleID) => roles.add(roleID);
 
-  User build() => User(userID: userID, username: username, tag: tag, nickname: nickname, roles: roles);
+  User build() => User(
+      userID: userID, username: username, tag: tag, globalName: globalName, nickname: nickname, roles: roles);
 }

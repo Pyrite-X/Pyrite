@@ -230,13 +230,13 @@ User? _handleMember(JsonData member) {
     return null;
   }
 
-  userBuilder.username = userJson["username"];
-  userBuilder.nickname = member["nick"];
-  userBuilder.tag = "${userBuilder.username}#${userJson['discriminator']}";
-  userBuilder.userID = BigInt.parse("${userJson['id']}");
-  List<BigInt> roleList = [];
-  (member["roles"] as List<dynamic>).forEach((element) => roleList.add(BigInt.parse("$element")));
-  userBuilder.roles = roleList;
+  userBuilder.setUsername(userJson["username"]);
+  userBuilder.setGlobalName(userJson["global_name"]);
+  userBuilder.setNickname(member["nick"]);
+  userBuilder.setTag("${userBuilder.username}#${userJson['discriminator']}");
+  userBuilder.setUserID(BigInt.parse("${userJson['id']}"));
+
+  (member["roles"] as List<dynamic>).forEach((element) => userBuilder.addRole(BigInt.parse("$element")));
 
   return userBuilder.build();
 }

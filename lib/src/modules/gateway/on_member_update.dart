@@ -25,6 +25,7 @@ void om_member_update(IGuildMemberUpdateEvent event) async {
   UserBuilder userBuilder = UserBuilder()
     ..setUsername(event.user.username)
     ..setTag(event.user.tag)
+    // ..setGlobalName()
     ..setNickname(nickname)
     ..setUserID(BigInt.from(event.user.id.id));
 
