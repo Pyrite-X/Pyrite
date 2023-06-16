@@ -27,8 +27,8 @@ class UserBuilder {
   late BigInt userID;
   late String username;
   late String tag;
-  late String? globalName;
-  late String? nickname;
+  String? globalName;
+  String? nickname;
   List<BigInt> roles = [];
 
   UserBuilder();
