@@ -28,7 +28,7 @@ import 'src/modules/interactions/transfer.dart' as transfer;
 
 import 'src/utilities/ignore_exceptions.dart' as IE;
 
-final int _startTime = (DateTime.now().toUtc().millisecondsSinceEpoch / 1000).round();
+late final int _startTime;
 
 class Pyrite {
   final String token;
@@ -122,6 +122,8 @@ class Pyrite {
       bool handleSignals = false,
       int serverPort = 8080,
       SecurityContext? securityContext}) async {
+    _startTime = (DateTime.now().toUtc().millisecondsSinceEpoch / 1000).round();
+
     onyx = Onyx();
     onyx.registerAppCommandHandler("about", about.aboutCmd);
     onyx.registerAppCommandHandler("config", config.configCmd);

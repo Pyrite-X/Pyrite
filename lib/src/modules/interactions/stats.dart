@@ -33,9 +33,7 @@ void statsCommand(Interaction interaction, int startTime) async {
   embedBuilder.addField(name: "Uptime", content: "<t:${startTime}:R>", inline: true);
 
   String memUsage = (ProcessInfo.currentRss / 1024 / 1024).toStringAsFixed(2);
-  print(ProcessInfo.maxRss);
-  embedBuilder.addField(
-      name: "Memory Usage (RSS)", content: "${ProcessInfo.currentRss} (${memUsage}) MB", inline: true);
+  embedBuilder.addField(name: "Memory Usage (RSS)", content: "${memUsage} MB", inline: true);
 
   await DiscordHTTP()
     ..sendFollowupMessage(interactionToken: interaction.token, payload: {
