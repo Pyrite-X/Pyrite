@@ -1,5 +1,5 @@
 name = "scan"
-description = "Scan for users matching your rules and Pyrite's phishing list."
+description = "Scan the users in your server for bot list and rule matches."
 type = 1
 dm_permission = false
 default_member_permissions = 38 # Manage server | Ban members | Kick members
@@ -10,7 +10,7 @@ default_member_permissions = 38 # Manage server | Ban members | Kick members
     type = 3
     required = true
     choices = [
-        {name = "Phishing list matches", value = "phish"},
+        {name = "Bot list matches", value = "phish"},
         {name = "Custom rule matches", value = "rules"},
-        {name = "Phishing list and custom rule matches", value = "phish,rules"}
+        {name = "Bot list and custom rule matches", value = "phish,rules"}
     ]

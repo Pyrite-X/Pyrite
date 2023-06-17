@@ -1,23 +1,23 @@
 name = "rules"
-description = "Manage the Pyrite rules in your server."
+description = "Manage the rules in your server."
 type = 1
 dm_permission = false
 default_member_permissions = 32 # Manage server permissions
 
 [[options]]
     name = "view"
-    description = "View the rules you have configured for Pyrite."
+    description = "View your configured rules!"
     type = 1
 
 [[options]]
     name = "add"
-    description = "Add a rule for Pyrite to use."
+    description = "Make a new rule!"
     type = 1
 
     [[options.options]]
         type = 3
         name = "pattern"
-        description = "String pattern used to match usernames and nicknames to."
+        description = "String to match usernames and nicknames against."
         required = true
         max_length = 64
         autocomplete = false
@@ -38,17 +38,17 @@ default_member_permissions = 32 # Manage server permissions
     [[options.options]]
         type = 5
         name = "regex"
-        description = "If the given pattern should be treated as RegEx (ECMAScript RegExp) or not. Default is false."
+        description = "If the given pattern should be treated as RegEx (ECMAScript) or not."
         required = false
 
 [[options]]
     name = "delete"
-    description = "Remove a rule from Pyrite."
+    description = "Remove a rule."
     type = 1
 
     [[options.options]]
         type = 3
         name = "rule_id"
-        description = "ID of the rule that is to be removed."
+        description = "The ID of the rule you want to remove."
         required = true
         autocomplete = false

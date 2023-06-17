@@ -29,13 +29,13 @@ default_member_permissions = 32 # Manage server permissions
 
     [[options.options]]
         name = "enable"
-        description = "True to act if there's a match, false if not."
+        description = "Set if Pyrite should check users against the bot list."
         type = 5
         required = false
 
     [[options.options]]
         name = "action"
-        description = "Set what will happen when a match is found. Only applies when scanning."
+        description = "Set what will happen when a match is found."
         type = 3
         required = false
         choices = [
@@ -48,7 +48,7 @@ default_member_permissions = 32 # Manage server permissions
 
     [[options.options]]
         name = "fuzzy_match"
-        description = "Set how similar a name should be to a bot name to match. Default is 100% (aka disabled)"
+        description = "Set how similar a name should be to a bot name to match. Default is 100%"
         type = 4
         min_value = 75
         max_value = 100
@@ -57,18 +57,18 @@ default_member_permissions = 32 # Manage server permissions
 
 [[options]]
     name = "join_event"
-    description = "Configure what happens when a user joins the server."
+    description = "Set if Pyrite should check a user when they join the server."
     type = 1
 
     [[options.options]]
         name = "enable"
-        description = "Toggle if scanning occurs on user join. True to enable, false to disable."
+        description = "True to enable, false to disable."
         type = 5
         required = true
 
 [[options]]
     name = "excluded_roles"
-    description = "Configure which roles will be exempt from being checked by Pyrite."
+    description = "Set which roles users should have to be ignored by Pyrite."
     type = 1
 
     [[options.options]]
