@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:alfred/alfred.dart';
-import 'package:nyxx/nyxx.dart' show EmbedBuilder;
 import 'package:onyx/onyx.dart';
 
 import '../../utilities/base_embeds.dart' as embeds;

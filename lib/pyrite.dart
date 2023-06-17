@@ -18,10 +18,12 @@ import 'src/modules/interactions/about.dart' as about;
 import 'src/modules/interactions/config.dart' as config;
 import 'src/modules/interactions/help.dart' as help;
 import 'src/modules/interactions/invite.dart' as invite;
+// ignore: unused_import
 import 'src/modules/interactions/redeem.dart' as redeem;
 import 'src/modules/interactions/rules.dart' as rules;
 import 'src/modules/interactions/scan.dart' as scan;
 import 'src/modules/interactions/stats.dart' as stats;
+// ignore: unused_import
 import 'src/modules/interactions/transfer.dart' as transfer;
 
 import 'src/utilities/ignore_exceptions.dart' as IE;
@@ -35,6 +37,7 @@ class Pyrite {
   late final Onyx onyx;
   late final INyxxWebsocket gateway;
 
+  // ignore: unused_field
   Logger _logger = Logger("Pyrite");
 
   Pyrite({required this.token, required this.publicKey, required this.appID});
