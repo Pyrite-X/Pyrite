@@ -3,6 +3,7 @@ import 'package:test/test.dart';
 
 import 'package:dotenv/dotenv.dart';
 import 'package:pyrite/src/backend/database.dart' as db;
+// ignore: unused_import
 import 'package:pyrite/src/backend/cache.dart';
 import 'package:pyrite/src/structures/action.dart';
 
