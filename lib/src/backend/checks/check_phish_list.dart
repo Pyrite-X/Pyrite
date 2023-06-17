@@ -8,7 +8,7 @@ import '../../structures/trigger/trigger_context.dart';
 import 'check_result.dart';
 
 List<String> phishingList = [];
-Logger _logger = Logger("Phishing List");
+Logger _logger = Logger("Bot List");
 
 void loadPhishingList() async {
   var result =
@@ -18,9 +18,9 @@ void loadPhishingList() async {
   try {
     var botList = resultBody["bots"];
     phishingList = [...botList];
-    _logger.info("Phishing list has been updated. There are ${phishingList.length} elements in the list.");
+    _logger.info("The bot list has been updated. There are ${phishingList.length} elements in the list.");
   } catch (e) {
-    _logger.severe("The phishing list could not be updated due to an exception.", e);
+    _logger.severe("The Bot list could not be updated due to an exception.", e);
   }
 }
 

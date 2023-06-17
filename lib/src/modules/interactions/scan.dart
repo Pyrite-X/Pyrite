@@ -87,7 +87,7 @@ void scanCmd(Interaction interaction) async {
   if (ruleCnt == 0 && scanMode.containsType(ScanModeOptions.rules)) {
     await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
       "content":
-          "You have no rules, so you cannot use this scan type. Try only scanning with the phishing list instead."
+          "You have no rules, so you cannot use this scan type. Try only scanning with the bot list instead."
     });
     return;
   }

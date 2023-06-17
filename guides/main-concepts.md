@@ -6,11 +6,11 @@ It does this either when you run a `/scan`, when users join the server, or when 
 
 ## **Checks**
 
-### - **Phishing List**
+### - **Bot List**
 
-There are two types of checks. The first is referred to as the **phishing list** (a better name would be the bot list). This list consists of the names of various large bots that exist on Discord, as well as bots that appear to be commonly mimicked.
+There are two types of checks. The first is referred to as the **bot list**. This list consists of the names of various large bots that exist on Discord, as well as bots that appear to be commonly mimicked.
 
-With phishing list checking enabled, Pyrite will compare the name(s) of the user against each of the bots in the list.
+With bot list checking enabled, Pyrite will compare the name(s) of the user against each of the bots in the list.
 
 ### - **Rules**
 
@@ -25,9 +25,9 @@ This means that if I made a rule with a pattern set as Nub, it would match my di
 ---
 
 
-## **Fuzzy Matching (Phishing list only)**
+## **Fuzzy Matching (Bot list only)**
 
-One of the crucial differences between rules and the phishing list, is that the phishing list supports a feature known as **fuzzy matching**! 
+One of the crucial differences between rules and the bot list, is that the bot list supports a feature known as **fuzzy matching**! 
 
 What this means is that Pyrite will match users based on how close their name is to the name of a bot. 
 

@@ -23,7 +23,7 @@ default_member_permissions = 32 # Manage server permissions
         required = false
 
 [[options]]
-    name = "phish_list"
+    name = "bot_list"
     description = "Configure options regarding the detection of users being popular bots."
     type = 1
 

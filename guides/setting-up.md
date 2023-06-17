@@ -19,11 +19,11 @@ In addition to the Discord audit logs, setting a log channel will let you easily
 
 <br>
 
-## **2. Set the action for Phishing list matches!**
+## **2. Set the action for Bot list matches!**
 
-As the primary feature of Pyrite, it is important that you set what should happen when people who have usernames which match the names of a bot in the bot (phishing) list.
+As the primary feature of Pyrite, it is important that you set what should happen when people who have usernames which match the names of a bot in the bot list.
 
-This can be set through the `/config phish_list` slash command, and you will need to set the `action` option.
+This can be set through the `/config bot_list` slash command, and you will need to set the `action` option.
 
 There are a few options available, which are:
 - Logging the match
@@ -40,7 +40,7 @@ There are a few options available, which are:
 
 If you wish to make it so that a name may not have to exactly match a bot name for a match, adjusting the match percentage is a good idea. 
 
-This can also be done through the `/config phish_list` slash command, and you will be setting the `fuzzy_match` option.
+This can also be done through the `/config bot_list` slash command, and you will be setting the `fuzzy_match` option.
 
 Be careful though! The lower the match, the more likely there will be false positives - resulting in the possibility that normal people may be removed! Unfortunately this is due to the nature of fuzzy matching, and can only be avoided by either not kicking or banning users automatically, or by setting a higher percentage.
 

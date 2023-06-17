@@ -23,8 +23,8 @@ void configCmd(Interaction interaction) async {
 
   if (optionName == "logchannel") {
     configLogChannel(interaction, subcommand.options!, request);
-  } else if (optionName == "phish_list") {
-    configPhishingList(interaction, subcommand.options!, request);
+  } else if (optionName == "bot_list") {
+    configBotList(interaction, subcommand.options!, request);
   } else if (optionName == "join_event") {
     var selection = subcommand.options![0];
     configJoinEvent(interaction, selection.value, request);
@@ -93,14 +93,14 @@ void configLogChannel(
   request.response.send(jsonEncode(response));
 }
 
-/// Handle logic for configuring the phishing list
-void configPhishingList(
+/// Handle logic for configuring the bot list
+void configBotList(
     Interaction interaction, List<ApplicationCommandOption> options, HttpRequest request) async {
   BigInt guildID = interaction.guild_id!;
   if (options.isEmpty) {
     InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
       "content":
-          "The </config phish_list:1024817802558849064> command requires at least one option to be configured!",
+          "The </config bot_list:1024817802558849064> command requires at least one option to be configured!",
       "flags": 1 << 6
     });
 
@@ -119,7 +119,7 @@ void configPhishingList(
   for (ApplicationCommandOption option in options) {
     if (option.name == "enable") {
       choicesString
-          .writeln("• Phishing list matching has been **${option.value == true ? 'enabled' : 'disabled'}**.");
+          .writeln("• Bot list matching has been **${option.value == true ? 'enabled' : 'disabled'}**.");
 
       phishingMatchEnabled = option.value as bool;
     } else if (option.name == "action") {
@@ -278,7 +278,7 @@ void viewServerConfig(Interaction interaction, HttpRequest request) async {
     actionStrList.forEach((element) => actionStr.writeln("• $element"));
 
     embedBuilder.addField(
-        name: "__Phishing List__",
+        name: "__Bot List__",
         content: "**Checking enabled?:** ${serverData.checkPhishingList}\n"
             "**Action(s):**\n${actionStr.toString()}"
             "**Match Percentage:** ${serverData.fuzzyMatchPercent}%",

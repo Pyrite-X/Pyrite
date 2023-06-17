@@ -53,14 +53,14 @@ void main() async {
         expect(await db.updateGuildConfig(serverID: GUILD_ID, fuzzyMatchPercent: 88), true);
       });
 
-      test("Update the phishing list match action", () async {
+      test("Update the bot list match action", () async {
         expect(
             await db.updateGuildConfig(
                 serverID: GUILD_ID, phishingMatchAction: Action.fromString("kick,log")),
             true);
       });
 
-      test("Update the toggle for phishing list matching", () async {
+      test("Update the toggle for bot list matching", () async {
         expect(await db.updateGuildConfig(serverID: GUILD_ID, phishingMatchEnabled: false), true);
       });
 
