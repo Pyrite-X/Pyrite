@@ -24,6 +24,19 @@ void main() async {
   // print(jsonEncode(lirx.commandList));
   var result = await lirx.bulkPublishCommands();
   result = result as List<dynamic>;
-  print("${result.length} commands were published.");
-  result.forEach((element) => print(element));
+
+  StringBuffer output = StringBuffer();
+  output.writeln("${result.length} commands were published.\n");
+
+  result.forEach((element) {
+    output.writeln("Command name: ${element["name"]}");
+    if (element.containsKey("options")) {
+      List<dynamic> optionData = element["options"];
+      optionData.forEach((element) {
+        output.writeln("\tOption: ${element["name"]}");
+      });
+    }
+  });
+
+  print(output.toString());
 }
