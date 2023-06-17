@@ -23,7 +23,7 @@ void on_join_event(IGuildMemberAddEvent event) async {
   UserBuilder userBuilder = UserBuilder()
     ..setUsername(event.user.username)
     ..setTag(event.user.tag)
-    // ..setGlobalName()
+    ..setGlobalName(event.user.globalName)
     ..setNickname(event.member.nickname)
     ..setUserID(BigInt.from(event.user.id.id));
 
