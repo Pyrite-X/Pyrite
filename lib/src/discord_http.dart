@@ -163,6 +163,14 @@ class DiscordHTTP {
     var uri = builder.build();
     return await http.patch(uri, headers: _buildHeaders(), body: jsonEncode(payload));
   }
+
+  Future<http.Response> getBotApplication() async {
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL, port: port);
+    builder.setPath("/api/$apiVersion/applications/@me");
+
+    var uri = builder.build();
+    return await http.get(uri, headers: _buildHeaders());
+  }
 }
 
 class UriBuilder {

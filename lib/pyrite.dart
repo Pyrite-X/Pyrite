@@ -21,9 +21,12 @@ import 'src/modules/interactions/invite.dart' as invite;
 import 'src/modules/interactions/redeem.dart' as redeem;
 import 'src/modules/interactions/rules.dart' as rules;
 import 'src/modules/interactions/scan.dart' as scan;
+import 'src/modules/interactions/stats.dart' as stats;
 import 'src/modules/interactions/transfer.dart' as transfer;
 
 import 'src/utilities/ignore_exceptions.dart' as IE;
+
+final int _startTime = (DateTime.now().toUtc().millisecondsSinceEpoch / 1000).round();
 
 class Pyrite {
   final String token;
@@ -124,6 +127,7 @@ class Pyrite {
     // onyx.registerAppCommandHandler("redeem", redeem.redeemCmd);
     onyx.registerAppCommandHandler("rules", rules.rulesCmd);
     onyx.registerAppCommandHandler("scan", scan.scanCmd);
+    onyx.registerAppCommandHandler("stats", ((p0) => stats.statsCommand(p0, _startTime)));
     // onyx.registerAppCommandHandler("transfer", transfer.transferCmd);
 
     Alfred alfred = Alfred();

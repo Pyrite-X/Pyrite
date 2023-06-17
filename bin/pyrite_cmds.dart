@@ -17,7 +17,8 @@ void main() async {
     'commands/help.toml',
     'commands/invite.toml',
     'commands/rules.toml',
-    'commands/scan.toml'
+    'commands/scan.toml',
+    'commands/stats.toml'
   ]);
 
   // print(jsonEncode(lirx.commandList));

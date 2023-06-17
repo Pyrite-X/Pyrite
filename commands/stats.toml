@@ -1,0 +1,3 @@
+name = "stats"
+description = "View some statistics about Pyrite"
+type = 1
