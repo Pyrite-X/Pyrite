@@ -20,6 +20,8 @@ class User {
     /// Normalize the output to get rid of custom fonts/styles that could bypass matching.
     this.username = unorm.nfkc(username);
     if (nickname != null) this.nickname = unorm.nfkc(nickname);
+
+    if (globalName != null) this.globalName = globalName;
   }
 }
 
