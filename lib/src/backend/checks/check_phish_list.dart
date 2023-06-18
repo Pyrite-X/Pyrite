@@ -81,9 +81,9 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
             : globalNameCheck
                 ? context.user.globalName
                 : context.user.nickname;
-      }
 
-      break;
+        break;
+      }
     }
   }
 
