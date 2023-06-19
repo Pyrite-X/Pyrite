@@ -20,22 +20,29 @@ class Action {
     bitwiseValue = input;
     textValue = "";
 
-    if (this.containsValue(ActionEnum.kick.value)) {
+    if (this.contains(enumObj: ActionEnum.kick)) {
       textValue += "kick,";
       enumList.add(ActionEnum.kick);
-    } else if (this.containsValue(ActionEnum.ban.value)) {
+    } else if (this.contains(enumObj: ActionEnum.ban)) {
       textValue += "ban,";
       enumList.add(ActionEnum.ban);
     }
 
-    if (this.containsValue(ActionEnum.log.value)) {
+    if (this.contains(enumObj: ActionEnum.log)) {
       textValue += "log";
       enumList.add(ActionEnum.log);
     }
   }
 
-  bool containsValue(int input) {
-    return (bitwiseValue & input) != 0;
+  bool contains({ActionEnum? enumObj, int? bitValue}) {
+    if (enumObj == null && bitValue == null) {
+      throw ArgumentError("You must pass either enumObj or bitValue.");
+    }
+    if (enumObj != null && bitValue != null) {
+      throw ArgumentError("You must pass either enumObj or bitValue, not both.");
+    }
+
+    return enumObj != null ? (bitwiseValue & enumObj.value) != 0 : (bitwiseValue & bitValue!) != 0;
   }
 }
 
@@ -58,15 +65,15 @@ class ActionEnumString {
   static List<String> getStringsFromAction(Action value) {
     List<String> result = [];
 
-    if (value.containsValue(1 << 0)) {
+    if (value.contains(bitValue: 1 << 0)) {
       result.add(kick);
     }
 
-    if (value.containsValue(1 << 1)) {
+    if (value.contains(bitValue: 1 << 1)) {
       result.add(ban);
     }
 
-    if (value.containsValue(1 << 2)) {
+    if (value.contains(bitValue: 1 << 2)) {
       result.add(log);
     }
 

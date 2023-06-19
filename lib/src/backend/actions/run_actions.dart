@@ -23,11 +23,11 @@ void runActions(TriggerContext context, CheckResult result) async {
 }
 
 void triggerActions(Action action, TriggerContext context, CheckResult result) {
-  if (action.containsValue(ActionEnum.kick.value)) kickUser(context: context, result: result);
+  if (action.contains(enumObj: ActionEnum.kick)) kickUser(context: context, result: result);
 
-  if (action.containsValue(ActionEnum.ban.value)) banUser(context: context, result: result);
+  if (action.contains(enumObj: ActionEnum.ban)) banUser(context: context, result: result);
 
-  if (action.containsValue(ActionEnum.log.value)) {
+  if (action.contains(enumObj: ActionEnum.log)) {
     if (context.eventSource.sourceType == EventSourceType.join) {
       log.sendLogMessage(context: context, result: result);
     } else if (context.eventSource.sourceType == EventSourceType.scan) {
