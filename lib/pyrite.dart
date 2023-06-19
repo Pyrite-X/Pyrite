@@ -128,7 +128,7 @@ class Pyrite {
     onyx.registerAppCommandHandler("about", about.aboutCmd);
     onyx.registerAppCommandHandler("config", config.configCmd);
     onyx.registerAppCommandHandler("help", help.helpCmd);
-    onyx.registerAppCommandHandler("invite", invite.helpCmd);
+    onyx.registerAppCommandHandler("invite", invite.inviteCmd);
     // onyx.registerAppCommandHandler("redeem", redeem.redeemCmd);
     onyx.registerAppCommandHandler("rules", rules.rulesCmd);
     onyx.registerAppCommandHandler("scan", scan.scanCmd);
