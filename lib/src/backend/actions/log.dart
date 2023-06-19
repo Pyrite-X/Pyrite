@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart' show EmbedBuilder;
-import 'package:onyx/onyx.dart' show JsonData;
+import 'package:onyx/onyx.dart';
 
 import '../storage.dart' as storage;
 import '../checks/check_result.dart';
@@ -43,9 +43,13 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
       inline: true);
 
   String title = "";
+  ActionRow? actionRow;
+
   if (result.runtimeType == CheckPhishResult) {
     var pma = guild.phishingMatchAction!;
     title = "Bot List Match | ${_actionToSuffix(pma)} | ${user.tag} ";
+
+    actionRow = _buildEmbedButtons(pma, user.userID);
 
     String percentage = (typedResult.fuzzyMatchPercent == 100)
         ? "100"
@@ -58,6 +62,8 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
   } else if (result.runtimeType == CheckRulesResult) {
     var rac = typedResult.rule!.action;
     title = "Rule Match | ${_actionToSuffix(rac)} | ${user.tag}";
+
+    actionRow = _buildEmbedButtons(rac, user.userID);
 
     embed.addField(
         name: "Rule",
@@ -79,12 +85,37 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
     "embeds": [
       {...embed.build()}
     ],
-    "allowed_mentions": {"parse": []}
+    "allowed_mentions": {"parse": []},
+    "components": [
+      {...actionRow!.toJson()}
+    ]
   });
+
   if (msgResponse.statusCode == 403 || msgResponse.statusCode == 404) {
     storage.removeGuildField(serverID: guild.serverID, fieldName: "logchannelID");
   }
 }
+
+ActionRow _buildEmbedButtons(Action action, BigInt userID) {
+  // Only include if the action didn't kick or ban the user already.
+  bool includeModerationButtons =
+      !(action.contains(enumObj: ActionEnum.ban) || action.contains(enumObj: ActionEnum.kick));
+  ActionRow actionRow = ActionRow();
+
+  actionRow.addComponent(
+      Button(style: ButtonStyle.primary, label: "User info", custom_id: "log_button:info:${userID}"));
+
+  if (includeModerationButtons) {
+    actionRow.addComponent(
+        Button(style: ButtonStyle.secondary, label: "Kick user", custom_id: "log_button:kick:${userID}"));
+    actionRow.addComponent(
+        Button(style: ButtonStyle.secondary, label: "Ban user", custom_id: "log_button:ban:${userID}"));
+  }
+
+  return actionRow;
+}
+
+// VVVVVV ---------------- Scan Log logic ---------------- VVVVVV
 
 Map<BigInt, StringBuffer> logBufferMap = Map();
 
@@ -131,8 +162,8 @@ String dumpServerScanLog({required BigInt serverID}) {
   return output;
 }
 
-String _actionToSuffix(Action action) => action.containsValue(ActionEnum.ban.value)
+String _actionToSuffix(Action action) => action.contains(enumObj: ActionEnum.ban)
     ? "Banned"
-    : action.containsValue(ActionEnum.kick.value)
+    : action.contains(enumObj: ActionEnum.kick)
         ? "Kicked"
         : "Alert";
