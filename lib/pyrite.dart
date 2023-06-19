@@ -26,6 +26,8 @@ import 'src/modules/interactions/stats.dart' as stats;
 // ignore: unused_import
 import 'src/modules/interactions/transfer.dart' as transfer;
 
+import 'src/modules/interactions/buttons/log_button.dart' as log_button;
+
 import 'src/utilities/ignore_exceptions.dart' as IE;
 
 late final int _startTime;
@@ -134,6 +136,8 @@ class Pyrite {
     onyx.registerAppCommandHandler("scan", scan.scanCmd);
     onyx.registerAppCommandHandler("stats", ((p0) => stats.statsCommand(p0, _startTime)));
     // onyx.registerAppCommandHandler("transfer", transfer.transferCmd);
+
+    onyx.registerGenericComponentHandler("log_button", log_button.logButtonHandler);
 
     Alfred alfred = Alfred();
     alfred.logWriter = _interceptAlfredLogs;
