@@ -75,6 +75,7 @@ void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, 
 
   String? nickname;
   DateTime? guildJoinDate;
+  List<dynamic> roleList = [];
 
   if (isMember) {
     JsonData subUserData = userData["user"];
@@ -87,6 +88,8 @@ void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, 
 
     String guildJoin = userData["joined_at"];
     guildJoinDate = DateTime.parse(guildJoin);
+
+    roleList = userData["roles"];
   } else {
     username = userData["username"];
     discrim = userData["discriminator"];
@@ -111,6 +114,13 @@ void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, 
   if (guildJoinDate != null) {
     int mseGuildJoin = (guildJoinDate.millisecondsSinceEpoch / 1000).round();
     embedBuilder.addField(name: "Server join date:", content: "<t:$mseGuildJoin:D>", inline: true);
+  }
+
+  if (roleList.isNotEmpty) {
+    StringBuffer sb = StringBuffer();
+    roleList.forEach((element) => sb.write("<@&$element> "));
+
+    embedBuilder.addField(name: "Roles", content: sb.toString());
   }
 
   embedBuilder.description = descBuffer.toString();
