@@ -1,4 +1,4 @@
-## Pyrite
+## **Pyrite**
 Pyrite is your next anti-phishing Discord bot for removing users who mimic popular Discord bots!
 
 By default, this is done through matching a person's username or nickname to a name of a well known Discord bot, as defined [here](https://github.com/Pyrite-X/Bot-List).
@@ -6,7 +6,20 @@ By default, this is done through matching a person's username or nickname to a n
 Along with this, there is an included rule system, allowing you to remove any users from your server who may match that rule.
 
 ---
-###  Invite
+### **Features**
+
+- Check users on join and on name/nickname updates.
+- Configurable name matching to a [bot list](https://github.com/Pyrite-X/Bot-List).
+  - Entire-name matching
+  - Partial/fuzzy matching
+- Rule system for custom names/strings to compare against.
+  - Regex rules and normal string rules.
+- Server scanning 
+  - Check everyone in your server for potential matches.
+- Self-hostable!
+
+---
+###  **Invite**
 Are you interested yet? If so, check out the bot for yourself!
 
 **[Invite Pyrite!](https://discord.com/api/oauth2/authorize?client_id=1022370218489692222&permissions=1374926720198&scope=bot%20applications.commands)**
@@ -15,7 +28,8 @@ Likewise, if you want to chat about Pyrite or get some help with it,
 join the **[Pyrite HQ](https://discord.gg/xzeWEDu4mj)** discord server!
 
 ---
-### Self Hosting
+
+### **Self Hosting**
 Although I would much appreciate if you use the hosted version instead, it is possible to self-host Pyrite!
 > This is not a completely thorough guide as it is presumed that if you are self hosting, you know how to do things like setup SSL certificates (or use a reverse proxy), open ports if necessary, and edit Docker files where necessary. 
 
@@ -38,10 +52,10 @@ The docker compose is setup so that it can work with Portainer, so the environme
 
 Keep in mind, Discord requires that interactions are served over an HTTPS connection, so you will need to set that up in your preferred way. 
 
-If you have certificates on your local system, you will need to add that folder as a volume to the `docker-compose.yml` under the `webserver` service.<br> Likewise, you will need to put the set the folder path that your certificates are in as the `CERT_BASE_PATH` environment variable.
+If you have certificates on your local system, you will need to add that folder as a volume to the `docker-compose.yml` under the `webserver` service.<br> Likewise, you will need to set the folder path that your certificates are in as the `CERT_BASE_PATH` environment variable.
 
 ---
-### Donations
+### **Donations**
 If Pyrite has helped you or your server, please send a donation my way! <br> I have no integrations for payments or premium upgrades at this time, so any money will give me motivation to keep the bot up-to-date for all to use! (Along with my desire to simply improve the community, but money helps me cover hosting costs!)
 
 There are no methods at this time to donate though, so unless you're really keen on donating, please hold onto your money lol.
