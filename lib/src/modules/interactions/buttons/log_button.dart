@@ -123,7 +123,159 @@ void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, 
 }
 
 void kickUser(
-    Interaction interaction, HttpRequest request, BigInt authorID, BigInt guildID, BigInt userID) async {}
+  Interaction interaction,
+  HttpRequest request,
+  BigInt authorID,
+  BigInt guildID,
+  BigInt userID,
+) async {
+  InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, null);
+
+  DiscordHTTP discordHTTP = DiscordHTTP();
+
+  // Check author permissions
+  JsonData authorMemberData = interaction.member!;
+
+  int? permissions = int.tryParse(authorMemberData["permissions"]);
+  if (permissions != null) {
+    if (permissions & (1 << 1) == 0) {
+      response.data = {
+        "content": "You don't have permissions to kick users in this server.",
+        "flags": 1 << 6
+      };
+      await request.response.send(jsonEncode(response));
+      return;
+    }
+  } else {
+    response.data = {
+      "content": "I could not check your permissions to make sure that you can kick people. Try again later!",
+      "flags": 1 << 6
+    };
+    await request.response.send(jsonEncode(response));
+    return;
+  }
+
+  // Check the bot's permissions
+  if (interaction.app_permissions != null) {
+    if (int.parse(interaction.app_permissions!) & (1 << 1) == 0) {
+      response.data = {
+        "content": "I can't kick people! Give me the permission to kick people and try again.",
+        "flags": 1 << 6
+      };
+      await request.response.send(jsonEncode(response));
+      return;
+    }
+  } else {
+    response.data = {
+      "content": "I could not check my permissions to make sure that I can kick people. Try again later!",
+      "flags": 1 << 6
+    };
+    await request.response.send(jsonEncode(response));
+    return;
+  }
+
+  String content = "User <@$userID> was kicked from your server.";
+  String userMention = authorMemberData["user"]["discriminator"] != "0"
+      ? "${authorMemberData["user"]["username"]}#${authorMemberData["user"]["discriminator"]}"
+      : "@${authorMemberData["user"]["username"]}";
+
+  response.responseType = InteractionResponseType.defer_message_response;
+  await request.response.send(jsonEncode(response));
+
+  await discordHTTP.kickUser(
+    guildID: guildID,
+    userID: userID,
+    logReason: "User was manually kicked by \"$userMention\".",
+  );
+
+  response.data = {"content": content};
+  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {"content": content});
+
+  JsonData message = interaction.message!;
+  List<dynamic> messageComponents = message["components"][0]["components"];
+  // Disable the kick button.
+  messageComponents[1]["disabled"] = true;
+
+  await discordHTTP.editMessage(
+      channelID: interaction.channel_id!,
+      messageID: BigInt.parse(interaction.message!["id"]),
+      payload: message);
+}
 
 void banUser(
-    Interaction interaction, HttpRequest request, BigInt authorID, BigInt guildID, BigInt userID) async {}
+  Interaction interaction,
+  HttpRequest request,
+  BigInt authorID,
+  BigInt guildID,
+  BigInt userID,
+) async {
+  InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, null);
+
+  DiscordHTTP discordHTTP = DiscordHTTP();
+
+  // Check author permissions
+  JsonData authorMemberData = interaction.member!;
+
+  int? permissions = int.tryParse(authorMemberData["permissions"]);
+  if (permissions != null) {
+    if (permissions & (1 << 2) == 0) {
+      response.data = {"content": "You don't have permissions to ban users in this server.", "flags": 1 << 6};
+      await request.response.send(jsonEncode(response));
+      return;
+    }
+  } else {
+    response.data = {
+      "content": "I could not check your permissions to make sure that you can ban people. Try again later!",
+      "flags": 1 << 6
+    };
+    await request.response.send(jsonEncode(response));
+    return;
+  }
+
+  // Check the bot's permissions
+  if (interaction.app_permissions != null) {
+    if (int.parse(interaction.app_permissions!) & (1 << 2) == 0) {
+      response.data = {
+        "content": "I can't ban people! Give me the permission to ban people and try again.",
+        "flags": 1 << 6
+      };
+      await request.response.send(jsonEncode(response));
+      return;
+    }
+  } else {
+    response.data = {
+      "content": "I could not check my permissions to make sure that I can ban people. Try again later!",
+      "flags": 1 << 6
+    };
+    await request.response.send(jsonEncode(response));
+    return;
+  }
+
+  String content = "User <@$userID> was banned from your server.";
+  String userMention = authorMemberData["user"]["discriminator"] != "0"
+      ? "${authorMemberData["user"]["username"]}#${authorMemberData["user"]["discriminator"]}"
+      : "@${authorMemberData["user"]["username"]}";
+
+  response.responseType = InteractionResponseType.defer_message_response;
+  await request.response.send(jsonEncode(response));
+
+  await discordHTTP.banUser(
+    guildID: guildID,
+    userID: userID,
+    logReason: "User was manually banned by \"$userMention\".",
+  );
+
+  response.data = {"content": content};
+  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {"content": content});
+
+  JsonData message = interaction.message!;
+  List<dynamic> messageComponents = message["components"][0]["components"];
+  // Disable both kick and ban buttons.
+  messageComponents[1]["disabled"] = true;
+  messageComponents[2]["disabled"] = true;
+
+  await discordHTTP.editMessage(
+      channelID: interaction.channel_id!,
+      messageID: BigInt.parse(interaction.message!["id"]),
+      payload: message);
+}
