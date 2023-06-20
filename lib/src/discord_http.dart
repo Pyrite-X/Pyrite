@@ -63,9 +63,11 @@ class DiscordHTTP {
     if (logReason != null) {
       headers["X-Audit-Log-Reason"] = logReason;
     }
-    return await http.put(uri, headers: headers, body: {
-      "delete_message_seconds": deleteSeconds ??= 600 //1 hour by default
-    });
+    return await http.put(uri,
+        headers: headers,
+        body: jsonEncode({
+          "delete_message_seconds": deleteSeconds ??= 600 //1 hour by default
+        }));
   }
 
   Future<http.Response> kickUser({required BigInt guildID, required BigInt userID, String? logReason}) async {
@@ -86,6 +88,15 @@ class DiscordHTTP {
 
     var uri = builder.build();
     return await http.post(uri, headers: _buildHeaders(), body: jsonEncode(payload));
+  }
+
+  Future<http.Response> editMessage(
+      {required BigInt channelID, required BigInt messageID, required JsonData payload}) async {
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL, port: port);
+    builder.setPath("/api/$apiVersion/channels/$channelID/messages/$messageID");
+
+    var uri = builder.build();
+    return await http.patch(uri, headers: _buildHeaders(), body: jsonEncode(payload));
   }
 
   Future<http.StreamedResponse> sendMessageWithFile(
