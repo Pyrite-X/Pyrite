@@ -5,7 +5,7 @@ By default, this is done through matching a person's username or nickname to a n
 
 Along with this, there is an included rule system, allowing you to remove any users from your server who may match that rule.
 
-Want to learn even more? Check out some of our [guides](guides/README.md)!
+> *Want to learn even more? Check out some of our [guides](guides/README.md)!*
 
 ---
 ### **Features**
