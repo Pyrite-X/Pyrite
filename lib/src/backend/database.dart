@@ -209,3 +209,63 @@ Future<bool> removeGuildRule({required BigInt serverID, required String ruleID})
 
   return result.modifiedCount == 1;
 }
+
+Future<bool> insertWhitelistEntry({required BigInt serverID, String? name, BigInt? roleID}) async {
+  JsonData queryMap = {"_id": serverID.toString()};
+
+  if (name == null && roleID == null) {
+    throw UnsupportedError("Cannot insert whitelist entry if there is no name or roleID.");
+  }
+
+  bool nameResult = false;
+  if (name != null) {
+    UpdateResult result = await handleQuery("guilds", (collection) async {
+      return await collection.updateOne(queryMap, {
+        r"$addToSet": {"whitelist.names": name}
+      });
+    });
+    nameResult = result.modifiedCount == 1;
+  }
+
+  bool roleResult = false;
+  if (roleID != null) {
+    UpdateResult result = await handleQuery("guilds", (collection) async {
+      return await collection.updateOne(queryMap, {
+        r"$addToSet": {"whitelist.roles": roleID.toString()}
+      });
+    });
+    roleResult = result.modifiedCount == 1;
+  }
+
+  return (name != null && roleID != null) ? nameResult && roleResult : nameResult || roleResult;
+}
+
+Future<bool> removeWhitelistEntry({required BigInt serverID, String? name, BigInt? roleID}) async {
+  JsonData queryMap = {"_id": serverID.toString()};
+
+  if (name == null && roleID == null) {
+    throw UnsupportedError("Cannot remove whitelist entry if there is no name or roleID.");
+  }
+
+  bool nameResult = false;
+  if (name != null) {
+    UpdateResult result = await handleQuery("guilds", (collection) async {
+      return await collection.updateOne(queryMap, {
+        r"$pull": {"whitelist.names": name}
+      });
+    });
+    nameResult = result.modifiedCount == 1;
+  }
+
+  bool roleResult = false;
+  if (roleID != null) {
+    UpdateResult result = await handleQuery("guilds", (collection) async {
+      return await collection.updateOne(queryMap, {
+        r"$pull": {"whitelist.roles": roleID}
+      });
+    });
+    roleResult = result.modifiedCount == 1;
+  }
+
+  return (name != null && roleID != null) ? nameResult && roleResult : nameResult || roleResult;
+}
