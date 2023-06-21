@@ -41,6 +41,7 @@ class AppCache {
 const CONFIG_KEY = "server_config";
 const RULE_KEY = "server_rules";
 const SCAN_KEY = "server_scans";
+const WHITELIST_KEY = "server_whitelist";
 const BASE_TIMEOUT = Duration(days: 3);
 final AppCache _appCache = AppCache();
 
@@ -134,4 +135,68 @@ Future<int> decreaseScanCount(BigInt guildID) async {
   var client = RespCommandsTier2(_appCache.cacheConnection);
   var response = await client.tier1.tier0.execute(["HINCRBY", SCAN_KEY, guildID.toString(), -1]);
   return response.toInteger().payload;
+}
+
+Future<void> addWhitelist(BigInt serverID, {List<BigInt>? roles, List<String>? names}) async {
+  var client = RespCommandsTier2(_appCache.cacheConnection);
+
+  if (roles != null) {
+    await client.tier1.tier0.execute(["SADD", "$WHITELIST_KEY\_$serverID\_roles", ...roles]);
+    client.pexpire("$WHITELIST_KEY\_$serverID\_roles", BASE_TIMEOUT);
+  }
+
+  if (names != null) {
+    await client.tier1.tier0.execute(["SADD", "$WHITELIST_KEY\_$serverID\_names", ...names]);
+    client.pexpire("$WHITELIST_KEY\_$serverID\_names", BASE_TIMEOUT);
+  }
+}
+
+Future<bool> clearWhitelist(BigInt serverID, {bool roles = false, bool names = false}) async {
+  if (!roles && !names) {
+    throw UnsupportedError("To clear, one must either clear the roles, the names, or both.");
+  }
+
+  var client = RespCommandsTier2(_appCache.cacheConnection);
+  bool roleSuccess = false;
+  bool nameSuccess = false;
+
+  if (roles) {
+    roleSuccess = await client.del(["$WHITELIST_KEY\_$serverID\_roles"]) == 1;
+  }
+
+  if (names) {
+    nameSuccess = await client.del(["$WHITELIST_KEY\_$serverID\_names"]) == 1;
+  }
+
+  return (roles && names) ? nameSuccess && roleSuccess : nameSuccess || roleSuccess;
+}
+
+Future<JsonData> getWhitelist(BigInt serverID, {bool roles = false, bool names = false}) async {
+  JsonData output = {"roles": [], "names": []};
+
+  var client = RespCommandsTier2(_appCache.cacheConnection);
+
+  if (roles) {
+    var roleRequest = await client.tier1.tier0.execute(["SMEMBERS", "$WHITELIST_KEY\_$serverID\_roles"]);
+    if (roleRequest.isArray) {
+      var arr = roleRequest.toArray().payload;
+
+      if (arr != null) {
+        output["roles"] = [for (var item in arr) item.toBulkString().payload];
+      }
+    }
+  }
+
+  if (names) {
+    var nameRequest = await client.tier1.tier0.execute(["SMEMBERS", "$WHITELIST_KEY\_$serverID\_names"]);
+    if (nameRequest.isArray) {
+      var arr = nameRequest.toArray().payload;
+
+      if (arr != null) {
+        output["names"] = [for (var item in arr) item.toBulkString().payload];
+      }
+    }
+  }
+
+  return output;
 }
