@@ -9,7 +9,8 @@ import 'package:unorm_dart/unorm_dart.dart' as unorm;
 import '../../backend/storage.dart' as storage;
 import '../../utilities/base_embeds.dart' as embeds;
 
-final RegExp ID_REGEX = RegExp(r'(\d{17,})');
+final int BASE_NAME_LIMIT = 50;
+final int BASE_ROLE_LIMIT = 10;
 
 /// Interaction entrypoint
 void whitelistLogic(Interaction interaction) async {
@@ -65,14 +66,17 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
 
   late ApplicationCommandOption nameInput;
   List<String> nameInputList = [];
-  JsonData whitelistData = {};
+
+  JsonData whitelistData = await storage.fetchGuildWhitelist(interaction.guild_id!);
+  List<String> existingNameList = whitelistData["names"];
 
   if (addOrDelete) {
     nameInput = command.options!.last;
     // Split on comma, trim & normalize input, shove into a list.
-    nameInputList = [for (String name in (nameInput.value as String).split(",")) unorm.nfkc(name.trim())];
-  } else {
-    whitelistData = await storage.fetchGuildWhitelist(interaction.guild_id!);
+    nameInputList = [
+      for (String name in (nameInput.value as String).split(","))
+        if (name.isNotEmpty) unorm.nfkc(name.trim())
+    ];
   }
 
   DiscordHTTP discordHTTP = DiscordHTTP();
@@ -81,6 +85,32 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
 
   switch (action) {
     case "add":
+      if (nameInputList.isEmpty) {
+        embedResponse = embeds.errorEmbed();
+        embedResponse.description =
+            "Your given input will result in nothing to add. Try again with a different list of names to add.";
+        break;
+      }
+
+      if (existingNameList.length >= BASE_NAME_LIMIT) {
+        int count = BASE_NAME_LIMIT - existingNameList.length;
+        embedResponse = embeds.warningEmbed();
+        embedResponse.description =
+            "You have too many names whitelisted. Please remove some before adding more. "
+            "Pyrite has a limit of $BASE_NAME_LIMIT names being whitelisted at a time, you can add `$count` more names.";
+        break;
+      }
+
+      if (existingNameList.length + nameInputList.length >= BASE_NAME_LIMIT) {
+        int count = BASE_NAME_LIMIT - existingNameList.length;
+        embedResponse = embeds.warningEmbed();
+        embedResponse.description =
+            "You will have too many names whitelisted. Please remove some before adding more. "
+            "Pyrite has a limit of $BASE_NAME_LIMIT names being whitelisted at a time, you can add `$count` more names.\n\n"
+            "Here is the list of names you gave me: \n> ${nameInput.value}";
+        break;
+      }
+
       bool success = await storage.addToWhitelist(interaction.guild_id!, names: nameInputList);
 
       if (success) {
@@ -99,6 +129,13 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
       break;
 
     case "delete":
+      if (nameInputList.isEmpty) {
+        embedResponse = embeds.errorEmbed();
+        embedResponse.description =
+            "Your given input will result in nothing to remove. Try again with a different list of names to remove.";
+        break;
+      }
+
       List<String> nameList = whitelistData["names"];
 
       if (nameList.isEmpty) {
@@ -185,12 +222,12 @@ void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOp
   switch (action) {
     case "add":
       List<BigInt> roleList = whitelistData["roles"];
-      int maxValues = 10 - roleList.length;
+      int maxValues = BASE_ROLE_LIMIT - roleList.length;
 
       if (maxValues <= 0) {
         embedResponse = embeds.warningEmbed();
         embedResponse.description = "You have too many roles added to the whitelist!\n"
-            "Try removing some so you have less than 10 roles on the whitelist at a time "
+            "Try removing some so you have less than $BASE_ROLE_LIMIT roles on the whitelist at a time "
             "before adding more.";
         break;
       }
@@ -201,7 +238,7 @@ void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOp
       actionRow.addComponent(SelectMenu(
           custom_id: "whitelist:sel:roles:add:$authorID",
           type: ComponentType.role_select,
-          min_values: 0,
+          min_values: 1,
           max_values: maxValues));
 
       break;
@@ -229,8 +266,11 @@ void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOp
         roleNameList[id] = name;
       }
 
-      SelectMenu deleteMenu =
-          SelectMenu(custom_id: "whitelist:sel:roles:delete:$authorID", type: ComponentType.string_select);
+      SelectMenu deleteMenu = SelectMenu(
+        custom_id: "whitelist:sel:roles:delete:$authorID",
+        type: ComponentType.string_select,
+        min_values: 1,
+      );
       for (BigInt roleID in roleList) {
         String name = "Invalid Role ($roleID)";
         if (roleNameList.containsKey(roleID)) {
