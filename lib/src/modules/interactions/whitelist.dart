@@ -99,6 +99,14 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
       break;
 
     case "delete":
+      List<String> nameList = whitelistData["names"];
+
+      if (nameList.isEmpty) {
+        embedResponse = embeds.warningEmbed();
+        embedResponse.description = "You have no names whitelisted! You can't remove something from nothing.";
+        break;
+      }
+
       bool success = await storage.removeFromWhitelist(interaction.guild_id!, names: nameInputList);
 
       if (success) {
@@ -159,11 +167,88 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
 }
 
 void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOption command) async {
-  InteractionResponse botResponse =
-      InteractionResponse(InteractionResponseType.message_response, {"content": "WIP.", "flags": 1 << 6});
+  ApplicationCommandOption selection = command.options![0];
 
-  await response.send(jsonEncode(botResponse));
-  return;
+  String action = selection.value;
+  String authorID = interaction.member!["user"]["id"];
+
+  InteractionResponse deferResponse =
+      InteractionResponse(InteractionResponseType.defer_message_response, null);
+  await response.send(jsonEncode(deferResponse));
+
+  JsonData whitelistData = await storage.fetchGuildWhitelist(interaction.guild_id!);
+
+  DiscordHTTP discordHTTP = DiscordHTTP();
+  late EmbedBuilder embedResponse;
+  ActionRow actionRow = ActionRow();
+
+  switch (action) {
+    case "add":
+      embedResponse = embeds.infoEmbed();
+      embedResponse.description = "Select which roles to add to the whitelist.";
+
+      actionRow.addComponent(SelectMenu(
+          custom_id: "whitelist:sel:roles:add:$authorID",
+          type: ComponentType.role_select,
+          min_values: 0,
+          max_values: 10));
+
+      break;
+
+    case "delete":
+      List<BigInt> roleList = whitelistData["roles"];
+      if (roleList.isEmpty) {
+        embedResponse = embeds.warningEmbed();
+        embedResponse.description = "You have no roles whitelisted! You can't remove something from nothing.";
+        break;
+      }
+
+      embedResponse = embeds.infoEmbed();
+      embedResponse.description = "Select which roles to remove from the whitelist.";
+
+      actionRow.addComponent(SelectMenu(
+          custom_id: "whitelist:sel:roles:delete:$authorID",
+          type: ComponentType.role_select,
+          min_values: 0,
+          max_values: 10));
+      break;
+
+    case "clear":
+      List<BigInt> roleList = whitelistData["roles"];
+      embedResponse = embeds.warningEmbed();
+
+      if (roleList.isEmpty) {
+        embedResponse.description = "You have no roles whitelisted! So therefore, there is nothing to clear!";
+        break;
+      }
+
+      embedResponse = embeds.warningEmbed();
+      embedResponse.title = "Are you sure you want to do this?";
+      embedResponse.description = ">>> *Please confirm that you DO in fact want to "
+          "clear your entire role whitelist.\n\n**THIS CANNOT BE UNDONE!***";
+
+      actionRow = ActionRow();
+      actionRow.addComponent(
+          Button(style: ButtonStyle.danger, label: "No", custom_id: "whitelist:clear:roles:no:$authorID"));
+      actionRow.addComponent(
+          Button(style: ButtonStyle.success, label: "Yes", custom_id: "whitelist:clear:roles:yes:$authorID"));
+      break;
+
+    default:
+      embedResponse = embeds.errorEmbed();
+      embedResponse.description = "You somehow caused the bot to receive an interaction "
+          "without a proper action in the `whitelist names` command. Bravo? Please report this.";
+  }
+
+  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+    "embeds": [
+      {...embedResponse.build()}
+    ],
+    "components": [
+      if (actionRow.components.isNotEmpty) {...actionRow.toJson()}
+    ],
+    "allowed_mentions": {"parse": []}
+  });
 }
 
 void _view(Interaction interaction, HttpResponse response, ApplicationCommandOption command) async {
