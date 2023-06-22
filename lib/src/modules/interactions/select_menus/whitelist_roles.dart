@@ -35,8 +35,9 @@ void roleMenuHandler(Interaction interaction) async {
     return;
   }
 
-  JsonData roleMap;
-  if (interactionData.resolved!.containsKey("roles")) {
+  JsonData roleMap = {};
+  List<BigInt> roleList = [];
+  if (interactionData.resolved != null && interactionData.resolved!.containsKey("roles")) {
     roleMap = interactionData.resolved!["roles"];
     // Remove all managed roles (bot roles, integrations, linked roles)
     roleMap.removeWhere((key, value) => value["managed"]);
@@ -49,7 +50,7 @@ void roleMenuHandler(Interaction interaction) async {
       await httpResponse.send(jsonEncode(response));
       return;
     }
-  } else {
+  } else if (userAction != "delete") {
     InteractionResponse response = InteractionResponse(InteractionResponseType.message_response,
         {"content": "No valid roles were found to be ${userAction}ed.", "flags": 1 << 6});
     await httpResponse.send(jsonEncode(response));
@@ -63,7 +64,12 @@ void roleMenuHandler(Interaction interaction) async {
   late EmbedBuilder eb;
 
   bool storeChanges = false;
-  List<BigInt> roleList = [for (var roleID in roleMap.keys) BigInt.parse(roleID.toString())];
+  if (roleList.isEmpty && roleMap.isNotEmpty) {
+    roleList = [for (var roleID in roleMap.keys) BigInt.parse(roleID.toString())];
+  } else if (roleMap.isEmpty && roleList.isEmpty) {
+    roleList = [for (String roleID in interactionData.values!) BigInt.parse(roleID)];
+  }
+
   String roleStringList = "<@&" + roleList.join(">, <@&") + ">";
 
   if (userAction == "add") {

@@ -217,13 +217,34 @@ void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOp
       embedResponse = embeds.infoEmbed();
       embedResponse.description = "Select which roles to remove from the whitelist.";
 
-      // User can select as many as they want because in this case we don't
-      // need to worry about the limit.
-      actionRow.addComponent(SelectMenu(
-          custom_id: "whitelist:sel:roles:delete:$authorID",
-          type: ComponentType.role_select,
-          min_values: 0,
-          max_values: 25));
+      // Only show users database entries, this is bc deleted roles can't be picked via the discord role picker.
+      var guildRoleReq = await discordHTTP.getGuildRoles(guildID: interaction.guild_id!);
+      List<dynamic> guildRolesData = jsonDecode(guildRoleReq.body);
+
+      Map<BigInt, String> roleNameList = {};
+      for (JsonData item in guildRolesData) {
+        BigInt id = BigInt.parse(item["id"].toString());
+        String name = item["name"];
+
+        roleNameList[id] = name;
+      }
+
+      SelectMenu deleteMenu =
+          SelectMenu(custom_id: "whitelist:sel:roles:delete:$authorID", type: ComponentType.string_select);
+      for (BigInt roleID in roleList) {
+        String name = "Invalid Role ($roleID)";
+        if (roleNameList.containsKey(roleID)) {
+          name = "${roleNameList[roleID]} ($roleID)";
+          // Cap to 100 characters bc that's the discord limit
+          name = name.substring(0, (name.length > 99) ? 99 : name.length - 1);
+        }
+        deleteMenu.addOption(SelectMenuOption(label: name, value: roleID.toString()));
+      }
+
+      deleteMenu.min_values = 0;
+      deleteMenu.max_values = deleteMenu.options.length;
+      actionRow.addComponent(deleteMenu);
+
       break;
 
     case "clear":
