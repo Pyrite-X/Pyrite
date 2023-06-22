@@ -218,3 +218,32 @@ Future<bool> canRunScan(BigInt guildID) async {
   int scanCount = await getScanCount(guildID);
   return scanCount > 0;
 }
+
+Future<bool> addToWhitelist(BigInt guildID, {List<BigInt>? roles, List<String>? names}) async {
+  redis.addWhitelist(guildID, roles: roles, names: names);
+  return await db.insertManyWhitelistEntries(serverID: guildID, roles: roles, names: names);
+}
+
+Future<bool> removeFromWhitelist(BigInt guildID, {List<BigInt>? roles, List<String>? names}) async {
+  redis.removeFromWhitelist(guildID, roles: roles, names: names);
+  return await db.removeManyWhitelistEntries(serverID: guildID, roles: roles, names: names);
+}
+
+Future<bool> clearWhitelist(BigInt guildID, {bool roles = false, bool names = false}) async {
+  bool cacheDump = await redis.clearWhitelist(guildID, roles: roles, names: names);
+
+  bool roleDump = false;
+  bool nameDump = false;
+
+  if (roles) {
+    roleDump = await db.removeGuildField(serverID: guildID, fieldName: "whitelist.roles");
+  }
+
+  if (names) {
+    nameDump = await db.removeGuildField(serverID: guildID, fieldName: "whitelist.names");
+  }
+
+  nameDump = (names == nameDump);
+  roleDump = (roles == roleDump);
+  return cacheDump && nameDump && roleDump;
+}
