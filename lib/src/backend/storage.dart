@@ -14,33 +14,41 @@ const DEFAULT_RULE_LIMIT = 10;
 const DEFAULT_REGEX_RULE_LIMIT = 2;
 
 /// Fetches guild data from the cache and then the database.
-Future<Server?> fetchGuildData(BigInt guildID, {bool withRules = false}) async {
+Future<Server?> fetchGuildData(BigInt guildID, {bool withRules = false, bool withWhitelist = true}) async {
   JsonData redisResponse = await redis.getServerConfig(guildID);
   Server? result;
 
+  bool queriedDatabase = false;
+
   if (redisResponse.isNotEmpty) {
     result = Server.fromJson(data: redisResponse);
-    if (withRules) {
-      result.rules = await fetchGuildRules(guildID);
-    }
   } else {
     // Get data from database because cache didn't have the entry.
+    // Contains all data, so just populate as necessary and cache.
     JsonData dbResponse = await db.fetchGuildData(serverID: guildID);
+    queriedDatabase = true;
     if (dbResponse.isNotEmpty) {
-      // Remove custom rules if not withRules bc fetchGuildData includes the entire
-      // rule list. Phishing list settings are technically a rule of type 1, so we
-      // can't just drop the rule list entirely.
+      // Remove custom rules if not withRules.
+      // Phishing list settings are a rule of type 1, so we can't just drop the rule list entirely.
+      // TODO: Move phishing list out of the rule configuration and into its own sub-dict.
       if (dbResponse["rules"] != null && !withRules) {
         List<dynamic> ruleList = dbResponse["rules"];
         ruleList.removeWhere((element) => element["type"] == 0);
         dbResponse["rules"] = ruleList;
       }
+
+      if (dbResponse["whitelist"] != null && !withWhitelist) {
+        dbResponse["whitelist"] = null;
+      }
       result = Server.fromJson(data: dbResponse);
 
       // Cache server config and rules if withRules.
       redis.setServerConfig(result);
-      if (withRules) {
+      if (withRules && result.rules.isNotEmpty) {
         redis.cacheRules(guildID, result.rules);
+      }
+      if (withWhitelist && (result.excludedRoles.isNotEmpty || result.excludedNames.isNotEmpty)) {
+        redis.addWhitelist(guildID, roles: result.excludedRoles, names: result.excludedNames);
       }
     } else {
       // No entry for this guild, add one. Don't cache it.
@@ -49,6 +57,20 @@ Future<Server?> fetchGuildData(BigInt guildID, {bool withRules = false}) async {
         result = Server.fromJson(data: insertedData);
       }
       // At this point, there was likely an issue with contacting the database.
+    }
+  }
+
+  if (result != null) {
+    // If the guild data was cached, check for rules and whitelist and set.
+    if (!queriedDatabase && withRules && result.rules.isEmpty) {
+      List<Rule> response = await fetchGuildRules(guildID);
+      result.rules = response;
+    }
+
+    if (!queriedDatabase && withWhitelist && (result.excludedNames.isEmpty || result.excludedRoles.isEmpty)) {
+      JsonData response = await fetchGuildWhitelist(guildID);
+      result.excludedNames = response["names"];
+      result.excludedRoles = response["roles"];
     }
   }
 
@@ -73,6 +95,29 @@ Future<List<Rule>> fetchGuildRules(BigInt guildID) async {
   }
 
   return ruleList;
+}
+
+Future<JsonData> fetchGuildWhitelist(BigInt guildID) async {
+  JsonData output = {"names": [], "roles": []};
+
+  JsonData whitelist = await redis.getWhitelist(guildID, roles: true, names: true);
+  output["roles"] = whitelist["roles"];
+  output["names"] = whitelist["names"];
+
+  if ((output["roles"] as List).isEmpty || (output["names"] as List).isEmpty) {
+    JsonData dbData = await db.fetchGuildData(serverID: guildID, fields: ["whitelist"]);
+
+    if ((dbData["roles"] as List).isNotEmpty) {
+      output["roles"] = [for (String role in dbData["roles"]) BigInt.parse(role)];
+    }
+    if ((dbData["names"] as List).isNotEmpty) {
+      output["names"] = dbData["names"];
+    }
+
+    redis.addWhitelist(guildID, roles: output["roles"], names: output["names"]);
+  }
+
+  return output;
 }
 
 /// Updates the saved guild config. On success it will clear any cached config.
