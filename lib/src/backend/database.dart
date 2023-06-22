@@ -332,9 +332,7 @@ Future<bool> removeManyWhitelistEntries({
     UpdateResult result = await handleQuery("guilds", (collection) async {
       return await collection.updateOne(queryMap, {
         r"$pull": {
-          "whitelist.names": {
-            "\$in": [names]
-          }
+          "whitelist.names": {"\$in": names}
         }
       });
     });
