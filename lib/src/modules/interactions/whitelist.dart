@@ -130,16 +130,15 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
       embedResponse.description = ">>> *Please confirm that you DO in fact want to "
           "clear your entire name whitelist.\n\n**THIS CANNOT BE UNDONE!***";
 
-      // TODO: Implement button handlers.
       actionRow = ActionRow();
       actionRow.addComponent(Button(
           style: ButtonStyle.danger,
           label: "No",
-          custom_id: "whitelist:clear:names:no:${interaction.member!["id"]}"));
+          custom_id: "whitelist:clear:names:no:${interaction.member!["user"]["id"]}"));
       actionRow.addComponent(Button(
           style: ButtonStyle.success,
           label: "Yes",
-          custom_id: "whitelist:clear:names:yes:${interaction.member!["id"]}"));
+          custom_id: "whitelist:clear:names:yes:${interaction.member!["user"]["id"]}"));
       break;
 
     default:
