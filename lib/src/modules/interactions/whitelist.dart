@@ -91,8 +91,8 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
       } else {
         embedResponse = embeds.errorEmbed();
         embedResponse.title = "Error!";
-        embedResponse.description =
-            "There was an issue saving your changes to the whitelist. Try again later!\n\n"
+        embedResponse.description = "Your changes to the whitelist were not saved. The name(s) you gave "
+            "may already exist in the list.\n\n"
             "Here is the input you provided:\n> ${nameInput.value}";
       }
 
@@ -110,7 +110,7 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
         embedResponse = embeds.errorEmbed();
         embedResponse.title = "Error!";
         embedResponse.description =
-            "There was an issue saving your changes to the whitelist. Try again later!\n\n"
+            "Your changes could not be saved. It is likely that the name given does not exist in the list.\n\n"
             "Here is the input you provided:\n> ${nameInput.value}";
       }
 
@@ -152,7 +152,7 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
       {...embedResponse.build()}
     ],
     "components": [
-      {...actionRow.toJson()}
+      if (actionRow.components.isNotEmpty) {...actionRow.toJson()}
     ],
     "allowed_mentions": {"parse": []}
   });
