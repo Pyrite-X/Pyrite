@@ -1,3 +1,5 @@
+import 'dart:io' as os;
+
 import 'package:dotenv/dotenv.dart';
 import 'package:lirx/lirx.dart';
 
@@ -23,7 +25,12 @@ void main() async {
 
   // print(jsonEncode(lirx.commandList));
   var result = await lirx.bulkPublishCommands();
-  result = result as List<dynamic>;
+  try {
+    result = result as List<dynamic>;
+  } on TypeError {
+    print(result);
+    os.exit(1);
+  }
 
   StringBuffer output = StringBuffer();
   output.writeln("${result.length} commands were published.\n");
