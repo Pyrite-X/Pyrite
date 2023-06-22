@@ -138,6 +138,10 @@ Future<int> decreaseScanCount(BigInt guildID) async {
 }
 
 Future<void> addWhitelist(BigInt serverID, {List<BigInt>? roles, List<String>? names}) async {
+  if (roles == null && names == null) {
+    throw UnsupportedError("Can't add to nothing!");
+  }
+
   var client = RespCommandsTier2(_appCache.cacheConnection);
 
   if (roles != null) {
@@ -148,6 +152,22 @@ Future<void> addWhitelist(BigInt serverID, {List<BigInt>? roles, List<String>? n
   if (names != null) {
     await client.tier1.tier0.execute(["SADD", "$WHITELIST_KEY\_$serverID\_names", ...names]);
     client.pexpire("$WHITELIST_KEY\_$serverID\_names", BASE_TIMEOUT);
+  }
+}
+
+Future<void> removeFromWhitelist(BigInt serverID, {List<BigInt>? roles, List<String>? names}) async {
+  if (roles == null && names == null) {
+    throw UnsupportedError("Can't remove from nothing!");
+  }
+
+  var client = RespCommandsTier2(_appCache.cacheConnection);
+
+  if (roles != null) {
+    await client.tier1.tier0.execute(["SREM", "$WHITELIST_KEY\_$serverID\_roles", ...roles]);
+  }
+
+  if (names != null) {
+    await client.tier1.tier0.execute(["SREM", "$WHITELIST_KEY\_$serverID\_names", ...names]);
   }
 }
 
@@ -172,6 +192,10 @@ Future<bool> clearWhitelist(BigInt serverID, {bool roles = false, bool names = f
 }
 
 Future<JsonData> getWhitelist(BigInt serverID, {bool roles = false, bool names = false}) async {
+  if (!roles && !names) {
+    throw UnsupportedError("Can't get nothing from the whitelist! No point in that.");
+  }
+
   JsonData output = {"roles": [], "names": []};
 
   var client = RespCommandsTier2(_appCache.cacheConnection);
