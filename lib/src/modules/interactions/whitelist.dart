@@ -184,6 +184,17 @@ void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOp
 
   switch (action) {
     case "add":
+      List<BigInt> roleList = whitelistData["roles"];
+      int maxValues = 10 - roleList.length;
+
+      if (maxValues <= 0) {
+        embedResponse = embeds.warningEmbed();
+        embedResponse.description = "You have too many roles added to the whitelist!\n"
+            "Try removing some so you have less than 10 roles on the whitelist at a time "
+            "before adding more.";
+        break;
+      }
+
       embedResponse = embeds.infoEmbed();
       embedResponse.description = "Select which roles to add to the whitelist.";
 
@@ -191,7 +202,7 @@ void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOp
           custom_id: "whitelist:sel:roles:add:$authorID",
           type: ComponentType.role_select,
           min_values: 0,
-          max_values: 10));
+          max_values: maxValues));
 
       break;
 
@@ -206,11 +217,13 @@ void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOp
       embedResponse = embeds.infoEmbed();
       embedResponse.description = "Select which roles to remove from the whitelist.";
 
+      // User can select as many as they want because in this case we don't
+      // need to worry about the limit.
       actionRow.addComponent(SelectMenu(
           custom_id: "whitelist:sel:roles:delete:$authorID",
           type: ComponentType.role_select,
           min_values: 0,
-          max_values: 10));
+          max_values: 25));
       break;
 
     case "clear":
