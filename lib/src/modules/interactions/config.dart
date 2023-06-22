@@ -10,6 +10,8 @@ import '../../structures/server.dart';
 import '../../backend/storage.dart' as storage;
 import '../../utilities/base_embeds.dart' as embeds;
 
+import 'whitelist.dart' as whitelist;
+
 final RegExp ID_REGEX = RegExp(r'(\d{17,})');
 
 /// Interaction entrypoint
@@ -28,11 +30,10 @@ void configCmd(Interaction interaction) async {
   } else if (optionName == "join_event") {
     var selection = subcommand.options![0];
     configJoinEvent(interaction, selection.value, request);
-  } else if (optionName == "excluded_roles") {
-    var inputOption = subcommand.options![0];
-    configExcludedRoles(interaction, inputOption.value, request);
   } else if (optionName == "view") {
     viewServerConfig(interaction, request);
+  } else if (optionName == "whitelist") {
+    whitelist.whitelistLogic(interaction);
   }
 }
 
