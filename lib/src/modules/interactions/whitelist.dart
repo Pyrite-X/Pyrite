@@ -250,7 +250,7 @@ void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOp
     default:
       embedResponse = embeds.errorEmbed();
       embedResponse.description = "You somehow caused the bot to receive an interaction "
-          "without a proper action in the `whitelist names` command. Bravo? Please report this.";
+          "without a proper action in the `whitelist roles` command. Bravo? Please report this.";
   }
 
   await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
