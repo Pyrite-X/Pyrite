@@ -269,3 +269,91 @@ Future<bool> removeWhitelistEntry({required BigInt serverID, String? name, BigIn
 
   return (name != null && roleID != null) ? nameResult && roleResult : nameResult || roleResult;
 }
+
+Future<bool> insertManyWhitelistEntries(
+    {required BigInt serverID, List<String>? names, List<BigInt>? roles}) async {
+  JsonData queryMap = {"_id": serverID.toString()};
+
+  if (names == null && roles == null) {
+    throw UnsupportedError("Cannot insert whitelist entries if there are no entries to add.");
+  }
+
+  if ((names != null && names.isEmpty) || (roles != null && roles.isEmpty)) {
+    throw UnsupportedError("Cannot insert whitelist entries if there are no entries to add in the list.");
+  }
+
+  bool nameResult = false;
+  if (names != null) {
+    UpdateResult result = await handleQuery("guilds", (collection) async {
+      return await collection.updateOne(queryMap, {
+        r"$addToSet": {
+          "whitelist.names": {r"$each": names}
+        }
+      });
+    });
+    nameResult = result.modifiedCount == 1;
+  }
+
+  bool roleResult = false;
+  if (roles != null) {
+    UpdateResult result = await handleQuery("guilds", (collection) async {
+      return await collection.updateOne(queryMap, {
+        r"$addToSet": {
+          "whitelist.roles": {
+            r"$each": [for (BigInt role in roles) role.toString()]
+          }
+        }
+      });
+    });
+    roleResult = result.modifiedCount == 1;
+  }
+
+  return (names != null && roles != null) ? nameResult && roleResult : nameResult || roleResult;
+}
+
+Future<bool> removeManyWhitelistEntries({
+  required BigInt serverID,
+  List<String>? names,
+  List<BigInt>? roles,
+}) async {
+  JsonData queryMap = {"_id": serverID.toString()};
+
+  if (names == null && roles == null) {
+    throw UnsupportedError("Cannot remove from the whitelist if there is nothing to remove.");
+  }
+
+  if ((names != null && names.isEmpty) || (roles != null && roles.isEmpty)) {
+    throw UnsupportedError(
+        "Cannot remove from the whitelist if there is nothing to remove in the given list.");
+  }
+
+  bool nameResult = false;
+  if (names != null) {
+    UpdateResult result = await handleQuery("guilds", (collection) async {
+      return await collection.updateOne(queryMap, {
+        r"$pull": {
+          "whitelist.names": {
+            "\$in": [names]
+          }
+        }
+      });
+    });
+    nameResult = result.modifiedCount == 1;
+  }
+
+  bool roleResult = false;
+  if (roles != null) {
+    UpdateResult result = await handleQuery("guilds", (collection) async {
+      return await collection.updateOne(queryMap, {
+        r"$pull": {
+          "whitelist.roles": {
+            "\$in": [for (BigInt roleID in roles) roleID.toString()]
+          }
+        }
+      });
+    });
+    roleResult = result.modifiedCount == 1;
+  }
+
+  return (names != null && roles != null) ? nameResult && roleResult : nameResult || roleResult;
+}
