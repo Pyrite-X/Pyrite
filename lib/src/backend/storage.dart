@@ -48,7 +48,7 @@ Future<Server?> fetchGuildData(BigInt guildID, {bool withRules = false, bool wit
         redis.cacheRules(guildID, result.rules);
       }
       if (withWhitelist && (result.excludedRoles.isNotEmpty || result.excludedNames.isNotEmpty)) {
-        redis.addWhitelist(guildID, roles: result.excludedRoles, names: result.excludedNames);
+        redis.addToWhitelist(guildID, roles: result.excludedRoles, names: result.excludedNames);
       }
     } else {
       // No entry for this guild, add one. Don't cache it.
@@ -114,7 +114,7 @@ Future<JsonData> fetchGuildWhitelist(BigInt guildID) async {
       output["names"] = dbData["names"];
     }
 
-    redis.addWhitelist(guildID, roles: output["roles"], names: output["names"]);
+    redis.addToWhitelist(guildID, roles: output["roles"], names: output["names"]);
   }
 
   return output;
@@ -220,7 +220,7 @@ Future<bool> canRunScan(BigInt guildID) async {
 }
 
 Future<bool> addToWhitelist(BigInt guildID, {List<BigInt>? roles, List<String>? names}) async {
-  redis.addWhitelist(guildID, roles: roles, names: names);
+  redis.addToWhitelist(guildID, roles: roles, names: names);
   return await db.insertManyWhitelistEntries(serverID: guildID, roles: roles, names: names);
 }
 

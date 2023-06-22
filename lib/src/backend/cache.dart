@@ -137,7 +137,7 @@ Future<int> decreaseScanCount(BigInt guildID) async {
   return response.toInteger().payload;
 }
 
-Future<void> addWhitelist(BigInt serverID, {List<BigInt>? roles, List<String>? names}) async {
+Future<void> addToWhitelist(BigInt serverID, {List<BigInt>? roles, List<String>? names}) async {
   if (roles == null && names == null) {
     throw UnsupportedError("Can't add to nothing!");
   }
