@@ -107,10 +107,10 @@ Future<JsonData> fetchGuildWhitelist(BigInt guildID) async {
   if ((output["roles"] as List).isEmpty || (output["names"] as List).isEmpty) {
     JsonData dbData = await db.fetchGuildData(serverID: guildID, fields: ["whitelist"]);
 
-    if ((dbData["roles"] as List).isNotEmpty) {
+    if (dbData["roles"] != null && (dbData["roles"] as List).isNotEmpty) {
       output["roles"] = [for (String role in dbData["roles"]) BigInt.parse(role)];
     }
-    if ((dbData["names"] as List).isNotEmpty) {
+    if (dbData["names"] != null && (dbData["names"] as List).isNotEmpty) {
       output["names"] = dbData["names"];
     }
 

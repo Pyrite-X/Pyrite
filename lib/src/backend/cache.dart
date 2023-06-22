@@ -206,7 +206,10 @@ Future<JsonData> getWhitelist(BigInt serverID, {bool roles = false, bool names =
       var arr = roleRequest.toArray().payload;
 
       if (arr != null) {
-        output["roles"] = [for (var item in arr) item.toBulkString().payload];
+        output["roles"] = [
+          for (var item in arr)
+            if (item.toBulkString().payload != null) BigInt.parse(item.toBulkString().payload!)
+        ];
       }
     }
   }
@@ -217,7 +220,10 @@ Future<JsonData> getWhitelist(BigInt serverID, {bool roles = false, bool names =
       var arr = nameRequest.toArray().payload;
 
       if (arr != null) {
-        output["names"] = [for (var item in arr) item.toBulkString().payload];
+        output["names"] = [
+          for (var item in arr)
+            if (item.toBulkString().payload != null) item.toBulkString().payload!
+        ];
       }
     }
   }
