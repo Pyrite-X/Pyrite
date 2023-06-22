@@ -14,18 +14,22 @@ class Server {
   Action? phishingMatchAction;
   List<Rule> rules = [];
   List<BigInt> excludedRoles = [];
+  List<String> excludedNames = [];
 
-  Server(
-      {required this.serverID,
-      this.logchannelID,
-      this.onJoinEnabled,
-      this.fuzzyMatchPercent,
-      this.checkPhishingList,
-      this.phishingMatchAction,
-      List<Rule>? rules,
-      List<BigInt>? excludedRoles}) {
+  Server({
+    required this.serverID,
+    this.logchannelID,
+    this.onJoinEnabled,
+    this.fuzzyMatchPercent,
+    this.checkPhishingList,
+    this.phishingMatchAction,
+    List<Rule>? rules,
+    List<BigInt>? excludedRoles,
+    List<String>? excludedNames,
+  }) {
     if (rules != null) this.rules = rules;
     if (excludedRoles != null) this.excludedRoles = excludedRoles;
+    if (excludedNames != null) this.excludedNames = excludedNames;
   }
 
   /// Specifically from a database representation of the server data.
@@ -60,22 +64,26 @@ class Server {
       }
 
       var ruleIterator = ruleList.where((element) => element["type"] == 0);
-      List<Rule> convertedRuleList = [];
-      ruleIterator.forEach((element) {
-        convertedRuleList.add(Rule.fromJson(element));
-      });
-      this.rules = convertedRuleList;
+      this.rules = [for (var rule in ruleIterator) Rule.fromJson(rule)];
     }
 
-    if (data["excludedRoles"] != null) {
-      List<dynamic> roleList = data["excludedRoles"].runtimeType == String
-          ? jsonDecode(data["excludedRoles"])
-          : data["excludedRoles"];
-      roleList.forEach((element) => excludedRoles.add(BigInt.parse(element)));
+    if (data["whitelist"] != null) {
+      JsonData whitelist = data["whitelist"];
+      if (whitelist.containsKey("roles")) {
+        whitelist["roles"] =
+            (whitelist["roles"].runtimeType == String) ? jsonDecode(whitelist["roles"]) : whitelist["roles"];
+        this.excludedRoles = [for (var role in whitelist["roles"]) BigInt.parse(role)];
+      }
+
+      if (whitelist.containsKey("names")) {
+        whitelist["names"] =
+            (whitelist["names"].runtimeType == String) ? jsonDecode(whitelist["names"]) : whitelist["names"];
+        this.excludedNames = [...whitelist["names"]];
+      }
     }
   }
 
-  /// Creates a json representation of a Server without any custom rules.
+  /// Creates a json representation of a Server without any custom rules, nor any whitelist configuration.
   Map<String, dynamic> toJson() {
     Map<String, dynamic> output = {
       'serverID': serverID.toString(),
@@ -87,21 +95,33 @@ class Server {
       ]
     };
 
-    List<String> roleList = [];
-    excludedRoles.forEach((element) => roleList.add(element.toString()));
-    output['excludedRoles'] = jsonEncode(roleList);
-
     return output;
   }
 
-  Map<String, dynamic> toJsonWithCustomRules() {
+  Map<String, dynamic> toJsonCustom({bool withRules = true, bool withWhitelist = true}) {
     var baseJson = toJson();
 
-    List<String> ruleList = baseJson["rules"];
-    for (Rule rule in rules) {
-      ruleList.add(jsonEncode(rule.toJson()));
+    if (withRules) {
+      List<String> ruleList = baseJson["rules"];
+      for (Rule rule in rules) {
+        ruleList.add(jsonEncode(rule.toJson()));
+      }
+      baseJson["rules"] = ruleList;
     }
-    baseJson["rules"] = ruleList;
+
+    if (withWhitelist) {
+      JsonData whitelist = {};
+      if (excludedRoles.isNotEmpty) {
+        List<String> roleList = [for (BigInt role in excludedRoles) role.toString()];
+        whitelist["roles"] = jsonEncode(roleList);
+      }
+
+      if (excludedNames.isNotEmpty) {
+        whitelist["roles"] = jsonEncode(excludedNames);
+      }
+
+      baseJson["whitelist"] = jsonEncode(whitelist);
+    }
 
     return baseJson;
   }
@@ -116,6 +136,7 @@ class ServerBuilder {
   Action? phishingMatchAction;
   List<Rule> rules = [];
   List<BigInt> excludedRoles = [];
+  List<String> excludedNames = [];
 
   ServerBuilder();
 
@@ -135,13 +156,17 @@ class ServerBuilder {
 
   void addExcludedRoleId(BigInt roleID) => excludedRoles.add(roleID);
 
+  void addExcludedName(String name) => excludedNames.add(name);
+
   Server build() => Server(
-      serverID: serverID,
-      logchannelID: logchannelID,
-      onJoinEnabled: onJoinEnabled,
-      fuzzyMatchPercent: fuzzyMatchPercent,
-      checkPhishingList: checkPhishingList,
-      phishingMatchAction: phishingMatchAction,
-      rules: rules,
-      excludedRoles: excludedRoles);
+        serverID: serverID,
+        logchannelID: logchannelID,
+        onJoinEnabled: onJoinEnabled,
+        fuzzyMatchPercent: fuzzyMatchPercent,
+        checkPhishingList: checkPhishingList,
+        phishingMatchAction: phishingMatchAction,
+        rules: rules,
+        excludedRoles: excludedRoles,
+        excludedNames: excludedNames,
+      );
 }
