@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:alfred/alfred.dart';
-import 'package:nyxx/nyxx.dart' show EmbedBuilder;
+import 'package:nyxx/nyxx.dart' show EmbedBuilder, EmbedFooterBuilder;
 import 'package:onyx/onyx.dart';
 import 'package:pyrite/src/discord_http.dart';
 import 'package:unorm_dart/unorm_dart.dart' as unorm;
@@ -9,8 +9,9 @@ import 'package:unorm_dart/unorm_dart.dart' as unorm;
 import '../../backend/storage.dart' as storage;
 import '../../utilities/base_embeds.dart' as embeds;
 
-final int BASE_NAME_LIMIT = 50;
-final int BASE_ROLE_LIMIT = 10;
+const int BASE_NAME_LIMIT = 50;
+const int BASE_ROLE_LIMIT = 10;
+const String _unicodeBlank = "\u{2800}";
 
 /// Interaction entrypoint
 void whitelistLogic(Interaction interaction) async {
@@ -111,6 +112,9 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
         break;
       }
 
+      nameInputList.forEach((element) {
+        if (element.length >= 32) element = element.substring(0, 32);
+      });
       bool success = await storage.addToWhitelist(interaction.guild_id!, names: nameInputList);
 
       if (success) {
@@ -125,6 +129,9 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
             "may already exist in the list.\n\n"
             "Here is the input you provided:\n> ${nameInput.value}";
       }
+
+      embedResponse.footer = EmbedFooterBuilder(
+          text: "Names will be truncated to 32 characters as that is the limit imposed by Discord on users.");
 
       break;
 
@@ -326,9 +333,73 @@ void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOp
 }
 
 void _view(Interaction interaction, HttpResponse response, ApplicationCommandOption command) async {
-  InteractionResponse botResponse =
-      InteractionResponse(InteractionResponseType.message_response, {"content": "WIP.", "flags": 1 << 6});
+  ApplicationCommandOption selection = command.options![0];
+  String choice = selection.value;
 
-  await response.send(jsonEncode(botResponse));
-  return;
+  InteractionResponse deferResponse =
+      InteractionResponse(InteractionResponseType.defer_message_response, null);
+  await response.send(jsonEncode(deferResponse));
+
+  JsonData whitelistData = await storage.fetchGuildWhitelist(interaction.guild_id!);
+  DiscordHTTP discordHTTP = DiscordHTTP();
+  late EmbedBuilder embedResponse;
+
+  switch (choice) {
+    case "roles":
+      List<BigInt> roleList = whitelistData["roles"];
+      if (roleList.isEmpty) {
+        embedResponse = embeds.warningEmbed();
+        embedResponse.description = "You have no whitelisted roles to view!";
+        break;
+      }
+
+      embedResponse = embeds.infoEmbed();
+      embedResponse.title = "Your whitelisted roles:";
+      List<String> stringifiedList = [for (BigInt roleID in roleList) "<@&$roleID> ($roleID)"];
+      embedResponse.description = "- " + stringifiedList.join("\n- ");
+      embedResponse.footer =
+          EmbedFooterBuilder(text: "You have ${roleList.length}/$BASE_ROLE_LIMIT names whitelisted.");
+
+      break;
+
+    case "names":
+      List<String> nameList = whitelistData["names"];
+      if (nameList.isEmpty) {
+        embedResponse = embeds.warningEmbed();
+        embedResponse.description = "You have no whitelisted names to view!";
+        break;
+      }
+
+      // Since the limit is 50 for now, just split the list into two inline fields
+      // In the future if the limit is raised, paginate this.
+      embedResponse = embeds.infoEmbed();
+      embedResponse.title = "Your whitelisted names:";
+      if (nameList.length > 25) {
+        int median = (nameList.length / 2).round();
+        var subOne = nameList.sublist(0, median);
+        var subTwo = nameList.sublist(median);
+
+        embedResponse.addField(name: "$_unicodeBlank", content: "- " + subOne.join("\n- "), inline: true);
+        embedResponse.addField(name: "$_unicodeBlank", content: "- " + subTwo.join("\n- "), inline: true);
+      } else {
+        embedResponse.addField(name: "$_unicodeBlank", content: "- " + nameList.join("\n- "));
+      }
+
+      embedResponse.footer =
+          EmbedFooterBuilder(text: "You have ${nameList.length}/$BASE_NAME_LIMIT names whitelisted.");
+
+      break;
+
+    default:
+      embedResponse = embeds.errorEmbed();
+      embedResponse.description = "You somehow caused the bot to receive an interaction "
+          "without a proper action in the `whitelist view` command. Bravo? Please report this.";
+  }
+
+  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+    "embeds": [
+      {...embedResponse.build()}
+    ],
+    "allowed_mentions": {"parse": []}
+  });
 }
