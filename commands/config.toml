@@ -109,22 +109,18 @@ default_member_permissions = 32 # Manage server permissions
             type = 3
             required = false
 
-    [[options.options]]
-        name = "view"
-        description = "View your whitelisted roles and names."
-        type = 1
-
-        [[options.options.options]]
-            name = "selection"
-            description = "Choose what you want to do."
-            type = 3
-            required = true
-            choices = [
-                {name = "View your whitelisted roles.", value = "roles"},
-                {name = "View your whitelisted names.", value = "names"}
-            ]
-
 [[options]]
     name = "view"
     description = "View a summary of your configured settings."
     type = 1
+
+    [[options.options]]
+        name = "selection"
+        description = "Choose what you want to view."
+        type = 3
+        required = true
+        choices = [
+            {name = "View a summary of your configuration.", value = "summary"},
+            {name = "View your list of whitelisted names.", value = "names"},
+            {name = "View your list of whitelisted roles.", value = "roles"},
+        ]

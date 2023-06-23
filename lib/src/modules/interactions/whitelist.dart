@@ -11,7 +11,6 @@ import '../../utilities/base_embeds.dart' as embeds;
 
 const int BASE_NAME_LIMIT = 50;
 const int BASE_ROLE_LIMIT = 10;
-const String _unicodeBlank = "\u{2800}";
 
 /// Interaction entrypoint
 void whitelistLogic(Interaction interaction) async {
@@ -30,10 +29,6 @@ void whitelistLogic(Interaction interaction) async {
 
     case "roles":
       _roles(interaction, request.response, subcommand);
-      break;
-
-    case "view":
-      _view(interaction, request.response, subcommand);
       break;
 
     default:
@@ -327,78 +322,6 @@ void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOp
     ],
     "components": [
       if (actionRow.components.isNotEmpty) {...actionRow.toJson()}
-    ],
-    "allowed_mentions": {"parse": []}
-  });
-}
-
-void _view(Interaction interaction, HttpResponse response, ApplicationCommandOption command) async {
-  ApplicationCommandOption selection = command.options![0];
-  String choice = selection.value;
-
-  InteractionResponse deferResponse =
-      InteractionResponse(InteractionResponseType.defer_message_response, null);
-  await response.send(jsonEncode(deferResponse));
-
-  JsonData whitelistData = await storage.fetchGuildWhitelist(interaction.guild_id!);
-  DiscordHTTP discordHTTP = DiscordHTTP();
-  late EmbedBuilder embedResponse;
-
-  switch (choice) {
-    case "roles":
-      List<BigInt> roleList = whitelistData["roles"];
-      if (roleList.isEmpty) {
-        embedResponse = embeds.warningEmbed();
-        embedResponse.description = "You have no whitelisted roles to view!";
-        break;
-      }
-
-      embedResponse = embeds.infoEmbed();
-      embedResponse.title = "Your whitelisted roles:";
-      List<String> stringifiedList = [for (BigInt roleID in roleList) "<@&$roleID> ($roleID)"];
-      embedResponse.description = "- " + stringifiedList.join("\n- ");
-      embedResponse.footer =
-          EmbedFooterBuilder(text: "You have ${roleList.length}/$BASE_ROLE_LIMIT names whitelisted.");
-
-      break;
-
-    case "names":
-      List<String> nameList = whitelistData["names"];
-      if (nameList.isEmpty) {
-        embedResponse = embeds.warningEmbed();
-        embedResponse.description = "You have no whitelisted names to view!";
-        break;
-      }
-
-      // Since the limit is 50 for now, just split the list into two inline fields
-      // In the future if the limit is raised, paginate this.
-      embedResponse = embeds.infoEmbed();
-      embedResponse.title = "Your whitelisted names:";
-      if (nameList.length > 25) {
-        int median = (nameList.length / 2).round();
-        var subOne = nameList.sublist(0, median);
-        var subTwo = nameList.sublist(median);
-
-        embedResponse.addField(name: "$_unicodeBlank", content: "- " + subOne.join("\n- "), inline: true);
-        embedResponse.addField(name: "$_unicodeBlank", content: "- " + subTwo.join("\n- "), inline: true);
-      } else {
-        embedResponse.addField(name: "$_unicodeBlank", content: "- " + nameList.join("\n- "));
-      }
-
-      embedResponse.footer =
-          EmbedFooterBuilder(text: "You have ${nameList.length}/$BASE_NAME_LIMIT names whitelisted.");
-
-      break;
-
-    default:
-      embedResponse = embeds.errorEmbed();
-      embedResponse.description = "You somehow caused the bot to receive an interaction "
-          "without a proper action in the `whitelist view` command. Bravo? Please report this.";
-  }
-
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
-    "embeds": [
-      {...embedResponse.build()}
     ],
     "allowed_mentions": {"parse": []}
   });
