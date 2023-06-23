@@ -22,9 +22,15 @@ void om_member_update(IGuildMemberUpdateEvent event) async {
 
   IMember member = await event.member.getOrDownload();
   String? nickname = member.nickname;
+  String tag = (event.user.discriminator != 0)
+      ? "${event.user.username}#${event.user.discriminator}"
+      : (event.user.globalName == null)
+          ? "@${event.user.username}"
+          : "${event.user.globalName} (@${event.user.username})";
+
   UserBuilder userBuilder = UserBuilder()
     ..setUsername(event.user.username)
-    ..setTag(event.user.tag)
+    ..setTag(tag)
     ..setGlobalName(event.user.globalName)
     ..setNickname(nickname)
     ..setUserID(BigInt.from(event.user.id.id));
