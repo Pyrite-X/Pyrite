@@ -282,14 +282,15 @@ void viewServerConfig(Interaction interaction, HttpRequest request) async {
         name: "__Bot List__",
         content: "**Checking enabled?:** ${serverData.checkPhishingList}\n"
             "**Action(s):**\n${actionStr.toString()}"
-            "**Match Percentage:** ${serverData.fuzzyMatchPercent}%",
+            "**Match Threshold:** ${serverData.fuzzyMatchPercent}%",
         inline: true);
 
-    if (serverData.excludedRoles.isNotEmpty) {
-      StringBuffer output = StringBuffer();
-      serverData.excludedRoles.forEach((element) => output.writeln("<@&${element}>"));
-      embedBuilder.addField(name: "__Excluded Roles__", content: output, inline: true);
-    }
+    embedBuilder.addField(
+      name: "__Whitelist Limits__",
+      content: "**Name List**: ${serverData.excludedNames.length}/${whitelist.BASE_NAME_LIMIT}\n"
+          "**Role List**: ${serverData.excludedRoles.length}/${whitelist.BASE_ROLE_LIMIT}",
+      inline: true,
+    );
   }
   embedBuilder.title = "Your server's settings";
   embedBuilder.addFooter((footer) {
