@@ -24,7 +24,7 @@ default_member_permissions = 32 # Manage server permissions
 
 [[options]]
     name = "bot_list"
-    description = "Configure options regarding the detection of users being popular bots."
+    description = "Configure Pyrite's settings for bot list matching."
     type = 1
 
     [[options.options]]
@@ -57,7 +57,7 @@ default_member_permissions = 32 # Manage server permissions
 
 [[options]]
     name = "join_event"
-    description = "Set if Pyrite should check a user when they join the server."
+    description = "Should Pyrite check someone when they join the server?"
     type = 1
 
     [[options.options]]
@@ -67,17 +67,60 @@ default_member_permissions = 32 # Manage server permissions
         required = true
 
 [[options]]
-    name = "excluded_roles"
-    description = "Set which roles users should have to be ignored by Pyrite."
-    type = 1
+    name = "whitelist"
+    description = "Manage which roles and names Pyrite should ignore."
+    type = 2
 
     [[options.options]]
         name = "roles"
-        description = "Select all the roles that you want to be ignored. To clear, input \"none\""
-        type = 3
-        required = true
+        description = "Manage your whitelisted roles."
+        type = 1
+
+        [[options.options.options]]
+            name = "selection"
+            description = "Choose what you want to do."
+            type = 3
+            required = true
+            choices = [
+                {name = "Add roles to the whitelist.", value = "add"},
+                {name = "Remove roles from the whitelist.", value = "delete"},
+                {name = "Clear the entire role whitelist.", value= "clear"}
+            ]
+
+    [[options.options]]
+        name = "names"
+        description = "Manage your whitelisted names."
+        type = 1
+
+        [[options.options.options]]
+            name = "selection"
+            description = "Choose what you want to do."
+            type = 3
+            required = true
+            choices = [
+                {name = "Add names to the whitelist.", value = "add"},
+                {name = "Remove names from the whitelist.", value = "delete"},
+                {name = "Clear the entire name whitelist.", value= "clear"}
+            ]
+        
+        [[options.options.options]]
+            name = "names"
+            description = "List out your names, comma separated, that you wish to add or remove."
+            type = 3
+            required = false
 
 [[options]]
     name = "view"
-    description = "View your configured settings."
+    description = "View a summary of your configured settings."
     type = 1
+
+    [[options.options]]
+        name = "selection"
+        description = "Choose what you want to view."
+        type = 3
+        required = true
+        choices = [
+            {name = "View a summary of your configuration.", value = "summary"},
+            {name = "View your list of whitelisted names.", value = "names"},
+            {name = "View your list of whitelisted roles.", value = "roles"},
+        ]

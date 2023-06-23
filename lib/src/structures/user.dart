@@ -21,7 +21,7 @@ class User {
     this.username = unorm.nfkc(username);
     if (nickname != null) this.nickname = unorm.nfkc(nickname);
 
-    if (globalName != null) this.globalName = globalName;
+    if (globalName != null) this.globalName = unorm.nfkc(globalName);
   }
 }
 

@@ -27,6 +27,9 @@ import 'src/modules/interactions/stats.dart' as stats;
 import 'src/modules/interactions/transfer.dart' as transfer;
 
 import 'src/modules/interactions/buttons/log_button.dart' as log_button;
+import 'src/modules/interactions/buttons/whitelist_buttons.dart' as whitelist_buttons;
+
+import 'src/modules/interactions/select_menus/whitelist_roles.dart' as whitelist_sel;
 
 import 'src/utilities/ignore_exceptions.dart' as IE;
 
@@ -138,6 +141,9 @@ class Pyrite {
     // onyx.registerAppCommandHandler("transfer", transfer.transferCmd);
 
     onyx.registerGenericComponentHandler("log_button", log_button.logButtonHandler);
+    onyx.registerGenericComponentHandler("whitelist:clear", whitelist_buttons.clearButtonHandler);
+
+    onyx.registerGenericComponentHandler("whitelist:sel", whitelist_sel.roleMenuHandler);
 
     Alfred alfred = Alfred();
     alfred.logWriter = _interceptAlfredLogs;

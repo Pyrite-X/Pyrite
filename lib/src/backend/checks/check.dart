@@ -1,3 +1,5 @@
+import 'package:unorm_dart/unorm_dart.dart' as unorm;
+
 import '../../structures/trigger/trigger_context.dart';
 import '../../structures/trigger/trigger_source.dart';
 
@@ -31,7 +33,8 @@ void checkUser(TriggerContext context) async {
   ///
   ///   - Get actions through containsValue on Action w/ ActionEnum as parameter.
 
-  bool excludeUser = checkUserRoles(context.server, context.user);
+  bool excludeUser =
+      checkUserRoles(context.server, context.user) || checkUserName(context.server, context.user);
   if (excludeUser) return;
 
   CheckPhishResult? checkPhishResult;
@@ -68,12 +71,35 @@ void checkUser(TriggerContext context) async {
 
 /// True = user should not be checked. False = check user.
 bool checkUserRoles(Server server, User user) {
-  if (server.excludedRoles.isEmpty || user.roles.isEmpty) return false;
+  bool result = false;
+  if (server.excludedRoles.isEmpty || user.roles.isEmpty) return result;
 
-  for (var element in server.excludedRoles) {
-    if (user.roles.contains(element)) return true;
+  for (BigInt element in server.excludedRoles) {
+    if (user.roles.contains(element)) {
+      result = true;
+      break;
+    }
   }
 
-  // default return false
-  return false;
+  return result;
+}
+
+/// True = user should not be checked. False = check user.
+bool checkUserName(Server server, User user) {
+  bool result = false;
+  if (server.excludedNames.isEmpty) return result;
+
+  for (String name in server.excludedNames) {
+    name = unorm.nfkc(name);
+    name = name.toLowerCase();
+
+    if (user.username.toLowerCase() == name ||
+        user.nickname?.toLowerCase() == name ||
+        user.globalName?.toLowerCase() == name) {
+      result = true;
+      break;
+    }
+  }
+
+  return result;
 }

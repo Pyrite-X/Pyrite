@@ -10,7 +10,10 @@ import '../../structures/server.dart';
 import '../../backend/storage.dart' as storage;
 import '../../utilities/base_embeds.dart' as embeds;
 
+import 'whitelist.dart' as whitelist;
+
 final RegExp ID_REGEX = RegExp(r'(\d{17,})');
+const String _unicodeBlank = "\u{2800}";
 
 /// Interaction entrypoint
 void configCmd(Interaction interaction) async {
@@ -28,11 +31,10 @@ void configCmd(Interaction interaction) async {
   } else if (optionName == "join_event") {
     var selection = subcommand.options![0];
     configJoinEvent(interaction, selection.value, request);
-  } else if (optionName == "excluded_roles") {
-    var inputOption = subcommand.options![0];
-    configExcludedRoles(interaction, inputOption.value, request);
   } else if (optionName == "view") {
-    viewServerConfig(interaction, request);
+    viewServerConfig(interaction, request, subcommand);
+  } else if (optionName == "whitelist") {
+    whitelist.whitelistLogic(interaction);
   }
 }
 
@@ -131,7 +133,7 @@ void configBotList(
       sBuffer.write(
           "• The ${actionStringList.length != 1 ? 'actions' : 'action'} taken on a match has been set to:");
       actionStringList.forEach((element) {
-        sBuffer.write("\n　- $element");
+        sBuffer.write("\n$_unicodeBlank- $element");
       });
 
       choicesString.writeln(sBuffer.toString());
@@ -218,7 +220,7 @@ void configExcludedRoles(Interaction interaction, String input, HttpRequest requ
     matches.forEach((element) {
       String match = element[0]!;
       resultList.add(BigInt.parse(match));
-      choicesString.writeln("　- <@&$match>");
+      choicesString.writeln("$_unicodeBlank- <@&$match>");
     });
 
     embedBuilder.addField(name: "Your Changes", content: choicesString.toString());
@@ -246,54 +248,114 @@ void configExcludedRoles(Interaction interaction, String input, HttpRequest requ
   await request.response.send(jsonEncode(response));
 }
 
-void viewServerConfig(Interaction interaction, HttpRequest request) async {
+/// Handle logic for viewing a server's settings.
+void viewServerConfig(Interaction interaction, HttpRequest request, ApplicationCommandOption command) async {
   // Defer because awaiting db responses makes the final reply timeout
   InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
   await request.response.send(jsonEncode(response));
 
-  EmbedBuilder embedBuilder;
-  Server? serverData = await storage.fetchGuildData(interaction.guild_id!, withRules: true);
+  ApplicationCommandOption selection = command.options![0];
+  String choice = selection.value;
 
-  if (serverData == null) {
-    embedBuilder = embeds.warningEmbed();
-    embedBuilder.description = "There was an issue getting your server data.";
-  } else {
-    embedBuilder = embeds.infoEmbed();
+  late EmbedBuilder embedBuilder;
 
-    int regexRuleCount = await storage.getGuildRegexRuleCount(serverData.serverID);
+  switch (choice) {
+    case "summary":
+      Server? serverData = await storage.fetchGuildData(interaction.guild_id!, withRules: true);
 
-    String logchannel = (serverData.logchannelID != null) ? "<#${serverData.logchannelID}>" : "None";
-    embedBuilder.addField(
-        name: "__General__",
-        content: "**Check users on join?:** ${serverData.onJoinEnabled}\n"
-            "**Log channel:** $logchannel\n"
-            "**Rule count:** ${serverData.rules.length}/${storage.DEFAULT_RULE_LIMIT}\n"
-            "**Regex rule count:** $regexRuleCount/${storage.DEFAULT_REGEX_RULE_LIMIT}",
-        inline: true);
+      if (serverData == null) {
+        embedBuilder = embeds.warningEmbed();
+        embedBuilder.description = "There was an issue getting your server data.";
+        break;
+      }
+      embedBuilder = embeds.infoEmbed();
+      embedBuilder.title = "Your server's settings:";
 
-    List<String> actionStrList = serverData.phishingMatchAction != null
-        ? ActionEnumString.getStringsFromAction(serverData.phishingMatchAction!)
-        : [];
-    StringBuffer actionStr = StringBuffer();
-    actionStrList.forEach((element) => actionStr.writeln("• $element"));
+      int regexRuleCount = await storage.getGuildRegexRuleCount(serverData.serverID);
 
-    embedBuilder.addField(
-        name: "__Bot List__",
-        content: "**Checking enabled?:** ${serverData.checkPhishingList}\n"
-            "**Action(s):**\n${actionStr.toString()}"
-            "**Match Percentage:** ${serverData.fuzzyMatchPercent}%",
-        inline: true);
+      String logchannel = (serverData.logchannelID != null) ? "<#${serverData.logchannelID}>" : "None";
+      embedBuilder.addField(
+          name: "__General__",
+          content: "**Check users on join?:** ${serverData.onJoinEnabled}\n"
+              "**Log channel:** $logchannel\n"
+              "**Rule count:** ${serverData.rules.length}/${storage.DEFAULT_RULE_LIMIT}\n"
+              "**Regex rule count:** $regexRuleCount/${storage.DEFAULT_REGEX_RULE_LIMIT}",
+          inline: true);
 
-    if (serverData.excludedRoles.isNotEmpty) {
-      StringBuffer output = StringBuffer();
-      serverData.excludedRoles.forEach((element) => output.writeln("<@&${element}>"));
-      embedBuilder.addField(name: "__Excluded Roles__", content: output, inline: true);
-    }
+      List<String> actionStrList = serverData.phishingMatchAction != null
+          ? ActionEnumString.getStringsFromAction(serverData.phishingMatchAction!)
+          : [];
+      StringBuffer actionStr = StringBuffer();
+      actionStrList.forEach((element) => actionStr.writeln("• $element"));
+
+      embedBuilder.addField(
+          name: "__Bot List__",
+          content: "**Checking enabled?:** ${serverData.checkPhishingList}\n"
+              "**Action(s):**\n${actionStr.toString()}"
+              "**Match Threshold:** ${serverData.fuzzyMatchPercent}%",
+          inline: true);
+
+      embedBuilder.addField(
+        name: "__Whitelist Limits__",
+        content: "**Name List**: ${serverData.excludedNames.length}/${whitelist.BASE_NAME_LIMIT}\n"
+            "**Role List**: ${serverData.excludedRoles.length}/${whitelist.BASE_ROLE_LIMIT}",
+        inline: true,
+      );
+
+      break;
+
+    case "names":
+      JsonData whitelistData = await storage.fetchGuildWhitelist(interaction.guild_id!);
+      List<String> nameList = whitelistData["names"];
+      if (nameList.isEmpty) {
+        embedBuilder = embeds.warningEmbed();
+        embedBuilder.description = "You have no whitelisted names to view!";
+        break;
+      }
+
+      // Since the limit is 50 for now, just split the list into two inline fields
+      // In the future if the limit is raised, paginate this.
+      embedBuilder = embeds.infoEmbed();
+      embedBuilder.title = "Your whitelisted names:";
+      if (nameList.length > 25) {
+        int median = (nameList.length / 2).round();
+        var subOne = nameList.sublist(0, median);
+        var subTwo = nameList.sublist(median);
+
+        embedBuilder.addField(name: "$_unicodeBlank", content: "- " + subOne.join("\n- "), inline: true);
+        embedBuilder.addField(name: "$_unicodeBlank", content: "- " + subTwo.join("\n- "), inline: true);
+      } else {
+        embedBuilder.addField(name: "$_unicodeBlank", content: "- " + nameList.join("\n- "));
+      }
+
+      embedBuilder.footer = EmbedFooterBuilder(
+          text: "You have ${nameList.length}/${whitelist.BASE_NAME_LIMIT} names whitelisted.");
+
+      break;
+
+    case "roles":
+      JsonData whitelistData = await storage.fetchGuildWhitelist(interaction.guild_id!);
+      List<BigInt> roleList = whitelistData["roles"];
+      if (roleList.isEmpty) {
+        embedBuilder = embeds.warningEmbed();
+        embedBuilder.description = "You have no whitelisted roles to view!";
+        break;
+      }
+
+      embedBuilder = embeds.infoEmbed();
+      embedBuilder.title = "Your whitelisted roles:";
+      List<String> stringifiedList = [for (BigInt roleID in roleList) "<@&$roleID> ($roleID)"];
+      embedBuilder.description = "- " + stringifiedList.join("\n- ");
+      embedBuilder.footer = EmbedFooterBuilder(
+          text: "You have ${roleList.length}/${whitelist.BASE_ROLE_LIMIT} roles whitelisted.");
+
+      break;
+
+    default:
+      embedBuilder = embeds.errorEmbed();
+      embedBuilder.description = "You somehow caused the bot to receive an interaction "
+          "without a proper action in the `config view` command. Bravo? Please report this.";
   }
-  embedBuilder.title = "Your server's settings";
-  embedBuilder.addFooter((footer) {
-    footer.text = "Guild ID: ${interaction.guild_id}";
-  });
 
   DiscordHTTP discordHTTP = DiscordHTTP();
   await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
