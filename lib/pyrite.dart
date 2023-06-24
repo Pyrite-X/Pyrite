@@ -101,7 +101,10 @@ class Pyrite {
   }
 
   void startGateway({bool ignoreExceptions = false, bool handleSignals = false}) async {
-    gateway = NyxxFactory.createNyxxWebsocket(token, GatewayIntents.guildMembers | GatewayIntents.guilds);
+    // Suppress unknown/"unimplemented" gateway events.
+    ClientOptions clientOpts = ClientOptions(dispatchRawShardEvent: true);
+    gateway = NyxxFactory.createNyxxWebsocket(token, GatewayIntents.guildMembers | GatewayIntents.guilds,
+        options: clientOpts);
 
     gateway.eventsWs.onGuildMemberAdd.listen((event) => on_join_event.on_join_event(event));
     gateway.eventsWs.onGuildMemberUpdate.listen((event) => on_member_update.om_member_update(event));
