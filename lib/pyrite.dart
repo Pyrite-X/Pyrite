@@ -107,13 +107,20 @@ class Pyrite {
         options: clientOpts);
 
     gateway.eventsWs.onGuildMemberAdd.listen((event) => on_join_event.on_join_event(event));
-    gateway.eventsWs.onGuildMemberUpdate.listen((event) => on_member_update.om_member_update(event));
+    // gateway.eventsWs.onGuildMemberUpdate.listen((event) => on_member_update.om_member_update(event));
     gateway.eventsWs.onGuildCreate.listen((event) => on_guild_create.on_guild_create(event));
 
     gateway.eventsWs.onReady.listen((event) {
       gateway.setPresence(PresenceBuilder.of(
           status: UserStatus.idle,
           activity: ActivityBuilder("for suspicious users...", ActivityType.watching)));
+
+      gateway.shardManager.rawEvent.listen((event) {
+        String type = event.rawData["t"];
+        if (type == "GUILD_MEMBER_UPDATE") {
+          on_member_update.on_member_update(event.rawData["d"]);
+        }
+      });
     });
 
     /// Load the list on init, then update every 30 minutes.
