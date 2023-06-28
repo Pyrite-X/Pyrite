@@ -55,7 +55,6 @@ void om_member_update(IGuildMemberUpdateEvent event) async {
 /// be able to check a user on update. Does not require and additional
 /// request to Discord to be made.
 void on_member_update(JsonData data) async {
-  print(data);
   JsonData userData = data["user"];
 
   // Ignore if it's a bot that was updated.
