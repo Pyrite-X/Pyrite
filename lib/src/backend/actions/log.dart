@@ -49,7 +49,7 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
     var pma = guild.phishingMatchAction!;
     title = "Bot List Match | ${_actionToSuffix(pma)} | ${user.tag} ";
 
-    actionRow = _buildEmbedButtons(pma, user.userID);
+    actionRow = _buildEmbedButtons(pma, user.userID, typedResult.userString);
 
     String percentage = (typedResult.fuzzyMatchPercent == 100)
         ? "100"
@@ -63,7 +63,7 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
     var rac = typedResult.rule!.action;
     title = "Rule Match | ${_actionToSuffix(rac)} | ${user.tag}";
 
-    actionRow = _buildEmbedButtons(rac, user.userID);
+    actionRow = _buildEmbedButtons(rac, user.userID, typedResult.userString);
 
     embed.addField(
         name: "Rule",
@@ -96,7 +96,7 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
   }
 }
 
-ActionRow _buildEmbedButtons(Action action, BigInt userID) {
+ActionRow _buildEmbedButtons(Action action, BigInt userID, String userString) {
   // Only include if the action didn't kick or ban the user already.
   bool includeModerationButtons =
       !(action.contains(enumObj: ActionEnum.ban) || action.contains(enumObj: ActionEnum.kick));
@@ -104,6 +104,11 @@ ActionRow _buildEmbedButtons(Action action, BigInt userID) {
 
   actionRow.addComponent(
       Button(style: ButtonStyle.primary, label: "User info", custom_id: "log_button:info:${userID}"));
+
+  actionRow.addComponent(Button(
+      style: ButtonStyle.secondary,
+      label: "Whitelist name",
+      custom_id: "log_button:whitelist:${userString}"));
 
   if (includeModerationButtons) {
     actionRow.addComponent(

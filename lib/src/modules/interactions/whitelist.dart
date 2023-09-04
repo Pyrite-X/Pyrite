@@ -36,6 +36,60 @@ void whitelistLogic(Interaction interaction) async {
   }
 }
 
+Future<EmbedBuilder> addToWhitelistHandler(
+    List<String> existingNames, List<String> newNames, BigInt guildID) async {
+  EmbedBuilder embedResponse;
+
+  if (newNames.isEmpty) {
+    embedResponse = embeds.errorEmbed();
+    embedResponse.description =
+        "Your given input will result in nothing to add. Try again with a different list of names to add.";
+
+    return embedResponse;
+  }
+
+  if (existingNames.length >= BASE_NAME_LIMIT) {
+    int count = BASE_NAME_LIMIT - existingNames.length;
+    embedResponse = embeds.warningEmbed();
+    embedResponse.description = "You have too many names whitelisted. Please remove some before adding more. "
+        "Pyrite has a limit of $BASE_NAME_LIMIT whitelisted names at a time, you can add `$count` more names.";
+
+    return embedResponse;
+  }
+
+  if (existingNames.length + newNames.length >= BASE_NAME_LIMIT) {
+    int count = BASE_NAME_LIMIT - existingNames.length;
+    embedResponse = embeds.warningEmbed();
+    embedResponse.description =
+        "You will have too many names whitelisted. Please remove some before adding more. "
+        "Pyrite has a limit of $BASE_NAME_LIMIT whitelisted names at a time, you can add `$count` more names.";
+
+    return embedResponse;
+  }
+
+  newNames.forEach((element) {
+    if (element.length >= 32) element = element.substring(0, 32);
+  });
+  bool success = await storage.addToWhitelist(guildID, names: newNames);
+
+  if (success) {
+    embedResponse = embeds.successEmbed();
+    embedResponse.title = "Success!";
+    embedResponse.description = "You changes to the whitelist have been saved successfully!\n\n"
+        "You added these values to the name whitelist:\n> ${newNames.join(', ')}";
+  } else {
+    embedResponse = embeds.errorEmbed();
+    embedResponse.title = "Error!";
+    embedResponse.description = "Your changes to the whitelist were not saved. The name(s) you gave "
+        "may already exist in the list.";
+  }
+
+  embedResponse.footer = EmbedFooterBuilder(
+      text: "Names will be truncated to 32 characters as that is the limit imposed by Discord on users.");
+
+  return embedResponse;
+}
+
 void _names(Interaction interaction, HttpResponse response, ApplicationCommandOption command) async {
   ApplicationCommandOption selection = command.options![0];
 
@@ -81,52 +135,7 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
 
   switch (action) {
     case "add":
-      if (nameInputList.isEmpty) {
-        embedResponse = embeds.errorEmbed();
-        embedResponse.description =
-            "Your given input will result in nothing to add. Try again with a different list of names to add.";
-        break;
-      }
-
-      if (existingNameList.length >= BASE_NAME_LIMIT) {
-        int count = BASE_NAME_LIMIT - existingNameList.length;
-        embedResponse = embeds.warningEmbed();
-        embedResponse.description =
-            "You have too many names whitelisted. Please remove some before adding more. "
-            "Pyrite has a limit of $BASE_NAME_LIMIT names being whitelisted at a time, you can add `$count` more names.";
-        break;
-      }
-
-      if (existingNameList.length + nameInputList.length >= BASE_NAME_LIMIT) {
-        int count = BASE_NAME_LIMIT - existingNameList.length;
-        embedResponse = embeds.warningEmbed();
-        embedResponse.description =
-            "You will have too many names whitelisted. Please remove some before adding more. "
-            "Pyrite has a limit of $BASE_NAME_LIMIT names being whitelisted at a time, you can add `$count` more names.\n\n"
-            "Here is the list of names you gave me: \n> ${nameInput.value}";
-        break;
-      }
-
-      nameInputList.forEach((element) {
-        if (element.length >= 32) element = element.substring(0, 32);
-      });
-      bool success = await storage.addToWhitelist(interaction.guild_id!, names: nameInputList);
-
-      if (success) {
-        embedResponse = embeds.successEmbed();
-        embedResponse.title = "Success!";
-        embedResponse.description = "You changes to the whitelist have been saved successfully!\n\n"
-            "You added these values to the name whitelist:\n> ${nameInput.value}";
-      } else {
-        embedResponse = embeds.errorEmbed();
-        embedResponse.title = "Error!";
-        embedResponse.description = "Your changes to the whitelist were not saved. The name(s) you gave "
-            "may already exist in the list.\n\n"
-            "Here is the input you provided:\n> ${nameInput.value}";
-      }
-
-      embedResponse.footer = EmbedFooterBuilder(
-          text: "Names will be truncated to 32 characters as that is the limit imposed by Discord on users.");
+      embedResponse = await addToWhitelistHandler(existingNameList, nameInputList, interaction.guild_id!);
 
       break;
 

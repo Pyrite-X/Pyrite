@@ -4,8 +4,11 @@ import 'package:alfred/alfred.dart';
 import 'package:http/http.dart' as http;
 import 'package:nyxx/nyxx.dart' show EmbedBuilder, EmbedAuthorBuilder, Snowflake;
 import 'package:onyx/onyx.dart';
+import 'package:unorm_dart/unorm_dart.dart' as unorm;
 
+import '../whitelist.dart' as wl;
 import '../../../discord_http.dart';
+import '../../../backend/storage.dart' as storage;
 import '../../../utilities/base_embeds.dart';
 
 void logButtonHandler(Interaction interaction) async {
@@ -18,7 +21,14 @@ void logButtonHandler(Interaction interaction) async {
 
   var split_id = customID.split(":");
   String buttonType = split_id[1];
-  BigInt userID = BigInt.parse(split_id[2]);
+
+  late BigInt userID;
+  late String userMatchString;
+  if (["info", "kick", "ban"].contains(buttonType)) {
+    userID = BigInt.parse(split_id[2]);
+  } else {
+    userMatchString = split_id[2];
+  }
 
   switch (buttonType) {
     case "info":
@@ -29,6 +39,9 @@ void logButtonHandler(Interaction interaction) async {
       return;
     case "ban":
       banUser(interaction, request, authorID, guildID, userID);
+      return;
+    case "whitelist":
+      whitelistName(interaction, request, authorID, guildID, userMatchString);
       return;
   }
 }
@@ -288,4 +301,55 @@ void banUser(
       channelID: interaction.channel_id!,
       messageID: BigInt.parse(interaction.message!["id"]),
       payload: message);
+}
+
+void whitelistName(
+  Interaction interaction,
+  HttpRequest request,
+  BigInt authorID,
+  BigInt guildID,
+  String userString,
+) async {
+  InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, null);
+
+  DiscordHTTP discordHTTP = DiscordHTTP();
+
+  // Check author permissions
+  JsonData authorMemberData = interaction.member!;
+
+  int? permissions = int.tryParse(authorMemberData["permissions"]);
+  if (permissions != null) {
+    if (permissions & (1 << 5) == 0) {
+      response.data = {
+        "content": "You don't have permissions to manage this server's configuration.",
+        "flags": 1 << 6
+      };
+      await request.response.send(jsonEncode(response));
+      return;
+    }
+  } else {
+    response.data = {
+      "content": "I could not check your permissions to make sure that you can "
+          "manage this server. Try again later!",
+      "flags": 1 << 6
+    };
+    await request.response.send(jsonEncode(response));
+    return;
+  }
+
+  response.responseType = InteractionResponseType.defer_message_response;
+  await request.response.send(jsonEncode(response));
+
+  userString = unorm.nfkc(userString.trim());
+
+  JsonData whitelistData = await storage.fetchGuildWhitelist(guildID);
+  List<String> existingNameList = whitelistData["names"];
+
+  EmbedBuilder embedResponse = await wl.addToWhitelistHandler(existingNameList, [userString], guildID);
+
+  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+    "embeds": [
+      {...embedResponse.build()}
+    ]
+  });
 }
