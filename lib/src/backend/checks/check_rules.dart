@@ -19,6 +19,10 @@ Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
   Rule? matchRule;
   String? userString;
 
+  bool usernameCheck = false;
+  bool globalNameCheck = false;
+  bool nicknameCheck = false;
+
   for (Rule rule in ruleList) {
     if (rule.regex) {
       RegExp pattern = RegExp(rule.pattern);
@@ -41,12 +45,20 @@ Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
             : (globalNameMatch != null)
                 ? user.globalName
                 : user.nickname;
+
+        if (usernameMatch != null)
+          usernameCheck = true;
+        else if (globalNameMatch != null)
+          globalNameCheck = true;
+        else if (nicknameMatch != null) nicknameCheck = true;
+
         break;
       }
     } else {
-      bool usernameCheck = user.username.toLowerCase() == rule.pattern.toLowerCase();
-      bool nicknameCheck = user.nickname?.toLowerCase() == rule.pattern.toLowerCase();
-      bool globalNameCheck = user.globalName?.toLowerCase() == rule.pattern.toLowerCase();
+      usernameCheck = user.username.toLowerCase() == rule.pattern.toLowerCase();
+      nicknameCheck = user.nickname?.toLowerCase() == rule.pattern.toLowerCase();
+      globalNameCheck = user.globalName?.toLowerCase() == rule.pattern.toLowerCase();
+
       if (usernameCheck || nicknameCheck || globalNameCheck) {
         matchRule = rule;
         userString = usernameCheck
@@ -54,12 +66,25 @@ Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
             : nicknameCheck
                 ? user.nickname
                 : user.globalName;
+
         break;
       }
     }
   }
 
+  String? nameStringType = null;
+  if (usernameCheck)
+    nameStringType = "Username";
+  else if (globalNameCheck)
+    nameStringType = "Display Name";
+  else if (nicknameCheck) nameStringType = "Nickname";
+
   return (matchRule == null)
       ? CheckRulesResult(match: false)
-      : CheckRulesResult(match: true, rule: matchRule, userString: userString);
+      : CheckRulesResult(
+          match: true,
+          nameStringType: nameStringType,
+          rule: matchRule,
+          userString: userString,
+        );
 }

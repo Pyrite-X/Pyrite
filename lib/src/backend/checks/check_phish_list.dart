@@ -38,13 +38,17 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
   String? lowercaseGlobalName = context.user.globalName?.toLowerCase();
   String? lowercaseNickname = context.user.nickname?.toLowerCase();
 
+  bool usernameCheck = false;
+  bool globalNameCheck = false;
+  bool nicknameCheck = false;
+
   double similarity = 100;
   for (String botName in phishingList) {
     String lowerBotName = botName.toLowerCase();
 
-    bool usernameCheck = lowerBotName == lowercaseUsername;
-    bool globalNameCheck = lowerBotName == lowercaseGlobalName;
-    bool nicknameCheck = lowerBotName == lowercaseNickname;
+    usernameCheck = lowerBotName == lowercaseUsername;
+    globalNameCheck = lowerBotName == lowercaseGlobalName;
+    nicknameCheck = lowerBotName == lowercaseNickname;
 
     if (usernameCheck || nicknameCheck || globalNameCheck) {
       matchString = botName;
@@ -87,8 +91,19 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
     }
   }
 
+  String? nameStringType = null;
+  if (usernameCheck)
+    nameStringType = "Username";
+  else if (globalNameCheck)
+    nameStringType = "Display Name";
+  else if (nicknameCheck) nameStringType = "Nickname";
+
   return (matchString == null)
       ? CheckPhishResult(match: false)
       : CheckPhishResult(
-          match: true, matchingString: matchString, fuzzyMatchPercent: similarity, userString: userString);
+          match: true,
+          nameStringType: nameStringType,
+          matchingString: matchString,
+          fuzzyMatchPercent: similarity,
+          userString: userString);
 }
