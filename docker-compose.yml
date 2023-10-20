@@ -5,10 +5,13 @@ services:
     container_name: pyrite_gateway
     hostname: gateway
     restart: unless-stopped
-    build:
-      context: .
-      dockerfile: Dockerfile.gateway
-    pull_policy: build
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile.gateway
+    # pull_policy: build
+    image: local/pyrite:latest
+    command: ./pyrite_gateway
+    
     depends_on:
       - redis
     deploy:
@@ -22,10 +25,12 @@ services:
     container_name: pyrite_http
     hostname: webserver
     restart: unless-stopped
-    build:
-      context: .
-      dockerfile: Dockerfile.http
-    pull_policy: build
+    image: local/pyrite:latest
+    command: ./pyrite_http
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile.http
+    # pull_policy: build
     ports:
       - "8008:8008"
     depends_on:
