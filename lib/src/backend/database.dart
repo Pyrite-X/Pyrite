@@ -65,12 +65,15 @@ Future<dynamic> handleQuery(String collection, Future<dynamic> func(DbCollection
 }
 
 Future<JsonData?> insertNewGuild({required BigInt serverID}) async {
-  UpdateResult result = await handleQuery("guilds", (collection) async {
-    return await collection.updateOne({"_id": serverID.toString()}, {"\$setOnInsert": _defaultData},
-        options: UpdateOptions(isUpsert: true));
+  WriteResult result = await handleQuery("guilds", (collection) async {
+    return await collection.updateOne(
+      {"_id": serverID.toString()},
+      {"\$setOnInsert": _defaultData},
+      upsert: true,
+    );
   });
 
-  return result.upsertedCount == 1 ? {"_id": serverID, ..._defaultData} : null;
+  return result.nUpserted == 1 ? {"_id": serverID, ..._defaultData} : null;
 }
 
 Future<JsonData> fetchGuildData({required BigInt serverID, List<String>? fields}) async {
