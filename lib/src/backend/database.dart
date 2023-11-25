@@ -1,7 +1,5 @@
 import 'package:logging/logging.dart';
-// import 'package:mongo_pool/mongo_pool.dart';
-import 'package:mongo_go/mongo_go.dart';
-import 'package:mongo_go/src/update_options.dart';
+import 'package:mongo_pool/mongo_pool.dart';
 import 'package:onyx/onyx.dart' show JsonData;
 
 import '../structures/action.dart';
@@ -13,8 +11,7 @@ class DatabaseClient {
   static final DatabaseClient _instance = DatabaseClient._init();
   DatabaseClient._init();
 
-  late final Connection connection;
-  late final Database database;
+  late final MongoDbPoolService pool;
   late final String uri;
 
   factory DatabaseClient() {
@@ -25,18 +22,22 @@ class DatabaseClient {
       {bool initializing = false, String? uri, String databaseName = "pyrite"}) async {
     if (initializing) {
       _logger.info("Initializing connection to the database.");
-      if (uri != null) {
-        _instance.connection = await Connection.connectWithString(uri);
-        _instance.uri = uri;
-      } else {
+
+      if (uri == null) {
         throw UnsupportedError("Cannot initialize a database client without a URI.");
       }
 
+      _instance.pool = MongoDbPoolService(MongoPoolConfiguration(
+          poolSize: 4,
+          uriString: uri,
+          maxLifetimeMilliseconds: 60 * 1000,
+          leakDetectionThreshold: 10 * 1000));
+
       _logger.info("Opening connection to the database.");
-      _instance.database = await _instance.connection.database(databaseName);
+      await _instance.pool.open();
     }
 
-    _logger.info("Connected to the database!");
+    _logger.info("Connected to the database(?)!");
     return _instance;
   }
 }
@@ -50,11 +51,17 @@ final _defaultData = {
   ]
 };
 
-Future<dynamic> handleQuery(String collection, Future<dynamic> func(Collection collection)) async {
-  Collection col = await _db.database.collection(collection);
-  var result = await func(col);
+Future<dynamic> handleQuery(String collection, Future<dynamic> func(DbCollection collection)) async {
+  Db connection = await _db.pool.acquire();
+  DbCollection col = connection.collection(collection);
 
-  return result;
+  // Always release connection after execution.
+  try {
+    var result = await func(col);
+    return result;
+  } finally {
+    _db.pool.release(connection);
+  }
 }
 
 Future<JsonData?> insertNewGuild({required BigInt serverID}) async {
