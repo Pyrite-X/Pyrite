@@ -21,7 +21,7 @@ dependencies:
     git: https://github.com/One-Nub/Onyx
   resp_client: ^1.2.0
   string_similarity: ^2.0.0
-  unorm_dart: ^0.2.0
+  unorm_dart: 0.3.0
 
 dev_dependencies:
   test: ^1.24.1
