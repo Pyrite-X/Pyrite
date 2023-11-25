@@ -1,5 +1,6 @@
 import 'package:pyrite/src/structures/rule.dart';
 import 'package:test/test.dart';
+import 'package:mongo_pool/mongo_pool.dart';
 
 import 'package:dotenv/dotenv.dart';
 import 'package:pyrite/src/backend/database.dart' as db;
@@ -20,8 +21,7 @@ void main() async {
   BigInt GUILD_ID = BigInt.from(440350951572897812);
 
   // Delete any guild data for the sample guild from the database - or else tests will complain.
-  var guildCol = await cli.database.collection("guilds");
-  await guildCol.deleteOne({"_id": GUILD_ID.toString()});
+  await db.handleQuery("guilds", (collection) => collection.deleteOne(where.eq("_id", GUILD_ID.toString())));
 
   group("database:", () {
     test("Create a new guild with default settings", () async {
