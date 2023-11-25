@@ -15,12 +15,15 @@ dependencies:
   lirx:
     git: https://github.com/One-Nub/Lirx
   logging: ^1.1.1
-  mongo_go: ^5.1.3
+  mongo_pool: ^1.3.2
   nyxx: ^5.1.0
   onyx:
     git: https://github.com/One-Nub/Onyx
   resp_client: ^1.2.0
   string_similarity: ^2.0.0
+  unorm_dart: ^0.3.0
+
+dependency_overrides:
   unorm_dart: 0.3.0
 
 dev_dependencies:
