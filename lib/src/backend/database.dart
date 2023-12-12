@@ -1,7 +1,5 @@
 import 'package:logging/logging.dart';
-// import 'package:mongo_pool/mongo_pool.dart';
-import 'package:mongo_go/mongo_go.dart';
-import 'package:mongo_go/src/update_options.dart';
+import 'package:mongo_pool/mongo_pool.dart';
 import 'package:onyx/onyx.dart' show JsonData;
 
 import '../structures/action.dart';
@@ -13,8 +11,7 @@ class DatabaseClient {
   static final DatabaseClient _instance = DatabaseClient._init();
   DatabaseClient._init();
 
-  late final Connection connection;
-  late final Database database;
+  late final MongoDbPoolService pool;
   late final String uri;
 
   factory DatabaseClient() {
@@ -25,18 +22,22 @@ class DatabaseClient {
       {bool initializing = false, String? uri, String databaseName = "pyrite"}) async {
     if (initializing) {
       _logger.info("Initializing connection to the database.");
-      if (uri != null) {
-        _instance.connection = await Connection.connectWithString(uri);
-        _instance.uri = uri;
-      } else {
+
+      if (uri == null) {
         throw UnsupportedError("Cannot initialize a database client without a URI.");
       }
 
+      _instance.pool = MongoDbPoolService(MongoPoolConfiguration(
+          poolSize: 4,
+          uriString: uri,
+          maxLifetimeMilliseconds: 60 * 1000,
+          leakDetectionThreshold: 10 * 1000));
+
       _logger.info("Opening connection to the database.");
-      _instance.database = await _instance.connection.database(databaseName);
+      await _instance.pool.open();
     }
 
-    _logger.info("Connected to the database!");
+    _logger.info("Connected to the database(?)!");
     return _instance;
   }
 }
@@ -50,20 +51,29 @@ final _defaultData = {
   ]
 };
 
-Future<dynamic> handleQuery(String collection, Future<dynamic> func(Collection collection)) async {
-  Collection col = await _db.database.collection(collection);
-  var result = await func(col);
+Future<dynamic> handleQuery(String collection, Future<dynamic> func(DbCollection collection)) async {
+  Db connection = await _db.pool.acquire();
+  DbCollection col = connection.collection(collection);
 
-  return result;
+  // Always release connection after execution.
+  try {
+    var result = await func(col);
+    return result;
+  } finally {
+    _db.pool.release(connection);
+  }
 }
 
 Future<JsonData?> insertNewGuild({required BigInt serverID}) async {
-  UpdateResult result = await handleQuery("guilds", (collection) async {
-    return await collection.updateOne({"_id": serverID.toString()}, {"\$setOnInsert": _defaultData},
-        options: UpdateOptions(isUpsert: true));
+  WriteResult result = await handleQuery("guilds", (collection) async {
+    return await collection.updateOne(
+      {"_id": serverID.toString()},
+      {"\$setOnInsert": _defaultData},
+      upsert: true,
+    );
   });
 
-  return result.upsertedCount == 1 ? {"_id": serverID, ..._defaultData} : null;
+  return result.nUpserted == 1 ? {"_id": serverID, ..._defaultData} : null;
 }
 
 Future<JsonData> fetchGuildData({required BigInt serverID, List<String>? fields}) async {
@@ -92,6 +102,7 @@ Future<bool> updateGuildConfig(
     List<BigInt>? excludedRoles}) async {
   JsonData queryMap = {"_id": serverID.toString()};
   JsonData updateMap = {};
+
   if (logchannelID != null) {
     updateMap["logchannelID"] = logchannelID.toString();
   }
@@ -122,34 +133,37 @@ Future<bool> updateGuildConfig(
     updateMap["excludedRoles"] = convertedRoleList;
   }
 
-  UpdateResult result = await handleQuery("guilds", (collection) async {
+  WriteResult result = await handleQuery("guilds", (collection) async {
     return await collection.updateOne(queryMap, {"\$set": updateMap});
   });
 
-  return result.modifiedCount == 1;
+  return result.nModified == 1;
 }
 
 Future<bool> removeGuildField({required BigInt serverID, required String fieldName}) async {
   JsonData queryMap = {"_id": serverID.toString()};
 
-  UpdateResult result = await handleQuery("guilds", (collection) async {
+  WriteResult result = await handleQuery("guilds", (collection) async {
     return await collection.updateOne(queryMap, {
       r"$unset": {fieldName: ""}
     });
   });
 
-  return result.modifiedCount == 1;
+  return result.nModified == 1;
 }
 
 /// Query for the rules in a guild. Default [ruleType] is 0, which is custom rules.
 /// [ruleType] of 1 returns the "phishing list" rule entry.
 Future<List<dynamic>> fetchGuildRules({required BigInt serverID, int ruleType = 0}) async {
   /// Since I'll forget, projection chooses what is returned in the result. 1 for true, 0 for false.
-  /// filter is filter, basically is used to figure out what document to select.
-  ///
-  /// TODO: complain to mongo_go devs about a lack of options on findOne... can't provide projection.
+  /// filter = selector, used to figure out what document to select.
+
   var query = await handleQuery("guilds", (collection) async {
-    return await collection.findOne({"_id": serverID.toString()});
+    // return await collection.findOne({"_id": serverID.toString()});
+    return await collection.modernFindOne(
+      filter: {"_id": serverID.toString(), "rules.type": ruleType},
+      projection: {"rules": 1, "_id": 0},
+    );
   });
 
   // Rules of type 0 are custom rules. Filter out phishing rule entry.
@@ -166,7 +180,7 @@ Future<List<dynamic>> fetchGuildRules({required BigInt serverID, int ruleType = 
 }
 
 Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) async {
-  UpdateResult result = await handleQuery("guilds", (collection) async {
+  WriteResult result = await handleQuery("guilds", (collection) async {
     return await collection.updateOne({
       "_id": serverID.toString(),
       "rules": {
@@ -193,11 +207,11 @@ Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) asy
     });
   });
 
-  return result.modifiedCount == 1;
+  return result.nModified == 1;
 }
 
 Future<bool> removeGuildRule({required BigInt serverID, required String ruleID}) async {
-  UpdateResult result = await handleQuery("guilds", (collection) async {
+  WriteResult result = await handleQuery("guilds", (collection) async {
     return await collection.updateOne({
       "_id": serverID.toString()
     }, {
@@ -207,7 +221,7 @@ Future<bool> removeGuildRule({required BigInt serverID, required String ruleID})
     });
   });
 
-  return result.modifiedCount == 1;
+  return result.nModified == 1;
 }
 
 Future<bool> insertWhitelistEntry({required BigInt serverID, String? name, BigInt? roleID}) async {
@@ -219,22 +233,22 @@ Future<bool> insertWhitelistEntry({required BigInt serverID, String? name, BigIn
 
   bool nameResult = false;
   if (name != null) {
-    UpdateResult result = await handleQuery("guilds", (collection) async {
+    WriteResult result = await handleQuery("guilds", (collection) async {
       return await collection.updateOne(queryMap, {
         r"$addToSet": {"whitelist.names": name}
       });
     });
-    nameResult = result.modifiedCount == 1;
+    nameResult = result.nModified == 1;
   }
 
   bool roleResult = false;
   if (roleID != null) {
-    UpdateResult result = await handleQuery("guilds", (collection) async {
+    WriteResult result = await handleQuery("guilds", (collection) async {
       return await collection.updateOne(queryMap, {
         r"$addToSet": {"whitelist.roles": roleID.toString()}
       });
     });
-    roleResult = result.modifiedCount == 1;
+    roleResult = result.nModified == 1;
   }
 
   return (name != null && roleID != null) ? nameResult && roleResult : nameResult || roleResult;
@@ -249,22 +263,22 @@ Future<bool> removeWhitelistEntry({required BigInt serverID, String? name, BigIn
 
   bool nameResult = false;
   if (name != null) {
-    UpdateResult result = await handleQuery("guilds", (collection) async {
+    WriteResult result = await handleQuery("guilds", (collection) async {
       return await collection.updateOne(queryMap, {
         r"$pull": {"whitelist.names": name}
       });
     });
-    nameResult = result.modifiedCount == 1;
+    nameResult = result.nModified == 1;
   }
 
   bool roleResult = false;
   if (roleID != null) {
-    UpdateResult result = await handleQuery("guilds", (collection) async {
+    WriteResult result = await handleQuery("guilds", (collection) async {
       return await collection.updateOne(queryMap, {
         r"$pull": {"whitelist.roles": roleID}
       });
     });
-    roleResult = result.modifiedCount == 1;
+    roleResult = result.nModified == 1;
   }
 
   return (name != null && roleID != null) ? nameResult && roleResult : nameResult || roleResult;
@@ -284,19 +298,19 @@ Future<bool> insertManyWhitelistEntries(
 
   bool nameResult = false;
   if (names != null) {
-    UpdateResult result = await handleQuery("guilds", (collection) async {
+    WriteResult result = await handleQuery("guilds", (collection) async {
       return await collection.updateOne(queryMap, {
         r"$addToSet": {
           "whitelist.names": {r"$each": names}
         }
       });
     });
-    nameResult = result.modifiedCount == 1;
+    nameResult = result.nModified == 1;
   }
 
   bool roleResult = false;
   if (roles != null) {
-    UpdateResult result = await handleQuery("guilds", (collection) async {
+    WriteResult result = await handleQuery("guilds", (collection) async {
       return await collection.updateOne(queryMap, {
         r"$addToSet": {
           "whitelist.roles": {
@@ -305,7 +319,7 @@ Future<bool> insertManyWhitelistEntries(
         }
       });
     });
-    roleResult = result.modifiedCount == 1;
+    roleResult = result.nModified == 1;
   }
 
   return (names != null && roles != null) ? nameResult && roleResult : nameResult || roleResult;
@@ -329,19 +343,19 @@ Future<bool> removeManyWhitelistEntries({
 
   bool nameResult = false;
   if (names != null) {
-    UpdateResult result = await handleQuery("guilds", (collection) async {
+    WriteResult result = await handleQuery("guilds", (collection) async {
       return await collection.updateOne(queryMap, {
         r"$pull": {
           "whitelist.names": {"\$in": names}
         }
       });
     });
-    nameResult = result.modifiedCount == 1;
+    nameResult = result.nModified == 1;
   }
 
   bool roleResult = false;
   if (roles != null) {
-    UpdateResult result = await handleQuery("guilds", (collection) async {
+    WriteResult result = await handleQuery("guilds", (collection) async {
       return await collection.updateOne(queryMap, {
         r"$pull": {
           "whitelist.roles": {
@@ -350,7 +364,7 @@ Future<bool> removeManyWhitelistEntries({
         }
       });
     });
-    roleResult = result.modifiedCount == 1;
+    roleResult = result.nModified == 1;
   }
 
   return (names != null && roles != null) ? nameResult && roleResult : nameResult || roleResult;
