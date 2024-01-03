@@ -161,12 +161,12 @@ class Pyrite {
 
     WebServer server = WebServer(alfred, publicKey);
     await server.startServer(
-        dispatchFunc: ((p0) {
+        dispatchFunc: ((p0) async {
           var currentMetadata = p0.metadata;
           Map<String, dynamic> newMetadata = {"request": currentMetadata, "pyrite": this};
 
           p0.setMetadata(newMetadata);
-          onyx.dispatchInteraction(p0);
+          await onyx.dispatchInteraction(p0);
         }),
         port: serverPort,
         securityContext: securityContext);
