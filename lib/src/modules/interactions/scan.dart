@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:alfred/alfred.dart';
 import 'package:http/http.dart' as http;
-import 'package:nyxx/nyxx.dart';
+import 'package:nyxx/nyxx.dart' show EmbedBuilder, EmbedFooterBuilder;
 import 'package:onyx/onyx.dart';
 
 import '../../discord_http.dart';
@@ -129,9 +129,7 @@ void queueHandler() async {
 
   EmbedBuilder embedBuilder = embeds.infoEmbed();
   embedBuilder.description = "Your server is now being scanned!";
-  embedBuilder.addFooter((footer) {
-    footer.text = "Guild ID: ${server.serverID}";
-  });
+  embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${server.serverID}");
 
   await discordHTTP.sendMessage(channelID: server.channelID, payload: {
     "embeds": [
@@ -195,9 +193,7 @@ void scanServer(Server server) async {
   }).then((value) async {
     EmbedBuilder embedBuilder = embeds.infoEmbed();
     embedBuilder.description = "Your server has finished scanning!";
-    embedBuilder.addFooter((footer) {
-      footer.text = "Guild ID: ${server.serverID}";
-    });
+    embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${server.serverID}");
 
     String logOutput = log.dumpServerScanLog(serverID: runningServer!.serverID);
     if (logOutput.isNotEmpty) {

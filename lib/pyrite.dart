@@ -40,7 +40,7 @@ class Pyrite {
   final String publicKey;
   final BigInt appID;
   late final Onyx onyx;
-  late final INyxxWebsocket gateway;
+  late final NyxxGateway gateway;
 
   // ignore: unused_field
   Logger _logger = Logger("Pyrite");
@@ -101,23 +101,27 @@ class Pyrite {
   }
 
   void startGateway({bool ignoreExceptions = false, bool handleSignals = false}) async {
-    ClientOptions clientOpts = ClientOptions(dispatchRawShardEvent: true);
-    gateway = NyxxFactory.createNyxxWebsocket(token, GatewayIntents.guildMembers | GatewayIntents.guilds,
-        options: clientOpts);
+    // ClientOptions clientOpts = ClientOptions(dispatchRawShardEvent: true);
+    gateway = await Nyxx.connectGateway(token, GatewayIntents.guildMembers | GatewayIntents.guilds);
 
-    gateway.eventsWs.onGuildMemberAdd.listen((event) => on_join_event.on_join_event(event));
-    // gateway.eventsWs.onGuildMemberUpdate.listen((event) => on_member_update.om_member_update(event));
-    gateway.eventsWs.onGuildCreate.listen((event) => on_guild_create.on_guild_create(event));
+    gateway.onGuildMemberAdd.listen((event) => on_join_event.on_join_event(event));
+    // gateway.onGuildMemberUpdate.listen((event) => on_member_update.om_member_update(event));
+    gateway.onGuildCreate.listen((event) => on_guild_create.on_guild_create(event));
 
-    gateway.eventsWs.onReady.listen((event) {
-      gateway.setPresence(PresenceBuilder.of(
-          status: UserStatus.idle,
-          activity: ActivityBuilder("for suspicious users...", ActivityType.watching)));
+    gateway.onReady.listen((event) {
+      gateway.updatePresence(PresenceBuilder(
+          status: CurrentUserStatus.online,
+          activities: [ActivityBuilder(name: "for suspicious users...", type: ActivityType.watching)],
+          isAfk: false));
 
-      gateway.shardManager.rawEvent.listen((event) {
-        String type = event.rawData["t"];
-        if (type == "GUILD_MEMBER_UPDATE") {
-          on_member_update.on_member_update(event.rawData["d"]);
+      gateway.gateway.messages.listen((event) {
+        if (event is! EventReceived) return;
+
+        final real_event = event.event;
+        if (real_event is! RawDispatchEvent) return;
+
+        if (real_event.name == "GUILD_MEMBER_UPDATE") {
+          on_member_update.on_member_update(real_event.payload);
         }
       });
     });
@@ -127,8 +131,6 @@ class Pyrite {
     Timer.periodic(Duration(minutes: 30), ((timer) => loadPhishingList()));
 
     if (ignoreExceptions) IE.ignoreExceptions();
-
-    await gateway.connect();
   }
 
   void startServer(

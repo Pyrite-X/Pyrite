@@ -2,7 +2,8 @@ import 'dart:convert';
 
 import 'package:alfred/alfred.dart';
 import 'package:http/http.dart' as http;
-import 'package:nyxx/nyxx.dart' show EmbedBuilder, EmbedAuthorBuilder, Snowflake;
+import 'package:nyxx/nyxx.dart'
+    show EmbedBuilder, EmbedAuthorBuilder, Snowflake, EmbedThumbnailBuilder, EmbedFieldBuilder;
 import 'package:onyx/onyx.dart';
 import 'package:unorm_dart/unorm_dart.dart' as unorm;
 
@@ -83,7 +84,7 @@ void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, 
   String? globalName;
   String? avatarHash;
 
-  DateTime userCreation = Snowflake(userID).timestamp;
+  DateTime userCreation = Snowflake(userID.toInt()).timestamp;
   int mseUserCreation = (userCreation.millisecondsSinceEpoch / 1000).round();
 
   String? nickname;
@@ -113,8 +114,10 @@ void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, 
   String userTitle =
       discrim == "0" ? "@$username${globalName != null ? ' (aka $globalName)' : ''}" : "$username#$discrim";
   embedBuilder.author = EmbedAuthorBuilder(name: userTitle);
+
   if (avatarHash != null) {
-    embedBuilder.thumbnailUrl = "https://cdn.discordapp.com/avatars/${userID}/${avatarHash}.webp";
+    embedBuilder.thumbnail = embedBuilder.thumbnail = EmbedThumbnailBuilder(
+        url: Uri.parse("https://cdn.discordapp.com/avatars/${userID}/${avatarHash}.webp"));
   }
 
   descBuffer.writeln("> <@$userID>");
@@ -122,18 +125,20 @@ void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, 
     descBuffer.writeln("> *Nickname*: $nickname");
   }
 
-  embedBuilder.addField(name: "Discord join date:", content: "<t:$mseUserCreation:D>", inline: true);
+  embedBuilder.fields!
+      .add(EmbedFieldBuilder(name: "Discord join date:", value: "<t:$mseUserCreation:D>", isInline: true));
 
   if (guildJoinDate != null) {
     int mseGuildJoin = (guildJoinDate.millisecondsSinceEpoch / 1000).round();
-    embedBuilder.addField(name: "Server join date:", content: "<t:$mseGuildJoin:D>", inline: true);
+    embedBuilder.fields!
+        .add(EmbedFieldBuilder(name: "Server join date:", value: "<t:$mseGuildJoin:D>", isInline: true));
   }
 
   if (roleList.isNotEmpty) {
     StringBuffer sb = StringBuffer();
     roleList.forEach((element) => sb.write("<@&$element> "));
 
-    embedBuilder.addField(name: "Roles", content: sb.toString());
+    embedBuilder.fields!.add(EmbedFieldBuilder(name: "Roles", value: sb.toString(), isInline: false));
   }
 
   embedBuilder.description = descBuffer.toString();

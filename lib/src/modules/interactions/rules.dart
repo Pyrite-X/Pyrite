@@ -86,8 +86,7 @@ void _paginatedRuleView(Interaction interaction, List<Rule> ruleList) async {
   }
 
   embedBuilder.description = pages[0];
-  EmbedFooterBuilder footerBuilder = EmbedFooterBuilder();
-  footerBuilder.text = "Page ${currentPage + 1}/${pages.length}";
+  EmbedFooterBuilder footerBuilder = EmbedFooterBuilder(text: "Page ${currentPage + 1}/${pages.length}");
 
   embedBuilder.footer = footerBuilder;
 

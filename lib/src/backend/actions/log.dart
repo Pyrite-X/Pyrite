@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
-import 'package:nyxx/nyxx.dart' show EmbedBuilder;
+import 'package:nyxx/nyxx.dart' show EmbedBuilder, EmbedFieldBuilder, EmbedFooterBuilder, EmbedAuthorBuilder;
 import 'package:onyx/onyx.dart';
 
 import '../storage.dart' as storage;
@@ -36,11 +36,11 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
   http.Response userObject = await discordHTTP.getUser(userID: user.userID);
   JsonData userData = json.decode(userObject.body);
 
-  embed.addField(
+  embed.fields!.add(EmbedFieldBuilder(
       name: "User",
-      content: "<@${user.userID}>\n"
+      value: "<@${user.userID}>\n"
           "**${typedResult.nameStringType}**: ${typedResult.userString}",
-      inline: true);
+      isInline: true));
 
   String title = "";
   ActionRow? actionRow;
@@ -54,32 +54,28 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
     String percentage = (typedResult.fuzzyMatchPercent == 100)
         ? "100"
         : typedResult.fuzzyMatchPercent?.toStringAsPrecision(4);
-    embed.addField(
+
+    embed.fields!.add(EmbedFieldBuilder(
         name: "Match",
-        content: "**Name**: ${typedResult.matchingString}\n"
+        value: "**Name**: ${typedResult.matchingString}\n"
             "**Percentage**: ~$percentage%",
-        inline: true);
+        isInline: true));
   } else if (result.runtimeType == CheckRulesResult) {
     var rac = typedResult.rule!.action;
     title = "Rule Match | ${_actionToSuffix(rac)} | ${user.tag}";
 
     actionRow = _buildEmbedButtons(rac, user.userID, typedResult.userString);
 
-    embed.addField(
+    embed.fields!.add(EmbedFieldBuilder(
         name: "Rule",
-        content: "**ID**: ${typedResult.rule!.ruleID}\n**Pattern**: ${typedResult.rule!.pattern}",
-        inline: true);
+        value: "**ID**: ${typedResult.rule!.ruleID}\n**Pattern**: ${typedResult.rule!.pattern}",
+        isInline: true));
   }
 
-  embed.addFooter((footer) {
-    footer.text = "User ID: ${user.userID}";
-  });
+  embed.footer = EmbedFooterBuilder(text: "User ID: ${user.userID}");
 
   String avatarUrl = "https://cdn.discordapp.com/avatars/${user.userID}/${userData['avatar']}.webp";
-  embed.addAuthor((author) {
-    author.iconUrl = avatarUrl;
-    author.name = title;
-  });
+  embed.author = EmbedAuthorBuilder(name: title, iconUrl: Uri.parse(avatarUrl));
 
   http.Response msgResponse = await discordHTTP.sendMessage(channelID: logchannelID, payload: {
     "embeds": [
