@@ -104,11 +104,14 @@ Future<void> _paginatedRuleView(Interaction interaction, List<Rule> ruleList) as
   await (interaction.metadata["request"] as HttpRequest).response.send(jsonEncode(response));
 
   DiscordHTTP discordHTTP = DiscordHTTP();
+  var initResp = await discordHTTP.getInitialInteractionResponse(interactionToken: interaction.token);
 
+  // TODO: Take component handling out of here.
   var thisStream = OnyxStreams.componentStream.where((event) =>
       event.guild_id == interaction.guild_id &&
       event.channel_id == interaction.channel_id &&
-      event.member!["user"]["id"] == interaction.member!["user"]["id"]);
+      event.member!["user"]["id"] == interaction.member!["user"]["id"] &&
+      event.message?["id"] == jsonDecode(initResp.body)["id"]);
 
   thisStream = thisStream.timeout(Duration(minutes: 1), onTimeout: (sink) async {
     buttonRow.components.forEach((element) {
@@ -123,7 +126,7 @@ Future<void> _paginatedRuleView(Interaction interaction, List<Rule> ruleList) as
         {...buttonRow.toJson()}
       ]
     });
-    sink.close();
+    // sink.close();
     return;
   });
 
@@ -134,58 +137,51 @@ Future<void> _paginatedRuleView(Interaction interaction, List<Rule> ruleList) as
 
     switch (data.custom_id) {
       case (PREV_PAGE_ID):
-        {
-          currentPage = (currentPage - 1 < 0) ? 0 : currentPage - 1;
-          if (currentPage == 0) {
-            (buttonRow.components[0] as Button).disabled = true;
-            (buttonRow.components[1] as Button).disabled = false;
-          } else {
-            (buttonRow.components[0] as Button).disabled = false;
-            (buttonRow.components[1] as Button).disabled = false;
-          }
-
-          embedBuilder.description = pages[currentPage];
-          footerBuilder.text = "Page ${currentPage + 1}/${pages.length}";
-          response.data = {
-            "embeds": [
-              {...embedBuilder.build()}
-            ],
-            "components": [
-              {...buttonRow.toJson()}
-            ]
-          };
-
-          await request.response.send(jsonEncode(response));
+        currentPage = (currentPage - 1 < 0) ? 0 : currentPage - 1;
+        if (currentPage == 0) {
+          (buttonRow.components[0] as Button).disabled = true;
+          (buttonRow.components[1] as Button).disabled = false;
+        } else {
+          (buttonRow.components[0] as Button).disabled = false;
+          (buttonRow.components[1] as Button).disabled = false;
         }
+
+        embedBuilder.description = pages[currentPage];
+        footerBuilder.text = "Page ${currentPage + 1}/${pages.length}";
+        response.data = {
+          "embeds": [
+            {...embedBuilder.build()}
+          ],
+          "components": [
+            {...buttonRow.toJson()}
+          ]
+        };
+
+        await request.response.send(jsonEncode(response));
         break;
 
       case (NEXT_PAGE_ID):
-        {
-          currentPage = (currentPage + 1 >= maxPages) ? maxPages : currentPage + 1;
-          if (currentPage + 1 == maxPages) {
-            (buttonRow.components[0] as Button).disabled = false;
-            (buttonRow.components[1] as Button).disabled = true;
-          } else {
-            (buttonRow.components[0] as Button).disabled = false;
-            (buttonRow.components[1] as Button).disabled = false;
-          }
-
-          embedBuilder.description = pages[currentPage];
-          footerBuilder.text = "Page ${currentPage + 1}/${pages.length}";
-          response.data = {
-            "embeds": [
-              {...embedBuilder.build()}
-            ],
-            "components": [
-              {...buttonRow.toJson()}
-            ]
-          };
-
-          await request.response.send(jsonEncode(response));
+        currentPage = (currentPage + 1 >= maxPages) ? maxPages : currentPage + 1;
+        if (currentPage + 1 == maxPages) {
+          (buttonRow.components[0] as Button).disabled = false;
+          (buttonRow.components[1] as Button).disabled = true;
+        } else {
+          (buttonRow.components[0] as Button).disabled = false;
+          (buttonRow.components[1] as Button).disabled = false;
         }
-        break;
 
-      default:
+        embedBuilder.description = pages[currentPage];
+        footerBuilder.text = "Page ${currentPage + 1}/${pages.length}";
+        response.data = {
+          "embeds": [
+            {...embedBuilder.build()}
+          ],
+          "components": [
+            {...buttonRow.toJson()}
+          ]
+        };
+
+        await request.response.send(jsonEncode(response));
         break;
     }
   });
