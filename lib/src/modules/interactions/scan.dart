@@ -208,7 +208,7 @@ Future<void> scanServer(Server server) async {
         ]
       });
     } else {
-      embedBuilder.description = embedBuilder.description! + "\nNo matches were found.";
+      embedBuilder.description = "${embedBuilder.description!}\nNo matches were found.";
       await discordHTTP.sendMessage(channelID: runningServer!.channelID, payload: {
         "embeds": [
           {...embedBuilder.build()}

@@ -9,6 +9,7 @@ import 'package:onyx/onyx.dart';
 
 class WebServer {
   Alfred server;
+  // ignore: non_constant_identifier_names
   String PUB_KEY;
 
   WebServer(this.server, this.PUB_KEY);
