@@ -103,11 +103,9 @@ class Pyrite {
   }
 
   Future<void> startGateway({bool ignoreExceptions = false, bool handleSignals = false}) async {
-    // ClientOptions clientOpts = ClientOptions(dispatchRawShardEvent: true);
     gateway = await Nyxx.connectGateway(token, GatewayIntents.guildMembers | GatewayIntents.guilds);
 
     gateway.onGuildMemberAdd.listen((event) => on_join_event.on_join_event(event));
-    // gateway.onGuildMemberUpdate.listen((event) => on_member_update.om_member_update(event));
     gateway.onGuildCreate.listen((event) => on_guild_create.on_guild_create(event));
 
     gateway.onReady.listen((event) {
