@@ -44,5 +44,5 @@ void main(List<String> arguments) async {
 
   /// Start bot features.
   Pyrite bot = Pyrite(token: token, publicKey: publicKey, appID: appID);
-  bot.startGateway(ignoreExceptions: true);
+  await bot.startGateway(ignoreExceptions: true);
 }

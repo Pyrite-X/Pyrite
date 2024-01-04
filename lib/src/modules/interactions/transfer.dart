@@ -1,5 +1,5 @@
 import 'package:onyx/onyx.dart';
 
-void transferCmd(Interaction interaction) async {
+Future<void> transferCmd(Interaction interaction) async {
   //TODO
 }

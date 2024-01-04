@@ -6,7 +6,7 @@ import 'package:onyx/onyx.dart';
 
 import '../../utilities/base_embeds.dart' as embeds;
 
-void inviteCmd(Interaction interaction) async {
+Future<void> inviteCmd(Interaction interaction) async {
   HttpRequest request = interaction.metadata["request"];
 
   EmbedBuilder embedBuilder = embeds.infoEmbed();

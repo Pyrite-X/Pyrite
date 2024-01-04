@@ -30,7 +30,7 @@ class AppCache {
 
     if (auth != null) {
       _logger.info("Authenticating with Redis.");
-      RespCommandsTier2(client).auth(auth);
+      await RespCommandsTier2(client).auth(auth);
     }
 
     _logger.info("Connected to the Redis cache!");
@@ -52,7 +52,7 @@ Future<JsonData> getServerConfig(BigInt serverID) async {
 
 Future<void> setServerConfig(Server server) async {
   var client = RespCommandsTier2(_appCache.cacheConnection);
-  client.multi();
+  await client.multi();
 
   JsonData mappedData = server.toJson();
   mappedData.forEach((key, value) {
@@ -60,7 +60,7 @@ Future<void> setServerConfig(Server server) async {
   });
 
   await client.exec();
-  client.pexpire("$CONFIG_KEY\_${server.serverID}", BASE_TIMEOUT);
+  await client.pexpire("$CONFIG_KEY\_${server.serverID}", BASE_TIMEOUT);
 }
 
 Future<bool> removeServerConfig(BigInt serverID) async {
@@ -70,7 +70,7 @@ Future<bool> removeServerConfig(BigInt serverID) async {
 
 Future<void> cacheRules(BigInt serverID, List<Rule> ruleList) async {
   var client = RespCommandsTier2(_appCache.cacheConnection);
-  client.multi();
+  await client.multi();
 
   ruleList.forEach((element) {
     JsonData ruleJson = element.toJson();
@@ -79,7 +79,7 @@ Future<void> cacheRules(BigInt serverID, List<Rule> ruleList) async {
   });
 
   await client.exec();
-  client.pexpire("$RULE_KEY\_$serverID", BASE_TIMEOUT);
+  await client.pexpire("$RULE_KEY\_$serverID", BASE_TIMEOUT);
 }
 
 Future<JsonData> getRules(BigInt serverID, {List<String>? ruleIDs}) async {
@@ -126,7 +126,7 @@ Future<void> initializeScanCount(BigInt guildID, int scanCount) async {
     var sundayDay = DateTime.utc(sundayTime.year, sundayTime.month, sundayTime.day);
     Duration timeUntilSunday = sundayDay.difference(currentTime);
 
-    client.pexpire(SCAN_KEY, timeUntilSunday);
+    await client.pexpire(SCAN_KEY, timeUntilSunday);
   }
 }
 
@@ -146,12 +146,12 @@ Future<void> addToWhitelist(BigInt serverID, {List<BigInt>? roles, List<String>?
 
   if (roles != null) {
     await client.tier1.tier0.execute(["SADD", "$WHITELIST_KEY\_$serverID\_roles", ...roles]);
-    client.pexpire("$WHITELIST_KEY\_$serverID\_roles", BASE_TIMEOUT);
+    await client.pexpire("$WHITELIST_KEY\_$serverID\_roles", BASE_TIMEOUT);
   }
 
   if (names != null) {
     await client.tier1.tier0.execute(["SADD", "$WHITELIST_KEY\_$serverID\_names", ...names]);
-    client.pexpire("$WHITELIST_KEY\_$serverID\_names", BASE_TIMEOUT);
+    await client.pexpire("$WHITELIST_KEY\_$serverID\_names", BASE_TIMEOUT);
   }
 }
 

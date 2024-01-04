@@ -9,12 +9,13 @@ import 'package:onyx/onyx.dart';
 
 class WebServer {
   Alfred server;
+  // ignore: non_constant_identifier_names
   String PUB_KEY;
 
   WebServer(this.server, this.PUB_KEY);
 
   Future<void> startServer(
-      {required Function(Interaction) dispatchFunc,
+      {required Future<dynamic> Function(Interaction) dispatchFunc,
       int port = 8080,
       SecurityContext? securityContext}) async {
     server.get("/ws", (req, res) => "You're not supposed to \"GET\" this endpoint... But it's working!");
@@ -29,7 +30,7 @@ class WebServer {
         Interaction interaction = Interaction(body);
         interaction.setMetadata(req);
 
-        dispatchFunc(interaction);
+        await dispatchFunc(interaction);
       }
     }, middleware: [_validateDiscordWebhook]);
 

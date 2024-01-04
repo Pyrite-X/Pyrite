@@ -4,11 +4,10 @@ import 'package:alfred/alfred.dart';
 import 'package:nyxx/nyxx.dart' show EmbedBuilder;
 import 'package:onyx/onyx.dart';
 
-import '../../../discord_http.dart';
 import '../../../backend/storage.dart' as storage;
 import '../../../utilities/base_embeds.dart' as embeds;
 
-void clearButtonHandler(Interaction interaction) async {
+Future<void> clearButtonHandler(Interaction interaction) async {
   HttpResponse httpResponse = interaction.metadata["request"]!.response;
   MessageComponentData interactionData = interaction.data! as MessageComponentData;
 
@@ -16,6 +15,7 @@ void clearButtonHandler(Interaction interaction) async {
   BigInt guildID = interaction.guild_id!;
   BigInt authorID = BigInt.parse(interaction.member!["user"]["id"]);
 
+  // ignore: non_constant_identifier_names
   var split_id = customID.split(":");
   String clearType = split_id[2];
   String userChoice = split_id[3];
@@ -54,9 +54,6 @@ void clearButtonHandler(Interaction interaction) async {
   }
 
   if (userChoice == "yes") {
-    InteractionResponse response = InteractionResponse(InteractionResponseType.defer_update_message, null);
-    await httpResponse.send(jsonEncode(response));
-
     bool roleSelection = clearType == "roles";
 
     bool result = await storage.clearWhitelist(guildID, roles: roleSelection, names: !roleSelection);
@@ -72,13 +69,10 @@ void clearButtonHandler(Interaction interaction) async {
       eb.description = "An issue occurred when clearing your list of whitelisted $clearType.";
     }
 
-    DiscordHTTP discordHTTP = DiscordHTTP();
-    await discordHTTP.editFollowupMessage(
-        interactionToken: interaction.token,
-        messageID: BigInt.parse(interaction.message!["id"]),
-        payload: {
-          "embeds": [eb.build()],
-          "components": [row.toJson()]
-        });
+    InteractionResponse response = InteractionResponse(InteractionResponseType.update_message, {
+      "embeds": [eb.build()],
+      "components": [row.toJson()]
+    });
+    await httpResponse.send(jsonEncode(response));
   }
 }

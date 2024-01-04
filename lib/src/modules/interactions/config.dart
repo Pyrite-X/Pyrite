@@ -1,9 +1,8 @@
 import 'dart:convert';
 
 import 'package:alfred/alfred.dart';
-import 'package:nyxx/nyxx.dart' show EmbedBuilder, EmbedFooterBuilder;
+import 'package:nyxx/nyxx.dart' show EmbedBuilder, EmbedFooterBuilder, EmbedFieldBuilder;
 import 'package:onyx/onyx.dart';
-import 'package:pyrite/src/discord_http.dart';
 
 import '../../structures/action.dart';
 import '../../structures/server.dart';
@@ -12,11 +11,12 @@ import '../../utilities/base_embeds.dart' as embeds;
 
 import 'whitelist.dart' as whitelist;
 
+// ignore: non_constant_identifier_names
 final RegExp ID_REGEX = RegExp(r'(\d{17,})');
 const String _unicodeBlank = "\u{2800}";
 
 /// Interaction entrypoint
-void configCmd(Interaction interaction) async {
+Future<void> configCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
 
   HttpRequest request = interaction.metadata["request"];
@@ -25,21 +25,21 @@ void configCmd(Interaction interaction) async {
   String optionName = subcommand.name;
 
   if (optionName == "logchannel") {
-    configLogChannel(interaction, subcommand.options!, request);
+    await configLogChannel(interaction, subcommand.options!, request);
   } else if (optionName == "bot_list") {
-    configBotList(interaction, subcommand.options!, request);
+    await configBotList(interaction, subcommand.options!, request);
   } else if (optionName == "join_event") {
     var selection = subcommand.options![0];
-    configJoinEvent(interaction, selection.value, request);
+    await configJoinEvent(interaction, selection.value, request);
   } else if (optionName == "view") {
-    viewServerConfig(interaction, request, subcommand);
+    await viewServerConfig(interaction, request, subcommand);
   } else if (optionName == "whitelist") {
-    whitelist.whitelistLogic(interaction);
+    await whitelist.whitelistLogic(interaction);
   }
 }
 
 /// Handle logic for configuring a log channel
-void configLogChannel(
+Future<void> configLogChannel(
     Interaction interaction, List<ApplicationCommandOption> options, HttpRequest request) async {
   BigInt guildID = interaction.guild_id!;
   if (options.isEmpty) {
@@ -68,13 +68,13 @@ void configLogChannel(
     if (option.name == "channel") {
       embedBuilder = embeds.successEmbed();
       BigInt channelID = BigInt.parse(option.value);
-      description = "Your log channel is now set to **<#${channelID}>**!";
-      storage.updateGuildConfig(serverID: guildID, logchannelID: channelID);
+      description = "Your log channel is now set to **<#$channelID>**!";
+      await storage.updateGuildConfig(serverID: guildID, logchannelID: channelID);
     } else if (option.name == "clear") {
       if (option.value) {
         embedBuilder = embeds.warningEmbed();
         description = "Your set log channel has now been cleared!";
-        storage.removeGuildField(serverID: guildID, fieldName: "logchannelID");
+        await storage.removeGuildField(serverID: guildID, fieldName: "logchannelID");
       } else {
         embedBuilder = embeds.errorEmbed();
         description = "Your set log channel was not modified.";
@@ -92,11 +92,11 @@ void configLogChannel(
     "allowed_mentions": {"parse": []}
   });
 
-  request.response.send(jsonEncode(response));
+  await request.response.send(jsonEncode(response));
 }
 
 /// Handle logic for configuring the bot list
-void configBotList(
+Future<void> configBotList(
     Interaction interaction, List<ApplicationCommandOption> options, HttpRequest request) async {
   BigInt guildID = interaction.guild_id!;
   if (options.isEmpty) {
@@ -109,9 +109,6 @@ void configBotList(
     await request.response.send(jsonEncode(response));
     return;
   }
-
-  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
-  await request.response.send(jsonEncode(response));
 
   StringBuffer choicesString = StringBuffer();
 
@@ -156,26 +153,23 @@ void configBotList(
   EmbedBuilder embedBuilder;
   if (storageResult) {
     embedBuilder = embeds.successEmbed();
-    embedBuilder.addField(name: "Your Changes", content: choicesString.toString());
+    embedBuilder.fields!
+        .add(EmbedFieldBuilder(name: "Your Changes", value: choicesString.toString(), isInline: false));
   } else {
     embedBuilder = embeds.warningEmbed();
     embedBuilder.description = "Your settings have not been changed from their current state.";
   }
   embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
 
-  DiscordHTTP discordHTTP = DiscordHTTP();
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+  await request.response.send(jsonEncode(InteractionResponse(InteractionResponseType.message_response, {
     "embeds": [
       {...embedBuilder.build()}
     ]
-  });
+  })));
 }
 
 /// Handle logic for configuring the join event toggle
-void configJoinEvent(Interaction interaction, bool selection, HttpRequest request) async {
-  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
-  await request.response.send(jsonEncode(response));
-
+Future<void> configJoinEvent(Interaction interaction, bool selection, HttpRequest request) async {
   bool updateResult =
       await storage.updateGuildConfig(serverID: interaction.guild_id!, onJoinEvent: selection);
 
@@ -190,16 +184,17 @@ void configJoinEvent(Interaction interaction, bool selection, HttpRequest reques
 
   embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
 
-  DiscordHTTP discordHTTP = DiscordHTTP();
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+  InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, {
     "embeds": [
       {...embedBuilder.build()}
     ]
   });
+
+  await request.response.send(jsonEncode(response));
 }
 
 /// Handle logic for configuring roles that Pyrite will ignore
-void configExcludedRoles(Interaction interaction, String input, HttpRequest request) async {
+Future<void> configExcludedRoles(Interaction interaction, String input, HttpRequest request) async {
   BigInt guildID = interaction.guild_id!;
 
   var matches = ID_REGEX.allMatches(input);
@@ -211,7 +206,8 @@ void configExcludedRoles(Interaction interaction, String input, HttpRequest requ
   if (input == "none") {
     embedBuilder = embeds.warningEmbed();
     embedBuilder.description = "Your list of roles that Pyrite will ignore is now empty.";
-    storage.removeGuildField(serverID: guildID, fieldName: "excludedRoles");
+
+    await storage.removeGuildField(serverID: guildID, fieldName: "excludedRoles");
   } else if (matches.isNotEmpty && withinTen) {
     embedBuilder = embeds.successEmbed();
     StringBuffer choicesString = StringBuffer();
@@ -223,8 +219,10 @@ void configExcludedRoles(Interaction interaction, String input, HttpRequest requ
       choicesString.writeln("$_unicodeBlank- <@&$match>");
     });
 
-    embedBuilder.addField(name: "Your Changes", content: choicesString.toString());
-    storage.updateGuildConfig(serverID: guildID, excludedRoles: resultList);
+    embedBuilder.fields!
+        .add(EmbedFieldBuilder(name: "Your Changes", value: choicesString.toString(), isInline: false));
+
+    await storage.updateGuildConfig(serverID: guildID, excludedRoles: resultList);
   } else {
     embedBuilder = embeds.errorEmbed();
     if (!withinTen) {
@@ -249,11 +247,8 @@ void configExcludedRoles(Interaction interaction, String input, HttpRequest requ
 }
 
 /// Handle logic for viewing a server's settings.
-void viewServerConfig(Interaction interaction, HttpRequest request, ApplicationCommandOption command) async {
-  // Defer because awaiting db responses makes the final reply timeout
-  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
-  await request.response.send(jsonEncode(response));
-
+Future<void> viewServerConfig(
+    Interaction interaction, HttpRequest request, ApplicationCommandOption command) async {
   ApplicationCommandOption selection = command.options![0];
   String choice = selection.value;
 
@@ -274,13 +269,13 @@ void viewServerConfig(Interaction interaction, HttpRequest request, ApplicationC
       int regexRuleCount = await storage.getGuildRegexRuleCount(serverData.serverID);
 
       String logchannel = (serverData.logchannelID != null) ? "<#${serverData.logchannelID}>" : "None";
-      embedBuilder.addField(
+      embedBuilder.fields!.add(EmbedFieldBuilder(
           name: "__General__",
-          content: "**Check users on join?:** ${serverData.onJoinEnabled}\n"
+          value: "**Check users on join?:** ${serverData.onJoinEnabled}\n"
               "**Log channel:** $logchannel\n"
               "**Rule count:** ${serverData.rules.length}/${storage.DEFAULT_RULE_LIMIT}\n"
               "**Regex rule count:** $regexRuleCount/${storage.DEFAULT_REGEX_RULE_LIMIT}",
-          inline: true);
+          isInline: true));
 
       List<String> actionStrList = serverData.phishingMatchAction != null
           ? ActionEnumString.getStringsFromAction(serverData.phishingMatchAction!)
@@ -288,19 +283,18 @@ void viewServerConfig(Interaction interaction, HttpRequest request, ApplicationC
       StringBuffer actionStr = StringBuffer();
       actionStrList.forEach((element) => actionStr.writeln("• $element"));
 
-      embedBuilder.addField(
+      embedBuilder.fields!.add(EmbedFieldBuilder(
           name: "__Bot List__",
-          content: "**Checking enabled?:** ${serverData.checkPhishingList}\n"
+          value: "**Checking enabled?:** ${serverData.checkPhishingList}\n"
               "**Action(s):**\n${actionStr.toString()}"
               "**Match Threshold:** ${serverData.fuzzyMatchPercent}%",
-          inline: true);
+          isInline: true));
 
-      embedBuilder.addField(
-        name: "__Whitelist Limits__",
-        content: "**Name List**: ${serverData.excludedNames.length}/${whitelist.BASE_NAME_LIMIT}\n"
-            "**Role List**: ${serverData.excludedRoles.length}/${whitelist.BASE_ROLE_LIMIT}",
-        inline: true,
-      );
+      embedBuilder.fields!.add(EmbedFieldBuilder(
+          name: "__Whitelist Limits__",
+          value: "**Name List**: ${serverData.excludedNames.length}/${whitelist.BASE_NAME_LIMIT}\n"
+              "**Role List**: ${serverData.excludedRoles.length}/${whitelist.BASE_ROLE_LIMIT}",
+          isInline: true));
 
       break;
 
@@ -322,10 +316,14 @@ void viewServerConfig(Interaction interaction, HttpRequest request, ApplicationC
         var subOne = nameList.sublist(0, median);
         var subTwo = nameList.sublist(median);
 
-        embedBuilder.addField(name: "$_unicodeBlank", content: "- " + subOne.join("\n- "), inline: true);
-        embedBuilder.addField(name: "$_unicodeBlank", content: "- " + subTwo.join("\n- "), inline: true);
+        embedBuilder.fields!
+            .add(EmbedFieldBuilder(name: _unicodeBlank, value: "- ${subOne.join("\n- ")}", isInline: true));
+
+        embedBuilder.fields!
+            .add(EmbedFieldBuilder(name: _unicodeBlank, value: "- ${subTwo.join("\n- ")}", isInline: true));
       } else {
-        embedBuilder.addField(name: "$_unicodeBlank", content: "- " + nameList.join("\n- "));
+        embedBuilder.fields!.add(
+            EmbedFieldBuilder(name: _unicodeBlank, value: "- ${nameList.join("\n- ")}", isInline: false));
       }
 
       embedBuilder.footer = EmbedFooterBuilder(
@@ -345,7 +343,7 @@ void viewServerConfig(Interaction interaction, HttpRequest request, ApplicationC
       embedBuilder = embeds.infoEmbed();
       embedBuilder.title = "Your whitelisted roles:";
       List<String> stringifiedList = [for (BigInt roleID in roleList) "<@&$roleID> ($roleID)"];
-      embedBuilder.description = "- " + stringifiedList.join("\n- ");
+      embedBuilder.description = "- ${stringifiedList.join("\n- ")}";
       embedBuilder.footer = EmbedFooterBuilder(
           text: "You have ${roleList.length}/${whitelist.BASE_ROLE_LIMIT} roles whitelisted.");
 
@@ -357,11 +355,10 @@ void viewServerConfig(Interaction interaction, HttpRequest request, ApplicationC
           "without a proper action in the `config view` command. Bravo? Please report this.";
   }
 
-  DiscordHTTP discordHTTP = DiscordHTTP();
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+  await request.response.send(jsonEncode(InteractionResponse(InteractionResponseType.message_response, {
     "embeds": [
       {...embedBuilder.build()}
     ],
     "allowed_mentions": {"parse": []}
-  });
+  })));
 }

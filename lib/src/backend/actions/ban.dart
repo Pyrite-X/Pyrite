@@ -7,7 +7,7 @@ import '../../structures/trigger/trigger_context.dart';
 
 Logger _logger = Logger("Action Log");
 
-void banUser({required TriggerContext context, CheckResult? result}) async {
+Future<void> banUser({required TriggerContext context, CheckResult? result}) async {
   String logReason = "";
   var user = context.user;
 
@@ -26,10 +26,9 @@ void banUser({required TriggerContext context, CheckResult? result}) async {
   _logger.info("${user.tag} | ${user.nickname} (${user.userID}) was kicked from ${context.server.serverID}");
 
   if (logReason.isEmpty) {
-    await DiscordHTTP()
-      ..banUser(guildID: context.server.serverID, userID: context.user.userID);
+    await DiscordHTTP().banUser(guildID: context.server.serverID, userID: context.user.userID);
   } else {
     await DiscordHTTP()
-      ..banUser(guildID: context.server.serverID, userID: context.user.userID, logReason: logReason);
+        .banUser(guildID: context.server.serverID, userID: context.user.userID, logReason: logReason);
   }
 }

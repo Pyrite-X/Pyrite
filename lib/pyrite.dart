@@ -31,6 +31,7 @@ import 'src/modules/interactions/buttons/whitelist_buttons.dart' as whitelist_bu
 
 import 'src/modules/interactions/select_menus/whitelist_roles.dart' as whitelist_sel;
 
+// ignore: library_prefixes
 import 'src/utilities/ignore_exceptions.dart' as IE;
 
 late final int _startTime;
@@ -40,13 +41,14 @@ class Pyrite {
   final String publicKey;
   final BigInt appID;
   late final Onyx onyx;
-  late final INyxxWebsocket gateway;
+  late final NyxxGateway gateway;
 
   // ignore: unused_field
-  Logger _logger = Logger("Pyrite");
+  final Logger _logger = Logger("Pyrite");
 
   Pyrite({required this.token, required this.publicKey, required this.appID});
 
+  // ignore: non_constant_identifier_names
   static final ELEVATED_INFO = Level("INFO", 825);
 
   static String? _styleLogOutput(LogRecord record) {
@@ -100,38 +102,38 @@ class Pyrite {
     print(_styleLogOutput(record));
   }
 
-  void startGateway({bool ignoreExceptions = false, bool handleSignals = false}) async {
-    ClientOptions clientOpts = ClientOptions(dispatchRawShardEvent: true);
-    gateway = NyxxFactory.createNyxxWebsocket(token, GatewayIntents.guildMembers | GatewayIntents.guilds,
-        options: clientOpts);
+  Future<void> startGateway({bool ignoreExceptions = false, bool handleSignals = false}) async {
+    gateway = await Nyxx.connectGateway(token, GatewayIntents.guildMembers | GatewayIntents.guilds);
 
-    gateway.eventsWs.onGuildMemberAdd.listen((event) => on_join_event.on_join_event(event));
-    // gateway.eventsWs.onGuildMemberUpdate.listen((event) => on_member_update.om_member_update(event));
-    gateway.eventsWs.onGuildCreate.listen((event) => on_guild_create.on_guild_create(event));
+    gateway.onGuildMemberAdd.listen((event) => on_join_event.on_join_event(event));
+    gateway.onGuildCreate.listen((event) => on_guild_create.on_guild_create(event));
 
-    gateway.eventsWs.onReady.listen((event) {
-      gateway.setPresence(PresenceBuilder.of(
-          status: UserStatus.idle,
-          activity: ActivityBuilder("for suspicious users...", ActivityType.watching)));
+    gateway.onReady.listen((event) {
+      gateway.updatePresence(PresenceBuilder(
+          status: CurrentUserStatus.online,
+          activities: [ActivityBuilder(name: "for suspicious users...", type: ActivityType.watching)],
+          isAfk: false));
 
-      gateway.shardManager.rawEvent.listen((event) {
-        String type = event.rawData["t"];
-        if (type == "GUILD_MEMBER_UPDATE") {
-          on_member_update.on_member_update(event.rawData["d"]);
+      gateway.gateway.messages.listen((event) {
+        if (event is! EventReceived) return;
+
+        final realEvent = event.event;
+        if (realEvent is! RawDispatchEvent) return;
+
+        if (realEvent.name == "GUILD_MEMBER_UPDATE") {
+          on_member_update.on_member_update(realEvent.payload);
         }
       });
     });
 
     /// Load the list on init, then update every 30 minutes.
-    loadPhishingList();
+    unawaited(loadPhishingList());
     Timer.periodic(Duration(minutes: 30), ((timer) => loadPhishingList()));
 
     if (ignoreExceptions) IE.ignoreExceptions();
-
-    await gateway.connect();
   }
 
-  void startServer(
+  Future<void> startServer(
       {bool ignoreExceptions = false,
       bool handleSignals = false,
       int serverPort = 8080,
@@ -159,18 +161,18 @@ class Pyrite {
 
     WebServer server = WebServer(alfred, publicKey);
     await server.startServer(
-        dispatchFunc: ((p0) {
+        dispatchFunc: ((p0) async {
           var currentMetadata = p0.metadata;
           Map<String, dynamic> newMetadata = {"request": currentMetadata, "pyrite": this};
 
           p0.setMetadata(newMetadata);
-          onyx.dispatchInteraction(p0);
+          await onyx.dispatchInteraction(p0);
         }),
         port: serverPort,
         securityContext: securityContext);
 
     /// Load the list on init, then update every 30 minutes.
-    loadPhishingList();
+    unawaited(loadPhishingList());
     Timer.periodic(Duration(minutes: 30), ((timer) => loadPhishingList()));
 
     /// Have the queue check status and/or start a server scan every minute.

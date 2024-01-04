@@ -10,7 +10,7 @@ import 'check_result.dart';
 List<String> phishingList = [];
 Logger _logger = Logger("Bot List");
 
-void loadPhishingList() async {
+Future<void> loadPhishingList() async {
   var result =
       await http.get(Uri.parse("https://raw.githubusercontent.com/Pyrite-X/Bot-List/main/botlist.json"));
   var resultBody = jsonDecode(result.body);
@@ -91,12 +91,14 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
     }
   }
 
-  String? nameStringType = null;
-  if (usernameCheck)
+  String? nameStringType;
+  if (usernameCheck) {
     nameStringType = "Username";
-  else if (globalNameCheck)
+  } else if (globalNameCheck) {
     nameStringType = "Display Name";
-  else if (nicknameCheck) nameStringType = "Nickname";
+  } else if (nicknameCheck) {
+    nameStringType = "Nickname";
+  }
 
   return (matchString == null)
       ? CheckPhishResult(match: false)

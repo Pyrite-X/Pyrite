@@ -4,11 +4,10 @@ import 'package:alfred/alfred.dart';
 import 'package:nyxx/nyxx.dart' show EmbedBuilder;
 import 'package:onyx/onyx.dart';
 
-import '../../../discord_http.dart';
 import '../../../backend/storage.dart' as storage;
 import '../../../utilities/base_embeds.dart' as embeds;
 
-void roleMenuHandler(Interaction interaction) async {
+Future<void> roleMenuHandler(Interaction interaction) async {
   HttpResponse httpResponse = interaction.metadata["request"]!.response;
   MessageComponentData interactionData = interaction.data! as MessageComponentData;
 
@@ -16,7 +15,9 @@ void roleMenuHandler(Interaction interaction) async {
   BigInt guildID = interaction.guild_id!;
   BigInt authorID = BigInt.parse(interaction.member!["user"]["id"]);
 
+  // ignore: non_constant_identifier_names
   var split_id = customID.split(":");
+  // ignore: unused_local_variable
   String clearType = split_id[2];
   String userAction = split_id[3];
   BigInt userID = BigInt.parse(split_id[4]);
@@ -57,10 +58,6 @@ void roleMenuHandler(Interaction interaction) async {
     return;
   }
 
-  InteractionResponse deferResponse = InteractionResponse(InteractionResponseType.defer_update_message, null);
-  await httpResponse.send(jsonEncode(deferResponse));
-
-  DiscordHTTP discordHTTP = DiscordHTTP();
   late EmbedBuilder eb;
 
   bool storeChanges = false;
@@ -70,7 +67,7 @@ void roleMenuHandler(Interaction interaction) async {
     roleList = [for (String roleID in interactionData.values!) BigInt.parse(roleID)];
   }
 
-  String roleStringList = "<@&" + roleList.join(">, <@&") + ">";
+  String roleStringList = "<@&${roleList.join(">, <@&")}>";
 
   if (userAction == "add") {
     storeChanges = await storage.addToWhitelist(guildID, roles: roleList);
@@ -90,18 +87,16 @@ void roleMenuHandler(Interaction interaction) async {
     eb.title = "Error!";
     eb.description = "Could not save your changes. This could be because of a database issue, "
         "or you chose roles that are not part of the stored whitelist.\n\n"
-        "You tried to ${userAction} these roles:\n\n"
+        "You tried to $userAction these roles:\n\n"
         "> *$roleStringList*";
   }
 
-  await discordHTTP.editFollowupMessage(
-      interactionToken: interaction.token,
-      messageID: BigInt.parse(interaction.message!["id"]),
-      payload: {
-        "embeds": [
-          {...eb.build()}
-        ],
-        "components": [],
-        "allowed_mentions": {"parse": []},
-      });
+  InteractionResponse response = InteractionResponse(InteractionResponseType.update_message, {
+    "embeds": [
+      {...eb.build()}
+    ],
+    "components": [],
+    "allowed_mentions": {"parse": []},
+  });
+  await httpResponse.send(jsonEncode(response));
 }

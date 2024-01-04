@@ -1,9 +1,10 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:alfred/alfred.dart';
 import 'package:http/http.dart' as http;
-import 'package:nyxx/nyxx.dart';
+import 'package:nyxx/nyxx.dart' show EmbedBuilder, EmbedFooterBuilder;
 import 'package:onyx/onyx.dart';
 
 import '../../discord_http.dart';
@@ -32,17 +33,17 @@ class QueuedServer {
   @override
   bool operator ==(Object other) {
     if (other is BigInt) {
-      return this.serverID == other;
+      return serverID == other;
     }
 
-    return other is QueuedServer && this.serverID == other.serverID;
+    return other is QueuedServer && serverID == other.serverID;
   }
 
   @override // This probably shouldn't be done, but we'll see if it breaks something? :)
-  int get hashCode => Object.hash(this.serverID, this.serverID);
+  int get hashCode => Object.hash(serverID, serverID);
 }
 
-void scanCmd(Interaction interaction) async {
+Future<void> scanCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
   HttpRequest request = interaction.metadata["request"];
 
@@ -97,13 +98,13 @@ void scanCmd(Interaction interaction) async {
   serverQueue.add(queuedServer);
 
   String grammar = serverQueue.length == 1 ? "is now 1 server" : "are now ${serverQueue.length} servers";
-  discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
     "content": "Your server has been queued for scanning! There $grammar in the queue.\n"
         "Status updates will be sent to your set log channel, or here if you have no log channel set."
   });
 }
 
-void queueHandler() async {
+Future<void> queueHandler() async {
   if (serverQueue.isEmpty || runningServer != null) {
     return;
   }
@@ -129,9 +130,7 @@ void queueHandler() async {
 
   EmbedBuilder embedBuilder = embeds.infoEmbed();
   embedBuilder.description = "Your server is now being scanned!";
-  embedBuilder.addFooter((footer) {
-    footer.text = "Guild ID: ${server.serverID}";
-  });
+  embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${server.serverID}");
 
   await discordHTTP.sendMessage(channelID: server.channelID, payload: {
     "embeds": [
@@ -139,11 +138,11 @@ void queueHandler() async {
     ]
   });
 
-  decreaseScanCount(server.serverID);
-  scanServer(serverObject);
+  unawaited(decreaseScanCount(server.serverID));
+  unawaited(scanServer(serverObject));
 }
 
-void scanServer(Server server) async {
+Future<void> scanServer(Server server) async {
   BigInt lastUserID = BigInt.zero;
   DiscordHTTP discordHTTP = DiscordHTTP();
 
@@ -154,6 +153,7 @@ void scanServer(Server server) async {
   contextBuilder.setEventSource(eventSource);
   contextBuilder.setServer(server);
 
+  // Get + check all members while we're getting at least 1000 people (the max we can retrieve).
   await Future.doWhile(() async {
     http.Response getMembers =
         await discordHTTP.listGuildMembers(guildID: runningServer!.serverID, limit: 1000, after: lastUserID);
@@ -178,14 +178,14 @@ void scanServer(Server server) async {
     }
 
     Iterable<dynamic> body = jsonDecode(getMembers.body);
-    await Future.forEach(body, (element) {
-      User? user = _handleMember(element);
+    for (dynamic rawUser in body) {
+      User? user = _parseMember(rawUser);
       if (user != null) {
         contextBuilder.setUser(user);
-        check.checkUser(contextBuilder.build());
+        await check.checkUser(contextBuilder.build());
         lastUserID = user.userID;
       }
-    });
+    }
 
     if (body.length < 1000) {
       return false;
@@ -195,9 +195,7 @@ void scanServer(Server server) async {
   }).then((value) async {
     EmbedBuilder embedBuilder = embeds.infoEmbed();
     embedBuilder.description = "Your server has finished scanning!";
-    embedBuilder.addFooter((footer) {
-      footer.text = "Guild ID: ${server.serverID}";
-    });
+    embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${server.serverID}");
 
     String logOutput = log.dumpServerScanLog(serverID: runningServer!.serverID);
     if (logOutput.isNotEmpty) {
@@ -210,7 +208,7 @@ void scanServer(Server server) async {
         ]
       });
     } else {
-      embedBuilder.description = embedBuilder.description! + "\nNo matches were found.";
+      embedBuilder.description = "${embedBuilder.description!}\nNo matches were found.";
       await discordHTTP.sendMessage(channelID: runningServer!.channelID, payload: {
         "embeds": [
           {...embedBuilder.build()}
@@ -222,7 +220,7 @@ void scanServer(Server server) async {
   runningServer = null;
 }
 
-User? _handleMember(JsonData member) {
+User? _parseMember(JsonData member) {
   UserBuilder userBuilder = UserBuilder();
 
   JsonData userJson = member["user"];

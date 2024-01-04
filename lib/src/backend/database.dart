@@ -51,7 +51,7 @@ final _defaultData = {
   ]
 };
 
-Future<dynamic> handleQuery(String collection, Future<dynamic> func(DbCollection collection)) async {
+Future<dynamic> handleQuery(String collection, Future<dynamic> Function(DbCollection collection) func) async {
   Db connection = await _db.pool.acquire();
   DbCollection col = connection.collection(collection);
 
@@ -60,7 +60,7 @@ Future<dynamic> handleQuery(String collection, Future<dynamic> func(DbCollection
     var result = await func(col);
     return result;
   } finally {
-    _db.pool.release(connection);
+    await _db.pool.release(connection);
   }
 }
 

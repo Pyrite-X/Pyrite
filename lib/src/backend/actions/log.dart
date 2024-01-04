@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
-import 'package:nyxx/nyxx.dart' show EmbedBuilder;
+import 'package:nyxx/nyxx.dart' show EmbedBuilder, EmbedFieldBuilder, EmbedFooterBuilder, EmbedAuthorBuilder;
 import 'package:onyx/onyx.dart';
 
 import '../storage.dart' as storage;
@@ -16,7 +16,7 @@ import '../../utilities/base_embeds.dart';
 
 Logger _logger = Logger("Action Log");
 
-void sendLogMessage({required TriggerContext context, required CheckResult result}) async {
+Future<void> sendLogMessage({required TriggerContext context, required CheckResult result}) async {
   Server guild = context.server;
   User user = context.user;
 
@@ -36,11 +36,11 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
   http.Response userObject = await discordHTTP.getUser(userID: user.userID);
   JsonData userData = json.decode(userObject.body);
 
-  embed.addField(
+  embed.fields!.add(EmbedFieldBuilder(
       name: "User",
-      content: "<@${user.userID}>\n"
+      value: "<@${user.userID}>\n"
           "**${typedResult.nameStringType}**: ${typedResult.userString}",
-      inline: true);
+      isInline: true));
 
   String title = "";
   ActionRow? actionRow;
@@ -54,32 +54,28 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
     String percentage = (typedResult.fuzzyMatchPercent == 100)
         ? "100"
         : typedResult.fuzzyMatchPercent?.toStringAsPrecision(4);
-    embed.addField(
+
+    embed.fields!.add(EmbedFieldBuilder(
         name: "Match",
-        content: "**Name**: ${typedResult.matchingString}\n"
+        value: "**Name**: ${typedResult.matchingString}\n"
             "**Percentage**: ~$percentage%",
-        inline: true);
+        isInline: true));
   } else if (result.runtimeType == CheckRulesResult) {
     var rac = typedResult.rule!.action;
     title = "Rule Match | ${_actionToSuffix(rac)} | ${user.tag}";
 
     actionRow = _buildEmbedButtons(rac, user.userID, typedResult.userString);
 
-    embed.addField(
+    embed.fields!.add(EmbedFieldBuilder(
         name: "Rule",
-        content: "**ID**: ${typedResult.rule!.ruleID}\n**Pattern**: ${typedResult.rule!.pattern}",
-        inline: true);
+        value: "**ID**: ${typedResult.rule!.ruleID}\n**Pattern**: ${typedResult.rule!.pattern}",
+        isInline: true));
   }
 
-  embed.addFooter((footer) {
-    footer.text = "User ID: ${user.userID}";
-  });
+  embed.footer = EmbedFooterBuilder(text: "User ID: ${user.userID}");
 
   String avatarUrl = "https://cdn.discordapp.com/avatars/${user.userID}/${userData['avatar']}.webp";
-  embed.addAuthor((author) {
-    author.iconUrl = avatarUrl;
-    author.name = title;
-  });
+  embed.author = EmbedAuthorBuilder(name: title, iconUrl: Uri.parse(avatarUrl));
 
   http.Response msgResponse = await discordHTTP.sendMessage(channelID: logchannelID, payload: {
     "embeds": [
@@ -92,7 +88,7 @@ void sendLogMessage({required TriggerContext context, required CheckResult resul
   });
 
   if (msgResponse.statusCode == 403 || msgResponse.statusCode == 404) {
-    storage.removeGuildField(serverID: guild.serverID, fieldName: "logchannelID");
+    await storage.removeGuildField(serverID: guild.serverID, fieldName: "logchannelID");
   }
 }
 
@@ -103,18 +99,16 @@ ActionRow _buildEmbedButtons(Action action, BigInt userID, String userString) {
   ActionRow actionRow = ActionRow();
 
   actionRow.addComponent(
-      Button(style: ButtonStyle.primary, label: "User info", custom_id: "log_button:info:${userID}"));
+      Button(style: ButtonStyle.primary, label: "User info", custom_id: "log_button:info:$userID"));
 
   actionRow.addComponent(Button(
-      style: ButtonStyle.secondary,
-      label: "Whitelist name",
-      custom_id: "log_button:whitelist:${userString}"));
+      style: ButtonStyle.secondary, label: "Whitelist name", custom_id: "log_button:whitelist:$userString"));
 
   if (includeModerationButtons) {
     actionRow.addComponent(
-        Button(style: ButtonStyle.secondary, label: "Kick user", custom_id: "log_button:kick:${userID}"));
+        Button(style: ButtonStyle.secondary, label: "Kick user", custom_id: "log_button:kick:$userID"));
     actionRow.addComponent(
-        Button(style: ButtonStyle.secondary, label: "Ban user", custom_id: "log_button:ban:${userID}"));
+        Button(style: ButtonStyle.secondary, label: "Ban user", custom_id: "log_button:ban:$userID"));
   }
 
   return actionRow;
@@ -122,7 +116,7 @@ ActionRow _buildEmbedButtons(Action action, BigInt userID, String userString) {
 
 // VVVVVV ---------------- Scan Log logic ---------------- VVVVVV
 
-Map<BigInt, StringBuffer> logBufferMap = Map();
+Map<BigInt, StringBuffer> logBufferMap = {};
 
 Future<void> writeScanLog({required TriggerContext context, required CheckResult result}) async {
   Server guild = context.server;

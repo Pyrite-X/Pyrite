@@ -43,12 +43,12 @@ Future<Server?> fetchGuildData(BigInt guildID, {bool withRules = false, bool wit
       result = Server.fromJson(data: dbResponse);
 
       // Cache server config and rules if withRules.
-      redis.setServerConfig(result);
+      await redis.setServerConfig(result);
       if (withRules && result.rules.isNotEmpty) {
-        redis.cacheRules(guildID, result.rules);
+        await redis.cacheRules(guildID, result.rules);
       }
       if (withWhitelist && (result.excludedRoles.isNotEmpty || result.excludedNames.isNotEmpty)) {
-        redis.addToWhitelist(guildID, roles: result.excludedRoles, names: result.excludedNames);
+        await redis.addToWhitelist(guildID, roles: result.excludedRoles, names: result.excludedNames);
       }
     } else {
       // No entry for this guild, add one. Don't cache it.
@@ -91,7 +91,7 @@ Future<List<Rule>> fetchGuildRules(BigInt guildID) async {
       data.forEach((element) => ruleList.add(Rule.fromJson(element)));
     }
     // Cache the retrieved rules.
-    redis.cacheRules(guildID, ruleList);
+    await redis.cacheRules(guildID, ruleList);
   }
 
   return ruleList;
@@ -114,7 +114,7 @@ Future<JsonData> fetchGuildWhitelist(BigInt guildID) async {
       output["names"] = dbData["names"];
     }
 
-    redis.addToWhitelist(guildID, roles: output["roles"], names: output["names"]);
+    await redis.addToWhitelist(guildID, roles: output["roles"], names: output["names"]);
   }
 
   return output;
@@ -139,7 +139,7 @@ Future<bool> updateGuildConfig(
       excludedRoles: excludedRoles);
 
   if (success) {
-    redis.removeServerConfig(serverID);
+    await redis.removeServerConfig(serverID);
   }
 
   return success;
@@ -149,7 +149,7 @@ Future<bool> updateGuildConfig(
 Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) async {
   bool success = await db.insertGuildRule(serverID: serverID, rule: rule);
   if (success) {
-    redis.removeCachedRules(serverID);
+    await redis.removeCachedRules(serverID);
   }
 
   return success;
@@ -159,7 +159,7 @@ Future<bool> insertGuildRule({required BigInt serverID, required Rule rule}) asy
 Future<bool> removeGuildField({required BigInt serverID, required String fieldName}) async {
   var success = await db.removeGuildField(serverID: serverID, fieldName: fieldName);
   if (success) {
-    redis.removeServerConfig(serverID);
+    await redis.removeServerConfig(serverID);
   }
 
   return success;
@@ -169,7 +169,7 @@ Future<bool> removeGuildField({required BigInt serverID, required String fieldNa
 Future<bool> removeGuildRule({required BigInt serverID, required String ruleID}) async {
   bool success = await db.removeGuildRule(serverID: serverID, ruleID: ruleID);
   if (success) {
-    redis.removeCachedRules(serverID);
+    await redis.removeCachedRules(serverID);
   }
 
   return success;
@@ -220,12 +220,12 @@ Future<bool> canRunScan(BigInt guildID) async {
 }
 
 Future<bool> addToWhitelist(BigInt guildID, {List<BigInt>? roles, List<String>? names}) async {
-  redis.addToWhitelist(guildID, roles: roles, names: names);
+  await redis.addToWhitelist(guildID, roles: roles, names: names);
   return await db.insertManyWhitelistEntries(serverID: guildID, roles: roles, names: names);
 }
 
 Future<bool> removeFromWhitelist(BigInt guildID, {List<BigInt>? roles, List<String>? names}) async {
-  redis.removeFromWhitelist(guildID, roles: roles, names: names);
+  await redis.removeFromWhitelist(guildID, roles: roles, names: names);
   return await db.removeManyWhitelistEntries(serverID: guildID, roles: roles, names: names);
 }
 

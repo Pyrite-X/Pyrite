@@ -13,7 +13,7 @@ import 'check_phish_list.dart' as phish;
 import 'check_result.dart';
 import 'check_rules.dart' as rules;
 
-void checkUser(TriggerContext context) async {
+Future<void> checkUser(TriggerContext context) async {
   /// Flow:
   ///   - Get server premium status (when implemented).
   ///   - Utilize event source type to know if the join or scan flow is followed.
@@ -63,9 +63,9 @@ void checkUser(TriggerContext context) async {
   }
 
   if (checkPhishResult != null && checkPhishResult.match) {
-    runActions(context, checkPhishResult);
+    await runActions(context, checkPhishResult);
   } else if (checkRulesResult != null && checkRulesResult.match) {
-    runActions(context, checkRulesResult);
+    await runActions(context, checkRulesResult);
   }
 }
 

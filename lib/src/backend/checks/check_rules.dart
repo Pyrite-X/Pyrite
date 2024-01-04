@@ -46,11 +46,13 @@ Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
                 ? user.globalName
                 : user.nickname;
 
-        if (usernameMatch != null)
+        if (usernameMatch != null) {
           usernameCheck = true;
-        else if (globalNameMatch != null)
+        } else if (globalNameMatch != null) {
           globalNameCheck = true;
-        else if (nicknameMatch != null) nicknameCheck = true;
+        } else if (nicknameMatch != null) {
+          nicknameCheck = true;
+        }
 
         break;
       }
@@ -72,12 +74,14 @@ Future<CheckRulesResult> checkRulesList(TriggerContext context) async {
     }
   }
 
-  String? nameStringType = null;
-  if (usernameCheck)
+  String? nameStringType;
+  if (usernameCheck) {
     nameStringType = "Username";
-  else if (globalNameCheck)
+  } else if (globalNameCheck) {
     nameStringType = "Display Name";
-  else if (nicknameCheck) nameStringType = "Nickname";
+  } else if (nicknameCheck) {
+    nameStringType = "Nickname";
+  }
 
   return (matchRule == null)
       ? CheckRulesResult(match: false)

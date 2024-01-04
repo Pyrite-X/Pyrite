@@ -13,7 +13,7 @@ const int BASE_NAME_LIMIT = 50;
 const int BASE_ROLE_LIMIT = 10;
 
 /// Interaction entrypoint
-void whitelistLogic(Interaction interaction) async {
+Future<void> whitelistLogic(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
 
   HttpRequest request = interaction.metadata["request"];
@@ -24,11 +24,11 @@ void whitelistLogic(Interaction interaction) async {
   String name = subcommand.name;
   switch (name) {
     case "names":
-      _names(interaction, request.response, subcommand);
+      await _names(interaction, request.response, subcommand);
       break;
 
     case "roles":
-      _roles(interaction, request.response, subcommand);
+      await _roles(interaction, request.response, subcommand);
       break;
 
     default:
@@ -36,6 +36,7 @@ void whitelistLogic(Interaction interaction) async {
   }
 }
 
+/// Handler used for adding a name to the whitelist from a button press on an alert message.
 Future<EmbedBuilder> addToWhitelistHandler(
     List<String> existingNames, List<String> newNames, BigInt guildID) async {
   EmbedBuilder embedResponse;
@@ -90,7 +91,7 @@ Future<EmbedBuilder> addToWhitelistHandler(
   return embedResponse;
 }
 
-void _names(Interaction interaction, HttpResponse response, ApplicationCommandOption command) async {
+Future<void> _names(Interaction interaction, HttpResponse response, ApplicationCommandOption command) async {
   ApplicationCommandOption selection = command.options![0];
 
   String action = selection.value;
@@ -110,9 +111,9 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
     return;
   }
 
-  InteractionResponse deferResponse =
-      InteractionResponse(InteractionResponseType.defer_message_response, null);
-  await response.send(jsonEncode(deferResponse));
+  // InteractionResponse deferResponse =
+  //     InteractionResponse(InteractionResponseType.defer_message_response, null);
+  // await response.send(jsonEncode(deferResponse));
 
   late ApplicationCommandOption nameInput;
   List<String> nameInputList = [];
@@ -129,7 +130,6 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
     ];
   }
 
-  DiscordHTTP discordHTTP = DiscordHTTP();
   late EmbedBuilder embedResponse;
   ActionRow actionRow = ActionRow();
 
@@ -203,7 +203,7 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
           "without a proper action in the `whitelist names` command. Bravo? Please report this.";
   }
 
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+  JsonData responseData = {
     "embeds": [
       {...embedResponse.build()}
     ],
@@ -211,18 +211,21 @@ void _names(Interaction interaction, HttpResponse response, ApplicationCommandOp
       if (actionRow.components.isNotEmpty) {...actionRow.toJson()}
     ],
     "allowed_mentions": {"parse": []}
-  });
+  };
+
+  await response
+      .send(jsonEncode(InteractionResponse(InteractionResponseType.message_response, responseData)));
 }
 
-void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOption command) async {
+Future<void> _roles(Interaction interaction, HttpResponse response, ApplicationCommandOption command) async {
   ApplicationCommandOption selection = command.options![0];
 
   String action = selection.value;
   String authorID = interaction.member!["user"]["id"];
 
-  InteractionResponse deferResponse =
-      InteractionResponse(InteractionResponseType.defer_message_response, null);
-  await response.send(jsonEncode(deferResponse));
+  // InteractionResponse deferResponse =
+  //     InteractionResponse(InteractionResponseType.defer_message_response, null);
+  // await response.send(jsonEncode(deferResponse));
 
   JsonData whitelistData = await storage.fetchGuildWhitelist(interaction.guild_id!);
 
@@ -325,7 +328,7 @@ void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOp
           "without a proper action in the `whitelist roles` command. Bravo? Please report this.";
   }
 
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+  JsonData responseData = {
     "embeds": [
       {...embedResponse.build()}
     ],
@@ -333,5 +336,8 @@ void _roles(Interaction interaction, HttpResponse response, ApplicationCommandOp
       if (actionRow.components.isNotEmpty) {...actionRow.toJson()}
     ],
     "allowed_mentions": {"parse": []}
-  });
+  };
+
+  await response
+      .send(jsonEncode(InteractionResponse(InteractionResponseType.message_response, responseData)));
 }

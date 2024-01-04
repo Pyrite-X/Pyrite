@@ -35,16 +35,16 @@ class Server {
   /// Specifically from a database representation of the server data.
   Server.fromJson({required JsonData data}) {
     if (data.containsKey("_id")) {
-      this.serverID = BigInt.parse(data["_id"].toString());
+      serverID = BigInt.parse(data["_id"].toString());
     } else if (data.containsKey("serverID")) {
-      this.serverID = BigInt.parse(data["serverID"].toString());
+      serverID = BigInt.parse(data["serverID"].toString());
     }
 
-    this.logchannelID = BigInt.tryParse(data["logchannelID"].toString());
-    this.onJoinEnabled = data["onJoinEnabled"].runtimeType == String
+    logchannelID = BigInt.tryParse(data["logchannelID"].toString());
+    onJoinEnabled = data["onJoinEnabled"].runtimeType == String
         ? data["onJoinEnabled"].toString() == "true"
         : data["onJoinEnabled"];
-    this.fuzzyMatchPercent = data["fuzzyMatchPercent"].runtimeType == int
+    fuzzyMatchPercent = data["fuzzyMatchPercent"].runtimeType == int
         ? data["fuzzyMatchPercent"]
         : int.tryParse(data["fuzzyMatchPercent"].toString());
 
@@ -57,14 +57,14 @@ class Server {
         orElse: () => {} as JsonData,
       );
       if ((phishEntry as JsonData).isNotEmpty) {
-        this.checkPhishingList = phishEntry["enabled"].runtimeType == String
+        checkPhishingList = phishEntry["enabled"].runtimeType == String
             ? phishEntry["enabled"] == "true"
             : phishEntry["enabled"];
-        this.phishingMatchAction = Action.fromInt(phishEntry["action"]);
+        phishingMatchAction = Action.fromInt(phishEntry["action"]);
       }
 
       var ruleIterator = ruleList.where((element) => element["type"] == 0);
-      this.rules = [for (var rule in ruleIterator) Rule.fromJson(rule)];
+      rules = [for (var rule in ruleIterator) Rule.fromJson(rule)];
     }
 
     if (data["whitelist"] != null) {
@@ -72,13 +72,13 @@ class Server {
       if (whitelist.containsKey("roles")) {
         whitelist["roles"] =
             (whitelist["roles"].runtimeType == String) ? jsonDecode(whitelist["roles"]) : whitelist["roles"];
-        this.excludedRoles = [for (var role in whitelist["roles"]) BigInt.parse(role)];
+        excludedRoles = [for (var role in whitelist["roles"]) BigInt.parse(role)];
       }
 
       if (whitelist.containsKey("names")) {
         whitelist["names"] =
             (whitelist["names"].runtimeType == String) ? jsonDecode(whitelist["names"]) : whitelist["names"];
-        this.excludedNames = [...whitelist["names"]];
+        excludedNames = [...whitelist["names"]];
       }
     }
   }

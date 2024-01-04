@@ -2,7 +2,8 @@ import 'dart:convert';
 
 import 'package:alfred/alfred.dart';
 import 'package:http/http.dart' as http;
-import 'package:nyxx/nyxx.dart' show EmbedBuilder, EmbedAuthorBuilder, Snowflake;
+import 'package:nyxx/nyxx.dart'
+    show EmbedBuilder, EmbedAuthorBuilder, Snowflake, EmbedThumbnailBuilder, EmbedFieldBuilder;
 import 'package:onyx/onyx.dart';
 import 'package:unorm_dart/unorm_dart.dart' as unorm;
 
@@ -11,7 +12,7 @@ import '../../../discord_http.dart';
 import '../../../backend/storage.dart' as storage;
 import '../../../utilities/base_embeds.dart';
 
-void logButtonHandler(Interaction interaction) async {
+Future<void> logButtonHandler(Interaction interaction) async {
   HttpRequest request = interaction.metadata["request"];
   MessageComponentData interactionData = interaction.data! as MessageComponentData;
 
@@ -19,6 +20,7 @@ void logButtonHandler(Interaction interaction) async {
   BigInt guildID = interaction.guild_id!;
   BigInt authorID = BigInt.parse(interaction.member!["user"]["id"]);
 
+  // ignore: non_constant_identifier_names
   var split_id = customID.split(":");
   String buttonType = split_id[1];
 
@@ -32,24 +34,22 @@ void logButtonHandler(Interaction interaction) async {
 
   switch (buttonType) {
     case "info":
-      showUserInfo(interaction, request, guildID, userID);
+      await showUserInfo(interaction, request, guildID, userID);
       return;
     case "kick":
-      kickUser(interaction, request, authorID, guildID, userID);
+      await kickUser(interaction, request, authorID, guildID, userID);
       return;
     case "ban":
-      banUser(interaction, request, authorID, guildID, userID);
+      await banUser(interaction, request, authorID, guildID, userID);
       return;
     case "whitelist":
-      whitelistName(interaction, request, authorID, guildID, userMatchString);
+      await whitelistName(interaction, request, authorID, guildID, userMatchString);
       return;
   }
 }
 
-void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, BigInt userID) async {
-  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
-  await request.response.send(jsonEncode(response));
-
+Future<void> showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, BigInt userID) async {
+  var response = InteractionResponse(InteractionResponseType.message_response, {});
   DiscordHTTP discordHTTP = DiscordHTTP();
 
   JsonData userData = {};
@@ -62,11 +62,12 @@ void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, 
       var embedBuilder = warningEmbed();
       embedBuilder.description = "User info could not be gotten at this time!";
 
-      await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
-        "embeds": [
-          {...embedBuilder.build()}
-        ]
-      });
+      response.data!["embeds"] = [
+        {...embedBuilder.build()}
+      ];
+      response.data!["flags"] = 1 << 6;
+
+      await request.response.send(jsonEncode(response));
       return;
     }
 
@@ -83,7 +84,7 @@ void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, 
   String? globalName;
   String? avatarHash;
 
-  DateTime userCreation = Snowflake(userID).timestamp;
+  DateTime userCreation = Snowflake(userID.toInt()).timestamp;
   int mseUserCreation = (userCreation.millisecondsSinceEpoch / 1000).round();
 
   String? nickname;
@@ -113,8 +114,10 @@ void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, 
   String userTitle =
       discrim == "0" ? "@$username${globalName != null ? ' (aka $globalName)' : ''}" : "$username#$discrim";
   embedBuilder.author = EmbedAuthorBuilder(name: userTitle);
+
   if (avatarHash != null) {
-    embedBuilder.thumbnailUrl = "https://cdn.discordapp.com/avatars/${userID}/${avatarHash}.webp";
+    embedBuilder.thumbnail = embedBuilder.thumbnail =
+        EmbedThumbnailBuilder(url: Uri.parse("https://cdn.discordapp.com/avatars/$userID/$avatarHash.webp"));
   }
 
   descBuffer.writeln("> <@$userID>");
@@ -122,30 +125,31 @@ void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, 
     descBuffer.writeln("> *Nickname*: $nickname");
   }
 
-  embedBuilder.addField(name: "Discord join date:", content: "<t:$mseUserCreation:D>", inline: true);
+  embedBuilder.fields!
+      .add(EmbedFieldBuilder(name: "Discord join date:", value: "<t:$mseUserCreation:D>", isInline: true));
 
   if (guildJoinDate != null) {
     int mseGuildJoin = (guildJoinDate.millisecondsSinceEpoch / 1000).round();
-    embedBuilder.addField(name: "Server join date:", content: "<t:$mseGuildJoin:D>", inline: true);
+    embedBuilder.fields!
+        .add(EmbedFieldBuilder(name: "Server join date:", value: "<t:$mseGuildJoin:D>", isInline: true));
   }
 
   if (roleList.isNotEmpty) {
     StringBuffer sb = StringBuffer();
     roleList.forEach((element) => sb.write("<@&$element> "));
 
-    embedBuilder.addField(name: "Roles", content: sb.toString());
+    embedBuilder.fields!.add(EmbedFieldBuilder(name: "Roles", value: sb.toString(), isInline: false));
   }
 
   embedBuilder.description = descBuffer.toString();
 
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
-    "embeds": [
-      {...embedBuilder.build()}
-    ]
-  });
+  response.data!["embeds"] = [
+    {...embedBuilder.build()}
+  ];
+  await request.response.send(jsonEncode(response));
 }
 
-void kickUser(
+Future<void> kickUser(
   Interaction interaction,
   HttpRequest request,
   BigInt authorID,
@@ -202,9 +206,6 @@ void kickUser(
       ? "${authorMemberData["user"]["username"]}#${authorMemberData["user"]["discriminator"]}"
       : "@${authorMemberData["user"]["username"]}";
 
-  response.responseType = InteractionResponseType.defer_message_response;
-  await request.response.send(jsonEncode(response));
-
   await discordHTTP.kickUser(
     guildID: guildID,
     userID: userID,
@@ -212,12 +213,12 @@ void kickUser(
   );
 
   response.data = {"content": content};
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {"content": content});
+  await request.response.send(jsonEncode(response));
 
   JsonData message = interaction.message!;
   List<dynamic> messageComponents = message["components"][0]["components"];
   // Disable the kick button.
-  messageComponents[1]["disabled"] = true;
+  messageComponents[2]["disabled"] = true;
 
   await discordHTTP.editMessage(
       channelID: interaction.channel_id!,
@@ -225,7 +226,7 @@ void kickUser(
       payload: message);
 }
 
-void banUser(
+Future<void> banUser(
   Interaction interaction,
   HttpRequest request,
   BigInt authorID,
@@ -279,9 +280,6 @@ void banUser(
       ? "${authorMemberData["user"]["username"]}#${authorMemberData["user"]["discriminator"]}"
       : "@${authorMemberData["user"]["username"]}";
 
-  response.responseType = InteractionResponseType.defer_message_response;
-  await request.response.send(jsonEncode(response));
-
   await discordHTTP.banUser(
     guildID: guildID,
     userID: userID,
@@ -289,13 +287,13 @@ void banUser(
   );
 
   response.data = {"content": content};
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {"content": content});
+  await request.response.send(jsonEncode(response));
 
   JsonData message = interaction.message!;
   List<dynamic> messageComponents = message["components"][0]["components"];
   // Disable both kick and ban buttons.
-  messageComponents[1]["disabled"] = true;
   messageComponents[2]["disabled"] = true;
+  messageComponents[3]["disabled"] = true;
 
   await discordHTTP.editMessage(
       channelID: interaction.channel_id!,
@@ -303,7 +301,7 @@ void banUser(
       payload: message);
 }
 
-void whitelistName(
+Future<void> whitelistName(
   Interaction interaction,
   HttpRequest request,
   BigInt authorID,
@@ -311,8 +309,6 @@ void whitelistName(
   String userString,
 ) async {
   InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, null);
-
-  DiscordHTTP discordHTTP = DiscordHTTP();
 
   // Check author permissions
   JsonData authorMemberData = interaction.member!;
@@ -337,9 +333,6 @@ void whitelistName(
     return;
   }
 
-  response.responseType = InteractionResponseType.defer_message_response;
-  await request.response.send(jsonEncode(response));
-
   userString = unorm.nfkc(userString.trim());
 
   JsonData whitelistData = await storage.fetchGuildWhitelist(guildID);
@@ -347,9 +340,10 @@ void whitelistName(
 
   EmbedBuilder embedResponse = await wl.addToWhitelistHandler(existingNameList, [userString], guildID);
 
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+  response.data = {
     "embeds": [
       {...embedResponse.build()}
     ]
-  });
+  };
+  await request.response.send(jsonEncode(response));
 }
