@@ -16,6 +16,7 @@ void clearButtonHandler(Interaction interaction) async {
   BigInt guildID = interaction.guild_id!;
   BigInt authorID = BigInt.parse(interaction.member!["user"]["id"]);
 
+  // ignore: non_constant_identifier_names
   var split_id = customID.split(":");
   String clearType = split_id[2];
   String userChoice = split_id[3];

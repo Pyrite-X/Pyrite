@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:nyxx/nyxx.dart' show EmbedBuilder, DiscordColor;
 
 final _INFO_COLOR = DiscordColor.parseHexString("4D346D");

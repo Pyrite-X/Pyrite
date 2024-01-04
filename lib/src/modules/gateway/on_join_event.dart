@@ -22,7 +22,7 @@ void on_join_event(nyxx.GuildMemberAddEvent event) async {
     ..setEventSource(EventSource(sourceType: EventSourceType.join))
     ..setServer(server);
 
-  String tag = (nyxxUser.discriminator != 0)
+  String tag = (nyxxUser.discriminator != "0")
       ? "${nyxxUser.username}#${nyxxUser.discriminator}"
       : (nyxxUser.globalName == null)
           ? "@${nyxxUser.username}"

@@ -27,11 +27,11 @@ Future<void> statsCommand(Interaction interaction, int startTime) async {
   }
 
   embedBuilder.fields!.add(EmbedFieldBuilder(name: "Servers", value: guildCount.toString(), isInline: true));
-  embedBuilder.fields!.add(EmbedFieldBuilder(name: "Uptime", value: "<t:${startTime}:R>", isInline: true));
+  embedBuilder.fields!.add(EmbedFieldBuilder(name: "Uptime", value: "<t:$startTime:R>", isInline: true));
 
   String memUsage = (ProcessInfo.currentRss / 1024 / 1024).toStringAsFixed(2);
   embedBuilder.fields!
-      .add(EmbedFieldBuilder(name: "Memory Usage (RSS)", value: "${memUsage} MB", isInline: true));
+      .add(EmbedFieldBuilder(name: "Memory Usage (RSS)", value: "$memUsage MB", isInline: true));
 
   var response = InteractionResponse(InteractionResponseType.message_response, {
     "embeds": [

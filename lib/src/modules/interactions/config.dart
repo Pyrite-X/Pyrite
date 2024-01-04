@@ -11,6 +11,7 @@ import '../../utilities/base_embeds.dart' as embeds;
 
 import 'whitelist.dart' as whitelist;
 
+// ignore: non_constant_identifier_names
 final RegExp ID_REGEX = RegExp(r'(\d{17,})');
 const String _unicodeBlank = "\u{2800}";
 
@@ -67,7 +68,7 @@ Future<void> configLogChannel(
     if (option.name == "channel") {
       embedBuilder = embeds.successEmbed();
       BigInt channelID = BigInt.parse(option.value);
-      description = "Your log channel is now set to **<#${channelID}>**!";
+      description = "Your log channel is now set to **<#$channelID>**!";
       await storage.updateGuildConfig(serverID: guildID, logchannelID: channelID);
     } else if (option.name == "clear") {
       if (option.value) {
@@ -315,14 +316,14 @@ Future<void> viewServerConfig(
         var subOne = nameList.sublist(0, median);
         var subTwo = nameList.sublist(median);
 
-        embedBuilder.fields!.add(
-            EmbedFieldBuilder(name: "$_unicodeBlank", value: "- " + subOne.join("\n- "), isInline: true));
+        embedBuilder.fields!
+            .add(EmbedFieldBuilder(name: _unicodeBlank, value: "- ${subOne.join("\n- ")}", isInline: true));
 
-        embedBuilder.fields!.add(
-            EmbedFieldBuilder(name: "$_unicodeBlank", value: "- " + subTwo.join("\n- "), isInline: true));
+        embedBuilder.fields!
+            .add(EmbedFieldBuilder(name: _unicodeBlank, value: "- ${subTwo.join("\n- ")}", isInline: true));
       } else {
         embedBuilder.fields!.add(
-            EmbedFieldBuilder(name: "$_unicodeBlank", value: "- " + nameList.join("\n- "), isInline: false));
+            EmbedFieldBuilder(name: _unicodeBlank, value: "- ${nameList.join("\n- ")}", isInline: false));
       }
 
       embedBuilder.footer = EmbedFooterBuilder(
@@ -342,7 +343,7 @@ Future<void> viewServerConfig(
       embedBuilder = embeds.infoEmbed();
       embedBuilder.title = "Your whitelisted roles:";
       List<String> stringifiedList = [for (BigInt roleID in roleList) "<@&$roleID> ($roleID)"];
-      embedBuilder.description = "- " + stringifiedList.join("\n- ");
+      embedBuilder.description = "- ${stringifiedList.join("\n- ")}";
       embedBuilder.footer = EmbedFooterBuilder(
           text: "You have ${roleList.length}/${whitelist.BASE_ROLE_LIMIT} roles whitelisted.");
 

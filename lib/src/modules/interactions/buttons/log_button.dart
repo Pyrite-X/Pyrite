@@ -20,6 +20,7 @@ void logButtonHandler(Interaction interaction) async {
   BigInt guildID = interaction.guild_id!;
   BigInt authorID = BigInt.parse(interaction.member!["user"]["id"]);
 
+  // ignore: non_constant_identifier_names
   var split_id = customID.split(":");
   String buttonType = split_id[1];
 
@@ -116,8 +117,8 @@ void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, 
   embedBuilder.author = EmbedAuthorBuilder(name: userTitle);
 
   if (avatarHash != null) {
-    embedBuilder.thumbnail = embedBuilder.thumbnail = EmbedThumbnailBuilder(
-        url: Uri.parse("https://cdn.discordapp.com/avatars/${userID}/${avatarHash}.webp"));
+    embedBuilder.thumbnail = embedBuilder.thumbnail =
+        EmbedThumbnailBuilder(url: Uri.parse("https://cdn.discordapp.com/avatars/$userID/$avatarHash.webp"));
   }
 
   descBuffer.writeln("> <@$userID>");

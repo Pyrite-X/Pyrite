@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_this
+
 class Action {
   late int bitwiseValue;
   late String textValue;

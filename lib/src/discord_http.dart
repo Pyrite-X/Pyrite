@@ -145,7 +145,7 @@ class DiscordHTTP {
   }
 
   Future<http.Response> listGuildMembers({required BigInt guildID, int limit = 1, BigInt? after}) async {
-    if (after == null) after = BigInt.zero;
+    after ??= BigInt.zero;
 
     UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL, port: port);
     builder.setPath("/api/$apiVersion/guilds/$guildID/members");

@@ -91,12 +91,14 @@ CheckPhishResult checkPhishingList(TriggerContext context) {
     }
   }
 
-  String? nameStringType = null;
-  if (usernameCheck)
+  String? nameStringType;
+  if (usernameCheck) {
     nameStringType = "Username";
-  else if (globalNameCheck)
+  } else if (globalNameCheck) {
     nameStringType = "Display Name";
-  else if (nicknameCheck) nameStringType = "Nickname";
+  } else if (nicknameCheck) {
+    nameStringType = "Nickname";
+  }
 
   return (matchString == null)
       ? CheckPhishResult(match: false)

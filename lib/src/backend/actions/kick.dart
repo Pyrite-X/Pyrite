@@ -26,10 +26,9 @@ void kickUser({required TriggerContext context, CheckResult? result}) async {
   _logger.info("${user.tag} | ${user.nickname} (${user.userID}) was kicked from ${context.server.serverID}");
 
   if (logReason.isEmpty) {
-    await DiscordHTTP()
-      ..kickUser(guildID: context.server.serverID, userID: context.user.userID);
+    await DiscordHTTP().kickUser(guildID: context.server.serverID, userID: context.user.userID);
   } else {
     await DiscordHTTP()
-      ..kickUser(guildID: context.server.serverID, userID: context.user.userID, logReason: logReason);
+        .kickUser(guildID: context.server.serverID, userID: context.user.userID, logReason: logReason);
   }
 }

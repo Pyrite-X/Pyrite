@@ -48,8 +48,8 @@ class Rule {
     } else {
       buffer.writeln(actionStringList.first);
     }
-    buffer.writeln("　`Pattern: `${pattern}");
-    buffer.writeln("　`Regex Matching:` ${regex}");
+    buffer.writeln("　`Pattern: `$pattern");
+    buffer.writeln("　`Regex Matching:` $regex");
 
     return buffer.toString();
   }

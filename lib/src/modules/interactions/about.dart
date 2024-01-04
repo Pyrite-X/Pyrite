@@ -23,7 +23,7 @@ Future<void> aboutCmd(Interaction interaction) async {
       name: "What is Pyrite?",
       value: "Pyrite is a bot focused on removing phishing bots!"
           "\nIn simpler terms, Pyrite tries to remove user accounts who "
-          "try to mimic or look like large bots.\n${_unicodeBlank}",
+          "try to mimic or look like large bots.\n$_unicodeBlank",
       isInline: false));
 
   embedFields.add(EmbedFieldBuilder(
@@ -32,7 +32,7 @@ Future<void> aboutCmd(Interaction interaction) async {
           "of large servers typically have many fake user accounts appearing like "
           "popular verification bots attempting to phish users (aka steal their account)."
           "\nSo just while thinking about why this is, I thought, why not make a bot that removes these accounts! "
-          "And so, Pyrite came to be.\n${_unicodeBlank}",
+          "And so, Pyrite came to be.\n$_unicodeBlank",
       isInline: false));
 
   embedFields.add(EmbedFieldBuilder(
@@ -40,7 +40,7 @@ Future<void> aboutCmd(Interaction interaction) async {
       value: "[Dart!](https://dart.dev) With some self-made frameworks of my own, "
           "specifically [Lirx](https://github.com/One-Nub/Lirx) and [Onyx](https://github.com/One-Nub/Onyx). "
           "I also use [Nyxx](https://github.com/nyxx-discord/nyxx) for some gateway functionality, "
-          "as well as for object representations.\n${_unicodeBlank}",
+          "as well as for object representations.\n$_unicodeBlank",
       isInline: false));
 
   embedFields.add(EmbedFieldBuilder(

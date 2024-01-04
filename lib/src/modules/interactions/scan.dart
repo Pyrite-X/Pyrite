@@ -33,14 +33,14 @@ class QueuedServer {
   @override
   bool operator ==(Object other) {
     if (other is BigInt) {
-      return this.serverID == other;
+      return serverID == other;
     }
 
-    return other is QueuedServer && this.serverID == other.serverID;
+    return other is QueuedServer && serverID == other.serverID;
   }
 
   @override // This probably shouldn't be done, but we'll see if it breaks something? :)
-  int get hashCode => Object.hash(this.serverID, this.serverID);
+  int get hashCode => Object.hash(serverID, serverID);
 }
 
 Future<void> scanCmd(Interaction interaction) async {
