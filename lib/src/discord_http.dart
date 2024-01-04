@@ -165,6 +165,31 @@ class DiscordHTTP {
     return await http.get(uri, headers: _buildHeaders());
   }
 
+  Future<http.Response> getInitialInteractionResponse({required String interactionToken}) async {
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL, port: port);
+    builder.setPath("/api/$apiVersion/webhooks/$applicationID/$interactionToken/messages/@original");
+
+    var uri = builder.build();
+    return await http.get(uri, headers: _buildHeaders());
+  }
+
+  Future<http.Response> editInitialInteractionResponse(
+      {required String interactionToken, required JsonData payload}) async {
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL, port: port);
+    builder.setPath("/api/$apiVersion/webhooks/$applicationID/$interactionToken/messages/@original");
+
+    var uri = builder.build();
+    return await http.patch(uri, headers: _buildHeaders(), body: jsonEncode(payload));
+  }
+
+  Future<http.Response> deleteInitialInteractionResponse({required String interactionToken}) async {
+    UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL, port: port);
+    builder.setPath("/api/$apiVersion/webhooks/$applicationID/$interactionToken/messages/@original");
+
+    var uri = builder.build();
+    return await http.delete(uri, headers: _buildHeaders());
+  }
+
   Future<http.Response> sendFollowupMessage(
       {required String interactionToken, required JsonData payload}) async {
     UriBuilder builder = UriBuilder(scheme: scheme, host: discordURL, port: port);
