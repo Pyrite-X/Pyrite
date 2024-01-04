@@ -4,7 +4,6 @@ import 'package:alfred/alfred.dart';
 import 'package:nyxx/nyxx.dart' show EmbedBuilder;
 import 'package:onyx/onyx.dart';
 
-import '../../../discord_http.dart';
 import '../../../backend/storage.dart' as storage;
 import '../../../utilities/base_embeds.dart' as embeds;
 
@@ -59,10 +58,6 @@ Future<void> roleMenuHandler(Interaction interaction) async {
     return;
   }
 
-  InteractionResponse deferResponse = InteractionResponse(InteractionResponseType.defer_update_message, null);
-  await httpResponse.send(jsonEncode(deferResponse));
-
-  DiscordHTTP discordHTTP = DiscordHTTP();
   late EmbedBuilder eb;
 
   bool storeChanges = false;
@@ -96,14 +91,12 @@ Future<void> roleMenuHandler(Interaction interaction) async {
         "> *$roleStringList*";
   }
 
-  await discordHTTP.editFollowupMessage(
-      interactionToken: interaction.token,
-      messageID: BigInt.parse(interaction.message!["id"]),
-      payload: {
-        "embeds": [
-          {...eb.build()}
-        ],
-        "components": [],
-        "allowed_mentions": {"parse": []},
-      });
+  InteractionResponse response = InteractionResponse(InteractionResponseType.update_message, {
+    "embeds": [
+      {...eb.build()}
+    ],
+    "components": [],
+    "allowed_mentions": {"parse": []},
+  });
+  await httpResponse.send(jsonEncode(response));
 }

@@ -49,9 +49,7 @@ Future<void> logButtonHandler(Interaction interaction) async {
 }
 
 Future<void> showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, BigInt userID) async {
-  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
-  await request.response.send(jsonEncode(response));
-
+  var response = InteractionResponse(InteractionResponseType.message_response, {});
   DiscordHTTP discordHTTP = DiscordHTTP();
 
   JsonData userData = {};
@@ -64,11 +62,12 @@ Future<void> showUserInfo(Interaction interaction, HttpRequest request, BigInt g
       var embedBuilder = warningEmbed();
       embedBuilder.description = "User info could not be gotten at this time!";
 
-      await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
-        "embeds": [
-          {...embedBuilder.build()}
-        ]
-      });
+      response.data!["embeds"] = [
+        {...embedBuilder.build()}
+      ];
+      response.data!["flags"] = 1 << 6;
+
+      await request.response.send(jsonEncode(response));
       return;
     }
 
@@ -144,11 +143,10 @@ Future<void> showUserInfo(Interaction interaction, HttpRequest request, BigInt g
 
   embedBuilder.description = descBuffer.toString();
 
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
-    "embeds": [
-      {...embedBuilder.build()}
-    ]
-  });
+  response.data!["embeds"] = [
+    {...embedBuilder.build()}
+  ];
+  await request.response.send(jsonEncode(response));
 }
 
 Future<void> kickUser(
@@ -208,9 +206,6 @@ Future<void> kickUser(
       ? "${authorMemberData["user"]["username"]}#${authorMemberData["user"]["discriminator"]}"
       : "@${authorMemberData["user"]["username"]}";
 
-  response.responseType = InteractionResponseType.defer_message_response;
-  await request.response.send(jsonEncode(response));
-
   await discordHTTP.kickUser(
     guildID: guildID,
     userID: userID,
@@ -218,12 +213,12 @@ Future<void> kickUser(
   );
 
   response.data = {"content": content};
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {"content": content});
+  await request.response.send(jsonEncode(response));
 
   JsonData message = interaction.message!;
   List<dynamic> messageComponents = message["components"][0]["components"];
   // Disable the kick button.
-  messageComponents[1]["disabled"] = true;
+  messageComponents[2]["disabled"] = true;
 
   await discordHTTP.editMessage(
       channelID: interaction.channel_id!,
@@ -285,9 +280,6 @@ Future<void> banUser(
       ? "${authorMemberData["user"]["username"]}#${authorMemberData["user"]["discriminator"]}"
       : "@${authorMemberData["user"]["username"]}";
 
-  response.responseType = InteractionResponseType.defer_message_response;
-  await request.response.send(jsonEncode(response));
-
   await discordHTTP.banUser(
     guildID: guildID,
     userID: userID,
@@ -295,13 +287,13 @@ Future<void> banUser(
   );
 
   response.data = {"content": content};
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {"content": content});
+  await request.response.send(jsonEncode(response));
 
   JsonData message = interaction.message!;
   List<dynamic> messageComponents = message["components"][0]["components"];
   // Disable both kick and ban buttons.
-  messageComponents[1]["disabled"] = true;
   messageComponents[2]["disabled"] = true;
+  messageComponents[3]["disabled"] = true;
 
   await discordHTTP.editMessage(
       channelID: interaction.channel_id!,
@@ -317,8 +309,6 @@ Future<void> whitelistName(
   String userString,
 ) async {
   InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, null);
-
-  DiscordHTTP discordHTTP = DiscordHTTP();
 
   // Check author permissions
   JsonData authorMemberData = interaction.member!;
@@ -343,9 +333,6 @@ Future<void> whitelistName(
     return;
   }
 
-  response.responseType = InteractionResponseType.defer_message_response;
-  await request.response.send(jsonEncode(response));
-
   userString = unorm.nfkc(userString.trim());
 
   JsonData whitelistData = await storage.fetchGuildWhitelist(guildID);
@@ -353,9 +340,10 @@ Future<void> whitelistName(
 
   EmbedBuilder embedResponse = await wl.addToWhitelistHandler(existingNameList, [userString], guildID);
 
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+  response.data = {
     "embeds": [
       {...embedResponse.build()}
     ]
-  });
+  };
+  await request.response.send(jsonEncode(response));
 }
