@@ -52,14 +52,15 @@ Future<JsonData> getServerConfig(BigInt serverID) async {
 
 Future<void> setServerConfig(Server server) async {
   var client = RespCommandsTier2(_appCache.cacheConnection);
-  await client.multi();
 
   JsonData mappedData = server.toJson();
+  List<String> commands = [];
   mappedData.forEach((key, value) {
-    client.tier1.hset("$CONFIG_KEY\_${server.serverID}", key, value);
+    commands.add(key.toString());
+    commands.add(value.toString());
   });
 
-  await client.exec();
+  await client.tier1.tier0.execute(["HSET", "$CONFIG_KEY\_${server.serverID}", ...commands]);
   await client.pexpire("$CONFIG_KEY\_${server.serverID}", BASE_TIMEOUT);
 }
 
@@ -70,15 +71,17 @@ Future<bool> removeServerConfig(BigInt serverID) async {
 
 Future<void> cacheRules(BigInt serverID, List<Rule> ruleList) async {
   var client = RespCommandsTier2(_appCache.cacheConnection);
-  await client.multi();
+  List<String> commands = [];
 
   ruleList.forEach((element) {
     JsonData ruleJson = element.toJson();
     String ruleID = ruleJson["ruleID"];
-    client.tier1.hset("$RULE_KEY\_$serverID", ruleID, jsonEncode(ruleJson));
+
+    commands.add(ruleID);
+    commands.add(jsonEncode(ruleJson));
   });
 
-  await client.exec();
+  await client.tier1.tier0.execute(["HSET", "$RULE_KEY\_$serverID", ...commands]);
   await client.pexpire("$RULE_KEY\_$serverID", BASE_TIMEOUT);
 }
 
