@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:alfred/alfred.dart';
 import 'package:http/http.dart' as http;
@@ -42,7 +43,7 @@ class QueuedServer {
   int get hashCode => Object.hash(this.serverID, this.serverID);
 }
 
-void scanCmd(Interaction interaction) async {
+Future<void> scanCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
   HttpRequest request = interaction.metadata["request"];
 
@@ -97,13 +98,13 @@ void scanCmd(Interaction interaction) async {
   serverQueue.add(queuedServer);
 
   String grammar = serverQueue.length == 1 ? "is now 1 server" : "are now ${serverQueue.length} servers";
-  discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
     "content": "Your server has been queued for scanning! There $grammar in the queue.\n"
         "Status updates will be sent to your set log channel, or here if you have no log channel set."
   });
 }
 
-void queueHandler() async {
+Future<void> queueHandler() async {
   if (serverQueue.isEmpty || runningServer != null) {
     return;
   }
@@ -137,11 +138,11 @@ void queueHandler() async {
     ]
   });
 
-  decreaseScanCount(server.serverID);
-  scanServer(serverObject);
+  unawaited(decreaseScanCount(server.serverID));
+  unawaited(scanServer(serverObject));
 }
 
-void scanServer(Server server) async {
+Future<void> scanServer(Server server) async {
   BigInt lastUserID = BigInt.zero;
   DiscordHTTP discordHTTP = DiscordHTTP();
 
@@ -152,6 +153,7 @@ void scanServer(Server server) async {
   contextBuilder.setEventSource(eventSource);
   contextBuilder.setServer(server);
 
+  // Get + check all members while we're getting at least 1000 people (the max we can retrieve).
   await Future.doWhile(() async {
     http.Response getMembers =
         await discordHTTP.listGuildMembers(guildID: runningServer!.serverID, limit: 1000, after: lastUserID);
@@ -177,7 +179,7 @@ void scanServer(Server server) async {
 
     Iterable<dynamic> body = jsonDecode(getMembers.body);
     await Future.forEach(body, (element) {
-      User? user = _handleMember(element);
+      User? user = _parseMember(element);
       if (user != null) {
         contextBuilder.setUser(user);
         check.checkUser(contextBuilder.build());
@@ -218,7 +220,7 @@ void scanServer(Server server) async {
   runningServer = null;
 }
 
-User? _handleMember(JsonData member) {
+User? _parseMember(JsonData member) {
   UserBuilder userBuilder = UserBuilder();
 
   JsonData userJson = member["user"];

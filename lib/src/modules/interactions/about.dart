@@ -8,7 +8,7 @@ import '../../utilities/base_embeds.dart' as embeds;
 
 const String _unicodeBlank = "\u{2800}";
 
-void aboutCmd(Interaction interaction) async {
+Future<void> aboutCmd(Interaction interaction) async {
   HttpRequest request = interaction.metadata["request"];
 
   var embedBuilder = embeds.infoEmbed();
