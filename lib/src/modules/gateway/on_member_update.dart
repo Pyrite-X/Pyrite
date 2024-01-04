@@ -11,7 +11,7 @@ import '../../structures/user.dart';
 /// Currently used way of building the necessary context for Pyrite to
 /// be able to check a user on update. Does not require and additional
 /// request to Discord to be made.
-void on_member_update(JsonData data) async {
+Future<void> on_member_update(JsonData data) async {
   JsonData userData = data["user"];
 
   // Ignore if it's a bot that was updated.

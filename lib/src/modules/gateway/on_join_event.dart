@@ -8,7 +8,7 @@ import '../../structures/trigger/trigger_source.dart';
 import '../../structures/server.dart';
 import '../../structures/user.dart';
 
-void on_join_event(nyxx.GuildMemberAddEvent event) async {
+Future<void> on_join_event(nyxx.GuildMemberAddEvent event) async {
   nyxx.User nyxxUser = event.member.user!;
 
   if (nyxxUser.isBot) return;

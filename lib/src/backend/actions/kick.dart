@@ -7,7 +7,7 @@ import '../../structures/trigger/trigger_context.dart';
 
 Logger _logger = Logger("Action Log");
 
-void kickUser({required TriggerContext context, CheckResult? result}) async {
+Future<void> kickUser({required TriggerContext context, CheckResult? result}) async {
   String logReason = "";
   var user = context.user;
 

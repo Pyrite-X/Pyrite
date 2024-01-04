@@ -12,7 +12,7 @@ import '../../../discord_http.dart';
 import '../../../backend/storage.dart' as storage;
 import '../../../utilities/base_embeds.dart';
 
-void logButtonHandler(Interaction interaction) async {
+Future<void> logButtonHandler(Interaction interaction) async {
   HttpRequest request = interaction.metadata["request"];
   MessageComponentData interactionData = interaction.data! as MessageComponentData;
 
@@ -48,7 +48,7 @@ void logButtonHandler(Interaction interaction) async {
   }
 }
 
-void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, BigInt userID) async {
+Future<void> showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, BigInt userID) async {
   InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
   await request.response.send(jsonEncode(response));
 
@@ -151,7 +151,7 @@ void showUserInfo(Interaction interaction, HttpRequest request, BigInt guildID, 
   });
 }
 
-void kickUser(
+Future<void> kickUser(
   Interaction interaction,
   HttpRequest request,
   BigInt authorID,
@@ -231,7 +231,7 @@ void kickUser(
       payload: message);
 }
 
-void banUser(
+Future<void> banUser(
   Interaction interaction,
   HttpRequest request,
   BigInt authorID,
@@ -309,7 +309,7 @@ void banUser(
       payload: message);
 }
 
-void whitelistName(
+Future<void> whitelistName(
   Interaction interaction,
   HttpRequest request,
   BigInt authorID,

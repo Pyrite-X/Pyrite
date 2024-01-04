@@ -8,7 +8,7 @@ import '../../../discord_http.dart';
 import '../../../backend/storage.dart' as storage;
 import '../../../utilities/base_embeds.dart' as embeds;
 
-void clearButtonHandler(Interaction interaction) async {
+Future<void> clearButtonHandler(Interaction interaction) async {
   HttpResponse httpResponse = interaction.metadata["request"]!.response;
   MessageComponentData interactionData = interaction.data! as MessageComponentData;
 

@@ -102,7 +102,7 @@ class Pyrite {
     print(_styleLogOutput(record));
   }
 
-  void startGateway({bool ignoreExceptions = false, bool handleSignals = false}) async {
+  Future<void> startGateway({bool ignoreExceptions = false, bool handleSignals = false}) async {
     // ClientOptions clientOpts = ClientOptions(dispatchRawShardEvent: true);
     gateway = await Nyxx.connectGateway(token, GatewayIntents.guildMembers | GatewayIntents.guilds);
 
@@ -135,7 +135,7 @@ class Pyrite {
     if (ignoreExceptions) IE.ignoreExceptions();
   }
 
-  void startServer(
+  Future<void> startServer(
       {bool ignoreExceptions = false,
       bool handleSignals = false,
       int serverPort = 8080,

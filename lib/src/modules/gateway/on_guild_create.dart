@@ -4,7 +4,7 @@ import 'package:nyxx/nyxx.dart';
 import '../../backend/database.dart' as db;
 
 Logger _logger = Logger("Guild Create");
-void on_guild_create(UnavailableGuildCreateEvent event) async {
+Future<void> on_guild_create(UnavailableGuildCreateEvent event) async {
   if (event is GuildCreateEvent) {
     _logger.info("Joined guild \"${event.guild.name}\" (${event.guild.id}), owner: ${event.guild.owner.id}");
   } else {

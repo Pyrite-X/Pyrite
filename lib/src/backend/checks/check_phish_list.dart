@@ -10,7 +10,7 @@ import 'check_result.dart';
 List<String> phishingList = [];
 Logger _logger = Logger("Bot List");
 
-void loadPhishingList() async {
+Future<void> loadPhishingList() async {
   var result =
       await http.get(Uri.parse("https://raw.githubusercontent.com/Pyrite-X/Bot-List/main/botlist.json"));
   var resultBody = jsonDecode(result.body);

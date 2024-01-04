@@ -8,7 +8,7 @@ import 'ban.dart';
 import 'kick.dart';
 import 'log.dart' as log;
 
-void runActions(TriggerContext context, CheckResult result) async {
+Future<void> runActions(TriggerContext context, CheckResult result) async {
   //If batching log msgs someday for scan cmd, need this
   // ignore: unused_local_variable
   var contextSource = context.eventSource.sourceType;

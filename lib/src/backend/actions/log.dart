@@ -16,7 +16,7 @@ import '../../utilities/base_embeds.dart';
 
 Logger _logger = Logger("Action Log");
 
-void sendLogMessage({required TriggerContext context, required CheckResult result}) async {
+Future<void> sendLogMessage({required TriggerContext context, required CheckResult result}) async {
   Server guild = context.server;
   User user = context.user;
 
