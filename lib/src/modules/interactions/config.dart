@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:alfred/alfred.dart';
 import 'package:nyxx/nyxx.dart' show EmbedBuilder, EmbedFooterBuilder, EmbedFieldBuilder;
 import 'package:onyx/onyx.dart';
-import 'package:pyrite/src/discord_http.dart';
 
 import '../../structures/action.dart';
 import '../../structures/server.dart';
