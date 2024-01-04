@@ -14,26 +14,23 @@ const MAX_PER_PAGE = 4;
 const PREV_PAGE_ID = "rl:prev";
 const NEXT_PAGE_ID = "rl:next";
 
-void rulesCmd(Interaction interaction) async {
+Future<void> rulesCmd(Interaction interaction) async {
   var interactionData = interaction.data! as ApplicationCommandData;
 
   ApplicationCommandOption subcommand = interactionData.options![0];
   String optionName = subcommand.name;
 
   if (optionName == "view") {
-    viewRules(interaction);
+    await viewRules(interaction);
   } else if (optionName == "add") {
-    addRule(interaction, subcommand.options!);
+    await addRule(interaction, subcommand.options!);
   } else if (optionName == "delete") {
-    deleteRule(interaction, subcommand.options![0].value.toString());
+    await deleteRule(interaction, subcommand.options![0].value.toString());
   }
 }
 
-void viewRules(Interaction interaction) async {
+Future<void> viewRules(Interaction interaction) async {
   HttpRequest request = interaction.metadata["request"];
-
-  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
-  await request.response.send(jsonEncode(response));
 
   List<Rule> result = await storage.fetchGuildRules(interaction.guild_id!);
 
@@ -49,22 +46,21 @@ void viewRules(Interaction interaction) async {
     embedBuilder.title = "Your guild's custom rules:";
     result.forEach((element) => description.writeln(element.toString()));
   } else {
-    _paginatedRuleView(interaction, result);
+    await _paginatedRuleView(interaction, result);
     return;
   }
 
   embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
   embedBuilder.description = description.toString();
 
-  DiscordHTTP discordHTTP = DiscordHTTP();
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+  await request.response.send(jsonEncode(InteractionResponse(InteractionResponseType.message_response, {
     "embeds": [
       {...embedBuilder.build()}
     ]
-  });
+  })));
 }
 
-void _paginatedRuleView(Interaction interaction, List<Rule> ruleList) async {
+Future<void> _paginatedRuleView(Interaction interaction, List<Rule> ruleList) async {
   EmbedBuilder embedBuilder = embeds.infoEmbed();
   embedBuilder.title = "Your guild's custom rules:";
 
@@ -96,15 +92,18 @@ void _paginatedRuleView(Interaction interaction, List<Rule> ruleList) async {
   buttonRow
       .addComponent(Button(style: ButtonStyle.primary, label: ">", disabled: false, custom_id: NEXT_PAGE_ID));
 
-  DiscordHTTP discordHTTP = DiscordHTTP();
-  var followupMessage = await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+  JsonData responseData = {
     "embeds": [
       {...embedBuilder.build()}
     ],
     "components": [
       {...buttonRow.toJson()}
     ]
-  });
+  };
+  InteractionResponse response = InteractionResponse(InteractionResponseType.message_response, responseData);
+  await (interaction.metadata["request"] as HttpRequest).response.send(jsonEncode(response));
+
+  DiscordHTTP discordHTTP = DiscordHTTP();
 
   var thisStream = OnyxStreams.componentStream.where((event) =>
       event.guild_id == interaction.guild_id &&
@@ -116,17 +115,14 @@ void _paginatedRuleView(Interaction interaction, List<Rule> ruleList) async {
       (element as Button).disabled = true;
     });
 
-    discordHTTP.editFollowupMessage(
-        interactionToken: interaction.token,
-        messageID: BigInt.parse(jsonDecode(followupMessage.body)["id"]),
-        payload: {
-          "embeds": [
-            {...embedBuilder.build()}
-          ],
-          "components": [
-            {...buttonRow.toJson()}
-          ]
-        });
+    discordHTTP.editInitialInteractionResponse(interactionToken: interaction.token, payload: {
+      "embeds": [
+        {...embedBuilder.build()}
+      ],
+      "components": [
+        {...buttonRow.toJson()}
+      ]
+    });
     sink.close();
     return;
   });
@@ -195,11 +191,8 @@ void _paginatedRuleView(Interaction interaction, List<Rule> ruleList) async {
   });
 }
 
-void addRule(Interaction interaction, List<ApplicationCommandOption> options) async {
+Future<void> addRule(Interaction interaction, List<ApplicationCommandOption> options) async {
   HttpRequest request = interaction.metadata["request"];
-
-  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
-  await request.response.send(jsonEncode(response));
 
   late EmbedBuilder embedBuilder;
 
@@ -230,7 +223,6 @@ void addRule(Interaction interaction, List<ApplicationCommandOption> options) as
 
   Rule builtRule = ruleBuilder.build();
   descBuffer.writeln(builtRule.toString());
-  DiscordHTTP discordHTTP = DiscordHTTP();
 
   JsonData ruleStatus = await storage.canAddRule(interaction.guild_id!, rule: builtRule);
   bool canAdd = ruleStatus["flag"];
@@ -239,11 +231,14 @@ void addRule(Interaction interaction, List<ApplicationCommandOption> options) as
     embedBuilder = embeds.errorEmbed();
     embedBuilder.description = "$flagReason Try deleting some rules first!";
     embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
-    await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+
+    var response = InteractionResponse(InteractionResponseType.message_response, {
       "embeds": [
         {...embedBuilder.build()}
       ]
     });
+    await request.response.send(jsonEncode(response));
+
     return;
   }
 
@@ -260,18 +255,17 @@ void addRule(Interaction interaction, List<ApplicationCommandOption> options) as
   }
 
   embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+
+  var response = InteractionResponse(InteractionResponseType.message_response, {
     "embeds": [
       {...embedBuilder.build()}
     ]
   });
+  await request.response.send(jsonEncode(response));
 }
 
-void deleteRule(Interaction interaction, String ruleID) async {
+Future<void> deleteRule(Interaction interaction, String ruleID) async {
   HttpRequest request = interaction.metadata["request"];
-
-  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
-  await request.response.send(jsonEncode(response));
 
   late EmbedBuilder embedBuilder;
 
@@ -286,10 +280,10 @@ void deleteRule(Interaction interaction, String ruleID) async {
   }
   embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
 
-  DiscordHTTP discordHTTP = DiscordHTTP();
-  await discordHTTP.sendFollowupMessage(interactionToken: interaction.token, payload: {
+  var response = InteractionResponse(InteractionResponseType.message_response, {
     "embeds": [
       {...embedBuilder.build()}
     ]
   });
+  await request.response.send(jsonEncode(response));
 }
