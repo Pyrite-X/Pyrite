@@ -9,21 +9,18 @@ import 'package:onyx/onyx.dart';
 import '../../discord_http.dart';
 import '../../utilities/base_embeds.dart' as embeds;
 
-void statsCommand(Interaction interaction, int startTime) async {
+Future<void> statsCommand(Interaction interaction, int startTime) async {
   HttpRequest request = interaction.metadata["request"];
-
-  InteractionResponse response = InteractionResponse(InteractionResponseType.defer_message_response, {});
-  await request.response.send(jsonEncode(response));
 
   EmbedBuilder embedBuilder = embeds.infoEmbed();
   embedBuilder.title = "Bot Statistics";
-
   embedBuilder.footer = EmbedFooterBuilder(text: "Guild ID: ${interaction.guild_id.toString()}");
 
   DiscordHTTP discordHTTP = DiscordHTTP();
 
   http.Response botObject = await discordHTTP.getBotApplication();
   JsonData botData = json.decode(botObject.body);
+
   int guildCount = 0;
   if (botData.containsKey("approximate_guild_count")) {
     guildCount = botData["approximate_guild_count"];
@@ -36,10 +33,10 @@ void statsCommand(Interaction interaction, int startTime) async {
   embedBuilder.fields!
       .add(EmbedFieldBuilder(name: "Memory Usage (RSS)", value: "${memUsage} MB", isInline: true));
 
-  await DiscordHTTP()
-    ..sendFollowupMessage(interactionToken: interaction.token, payload: {
-      "embeds": [
-        {...embedBuilder.build()}
-      ]
-    });
+  var response = InteractionResponse(InteractionResponseType.message_response, {
+    "embeds": [
+      {...embedBuilder.build()}
+    ]
+  });
+  await request.response.send(jsonEncode(response));
 }
