@@ -99,18 +99,16 @@ ActionRow _buildEmbedButtons(Action action, BigInt userID, String userString) {
   ActionRow actionRow = ActionRow();
 
   actionRow.addComponent(
-      Button(style: ButtonStyle.primary, label: "User info", custom_id: "log_button:info:${userID}"));
+      Button(style: ButtonStyle.primary, label: "User info", custom_id: "log_button:info:$userID"));
 
   actionRow.addComponent(Button(
-      style: ButtonStyle.secondary,
-      label: "Whitelist name",
-      custom_id: "log_button:whitelist:${userString}"));
+      style: ButtonStyle.secondary, label: "Whitelist name", custom_id: "log_button:whitelist:$userString"));
 
   if (includeModerationButtons) {
     actionRow.addComponent(
-        Button(style: ButtonStyle.secondary, label: "Kick user", custom_id: "log_button:kick:${userID}"));
+        Button(style: ButtonStyle.secondary, label: "Kick user", custom_id: "log_button:kick:$userID"));
     actionRow.addComponent(
-        Button(style: ButtonStyle.secondary, label: "Ban user", custom_id: "log_button:ban:${userID}"));
+        Button(style: ButtonStyle.secondary, label: "Ban user", custom_id: "log_button:ban:$userID"));
   }
 
   return actionRow;
@@ -118,7 +116,7 @@ ActionRow _buildEmbedButtons(Action action, BigInt userID, String userString) {
 
 // VVVVVV ---------------- Scan Log logic ---------------- VVVVVV
 
-Map<BigInt, StringBuffer> logBufferMap = Map();
+Map<BigInt, StringBuffer> logBufferMap = {};
 
 Future<void> writeScanLog({required TriggerContext context, required CheckResult result}) async {
   Server guild = context.server;

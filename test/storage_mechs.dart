@@ -12,12 +12,14 @@ void main() async {
   var env = DotEnv(includePlatformEnvironment: true);
   env.load(['bin/.env']);
 
+  // ignore: unused_local_variable
   var cli = await db.DatabaseClient.create(initializing: true, uri: env["MONGO_URI"], databaseName: "test");
 
   /// Start the connection to Redis.
   // AppCache redis = await AppCache.init(
   //     host: env["REDIS_HOST"]!, port: int.parse(env["REDIS_PORT"]!), auth: env["REDIS_PASS"]);
 
+  // ignore: non_constant_identifier_names
   BigInt GUILD_ID = BigInt.from(440350951572897812);
 
   // Delete any guild data for the sample guild from the database - or else tests will complain.

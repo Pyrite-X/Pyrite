@@ -31,6 +31,7 @@ import 'src/modules/interactions/buttons/whitelist_buttons.dart' as whitelist_bu
 
 import 'src/modules/interactions/select_menus/whitelist_roles.dart' as whitelist_sel;
 
+// ignore: library_prefixes
 import 'src/utilities/ignore_exceptions.dart' as IE;
 
 late final int _startTime;
@@ -43,10 +44,11 @@ class Pyrite {
   late final NyxxGateway gateway;
 
   // ignore: unused_field
-  Logger _logger = Logger("Pyrite");
+  final Logger _logger = Logger("Pyrite");
 
   Pyrite({required this.token, required this.publicKey, required this.appID});
 
+  // ignore: non_constant_identifier_names
   static final ELEVATED_INFO = Level("INFO", 825);
 
   static String? _styleLogOutput(LogRecord record) {
@@ -117,11 +119,11 @@ class Pyrite {
       gateway.gateway.messages.listen((event) {
         if (event is! EventReceived) return;
 
-        final real_event = event.event;
-        if (real_event is! RawDispatchEvent) return;
+        final realEvent = event.event;
+        if (realEvent is! RawDispatchEvent) return;
 
-        if (real_event.name == "GUILD_MEMBER_UPDATE") {
-          on_member_update.on_member_update(real_event.payload);
+        if (realEvent.name == "GUILD_MEMBER_UPDATE") {
+          on_member_update.on_member_update(realEvent.payload);
         }
       });
     });
