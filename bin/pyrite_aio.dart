@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dotenv/dotenv.dart';
@@ -47,7 +48,7 @@ void main(List<String> arguments) async {
 
   /// Start bot features.
   Pyrite bot = Pyrite(token: token, publicKey: publicKey, appID: appID);
-  bot.startGateway(ignoreExceptions: true);
+  unawaited(bot.startGateway(ignoreExceptions: true));
 
   String? certPath = env["CERT_BASE_PATH"];
   if (certPath != null) {
@@ -58,8 +59,8 @@ void main(List<String> arguments) async {
     securityContext.useCertificateChain(chainPath);
     securityContext.usePrivateKey(privKeyPath);
 
-    bot.startServer(serverPort: 8008, securityContext: securityContext);
+    unawaited(bot.startServer(serverPort: 8008, securityContext: securityContext));
   } else {
-    bot.startServer(serverPort: 8008);
+    unawaited(bot.startServer(serverPort: 8008));
   }
 }

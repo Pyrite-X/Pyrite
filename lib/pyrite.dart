@@ -129,7 +129,7 @@ class Pyrite {
     });
 
     /// Load the list on init, then update every 30 minutes.
-    loadPhishingList();
+    unawaited(loadPhishingList());
     Timer.periodic(Duration(minutes: 30), ((timer) => loadPhishingList()));
 
     if (ignoreExceptions) IE.ignoreExceptions();
@@ -174,7 +174,7 @@ class Pyrite {
         securityContext: securityContext);
 
     /// Load the list on init, then update every 30 minutes.
-    loadPhishingList();
+    unawaited(loadPhishingList());
     Timer.periodic(Duration(minutes: 30), ((timer) => loadPhishingList()));
 
     /// Have the queue check status and/or start a server scan every minute.

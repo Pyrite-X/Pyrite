@@ -115,7 +115,7 @@ Future<void> _paginatedRuleView(Interaction interaction, List<Rule> ruleList) as
       (element as Button).disabled = true;
     });
 
-    discordHTTP.editInitialInteractionResponse(interactionToken: interaction.token, payload: {
+    await discordHTTP.editInitialInteractionResponse(interactionToken: interaction.token, payload: {
       "embeds": [
         {...embedBuilder.build()}
       ],

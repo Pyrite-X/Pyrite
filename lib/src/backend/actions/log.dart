@@ -88,7 +88,7 @@ Future<void> sendLogMessage({required TriggerContext context, required CheckResu
   });
 
   if (msgResponse.statusCode == 403 || msgResponse.statusCode == 404) {
-    storage.removeGuildField(serverID: guild.serverID, fieldName: "logchannelID");
+    await storage.removeGuildField(serverID: guild.serverID, fieldName: "logchannelID");
   }
 }
 

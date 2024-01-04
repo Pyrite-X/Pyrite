@@ -34,16 +34,16 @@ Future<void> logButtonHandler(Interaction interaction) async {
 
   switch (buttonType) {
     case "info":
-      showUserInfo(interaction, request, guildID, userID);
+      await showUserInfo(interaction, request, guildID, userID);
       return;
     case "kick":
-      kickUser(interaction, request, authorID, guildID, userID);
+      await kickUser(interaction, request, authorID, guildID, userID);
       return;
     case "ban":
-      banUser(interaction, request, authorID, guildID, userID);
+      await banUser(interaction, request, authorID, guildID, userID);
       return;
     case "whitelist":
-      whitelistName(interaction, request, authorID, guildID, userMatchString);
+      await whitelistName(interaction, request, authorID, guildID, userMatchString);
       return;
   }
 }

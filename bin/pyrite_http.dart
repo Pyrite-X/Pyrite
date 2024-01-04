@@ -56,8 +56,8 @@ void main(List<String> arguments) async {
     securityContext.useCertificateChain(chainPath);
     securityContext.usePrivateKey(privKeyPath);
 
-    bot.startServer(ignoreExceptions: true, serverPort: 8008, securityContext: securityContext);
+    await bot.startServer(ignoreExceptions: true, serverPort: 8008, securityContext: securityContext);
   } else {
-    bot.startServer(ignoreExceptions: true, serverPort: 8008);
+    await bot.startServer(ignoreExceptions: true, serverPort: 8008);
   }
 }
