@@ -52,5 +52,5 @@ Future<void> on_member_update(JsonData data) async {
     ..setServer(server)
     ..setUser(user);
 
-  check.checkUser(contextBuilder.build());
+  await check.checkUser(contextBuilder.build());
 }

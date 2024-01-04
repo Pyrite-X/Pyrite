@@ -63,9 +63,9 @@ Future<void> checkUser(TriggerContext context) async {
   }
 
   if (checkPhishResult != null && checkPhishResult.match) {
-    runActions(context, checkPhishResult);
+    await runActions(context, checkPhishResult);
   } else if (checkRulesResult != null && checkRulesResult.match) {
-    runActions(context, checkRulesResult);
+    await runActions(context, checkRulesResult);
   }
 }
 

@@ -178,14 +178,14 @@ Future<void> scanServer(Server server) async {
     }
 
     Iterable<dynamic> body = jsonDecode(getMembers.body);
-    await Future.forEach(body, (element) {
-      User? user = _parseMember(element);
+    for (dynamic rawUser in body) {
+      User? user = _parseMember(rawUser);
       if (user != null) {
         contextBuilder.setUser(user);
-        check.checkUser(contextBuilder.build());
+        await check.checkUser(contextBuilder.build());
         lastUserID = user.userID;
       }
-    });
+    }
 
     if (body.length < 1000) {
       return false;

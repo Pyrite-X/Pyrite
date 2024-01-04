@@ -42,5 +42,5 @@ Future<void> on_join_event(nyxx.GuildMemberAddEvent event) async {
   });
 
   contextBuilder.setUser(userBuilder.build());
-  check.checkUser(contextBuilder.build());
+  await check.checkUser(contextBuilder.build());
 }
