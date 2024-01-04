@@ -3,6 +3,7 @@ include: package:lints/recommended.yaml
 linter:
   rules:
     unawaited_futures: true
+    avoid_void_async: true
     avoid_function_literals_in_foreach_calls: false
     constant_identifier_names: false
     unnecessary_string_escapes: false
