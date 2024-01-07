@@ -53,6 +53,15 @@ final _defaultData = {
 
 Future<dynamic> handleQuery(String collection, Future<dynamic> Function(DbCollection collection) func) async {
   Db connection = await _db.pool.acquire();
+
+  if (!connection.isConnected) {
+    await _db.pool.close();
+    _logger.warning("Reconnecting to the database.");
+    await _db.pool.open();
+
+    connection = await _db.pool.acquire();
+  }
+
   DbCollection col = connection.collection(collection);
 
   // Always release connection after execution.
