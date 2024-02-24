@@ -7,7 +7,7 @@ import 'package:onyx/onyx.dart';
 ///
 /// Needs to be instantiated once with variables, after that it follows a singleton pattern.
 class DiscordHTTP {
-  static const String _userAgent = "Pyrite (https://github.com/One-Nub/Pyrite, 0.0.1)";
+  static const String _userAgent = "DiscordBot (https://github.com/One-Nub/Pyrite, 0.0.1)";
 
   static final DiscordHTTP _instance = DiscordHTTP._init();
   DiscordHTTP._init();
