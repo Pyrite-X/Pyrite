@@ -25,9 +25,6 @@ There is also an included rule system, allowing you to remove any users from you
 Are you interested yet? If so, check out the bot for yourself!
 **[Invite Pyrite!](https://discord.com/api/oauth2/authorize?client_id=1022370218489692222&permissions=1374926720198&scope=bot%20applications.commands)**
 
-Likewise, if you want to chat about Pyrite or get some help with it,
-join the **[Pyrite HQ](https://discord.gg/xzeWEDu4mj)** discord server!
-
 ---
 
 ### **Self Hosting**
