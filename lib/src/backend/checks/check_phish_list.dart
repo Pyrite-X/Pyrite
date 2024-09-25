@@ -11,16 +11,21 @@ List<String> phishingList = [];
 Logger _logger = Logger("Bot List");
 
 Future<void> loadPhishingList() async {
-  var result =
-      await http.get(Uri.parse("https://raw.githubusercontent.com/Pyrite-X/Bot-List/main/botlist.json"));
-  var resultBody = jsonDecode(result.body);
-
   try {
+    var result =
+        await http.get(Uri.parse("https://raw.githubusercontent.com/Pyrite-X/Bot-List/main/botlist.json"));
+    var resultBody = jsonDecode(result.body);
+
     var botList = resultBody["bots"];
-    phishingList = [...botList];
-    _logger.info("The bot list has been updated. There are ${phishingList.length} elements in the list.");
+    if (phishingList.length != botList.length) {
+      phishingList = [...botList];
+      _logger.info("The bot list has been updated. There are ${phishingList.length} elements in the list.");
+    } else {
+      // Only send the msg if we're debugging for some reason.
+      _logger.fine("The bot list has not been updated because there are no new elements to add.");
+    }
   } catch (e) {
-    _logger.severe("The Bot list could not be updated due to an exception.", e);
+    _logger.severe("The bot list could not be updated due to an exception.", e);
   }
 }
 
