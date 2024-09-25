@@ -69,7 +69,7 @@ Future<dynamic> handleQuery(String collection, Future<dynamic> Function(DbCollec
     var result = await func(col);
     return result;
   } finally {
-    await _db.pool.release(connection);
+    _db.pool.release(connection);
   }
 }
 
