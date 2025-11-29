@@ -60,5 +60,10 @@ services:
     hostname: nirn
     restart: unless-stopped
     image: ghcr.io/germanoeich/nirn-proxy:v1.3.2
+    #image: local/nirn:1.3.2
+    deploy:
+      resources:
+        limits:
+          memory: 500M
     env_file:
       - stack.env
